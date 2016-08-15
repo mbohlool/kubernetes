@@ -105,7 +105,7 @@ func (s *SpecValidator) Validate(data interface{}) (errs *Result, warnings *Resu
 		errs.AddErrors(err)
 		return
 	}
-	errs.Merge(schv.Validate(obj)) // error -
+	errs.Merge(schv.Validate(sd.Spec())) // error -
 	if errs.HasErrors() {
 		return // no point in continuing
 	}

@@ -15,7 +15,6 @@
 package analysis
 
 import (
-	"fmt"
 	slashpath "path"
 	"strconv"
 	"strings"
@@ -502,9 +501,9 @@ func (s *Spec) OperationIDs() []string {
 		return nil
 	}
 	result := make([]string, 0, len(s.operations))
-	for method, v := range s.operations {
-		for p := range v {
-			result = append(result, fmt.Sprintf("%s %s", strings.ToUpper(method), p))
+	for _, v := range s.operations {
+		for _, o := range v {
+			result = append(result, o.ID)
 		}
 	}
 	return result
