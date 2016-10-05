@@ -43,5 +43,9 @@ func (a *Authenticator) AuthenticateRequest(req *http.Request) (user.Info, bool,
 	}
 
 	token := parts[1]
-	return a.auth.AuthenticateToken(token)
+	u, ok, err := a.auth.AuthenticateToken(token)
+	if err == nil && ok {
+		req.Header.Del("Authorization")
+	}
+	return u, ok, err
 }

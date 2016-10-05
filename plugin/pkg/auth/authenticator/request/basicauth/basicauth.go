@@ -39,5 +39,9 @@ func (a *Authenticator) AuthenticateRequest(req *http.Request) (user.Info, bool,
 	if !found {
 		return nil, false, nil
 	}
-	return a.auth.AuthenticatePassword(username, password)
+	u, ok, err := a.auth.AuthenticatePassword(username, password)
+	if err != nil && ok {
+		req.Header.Del("Authentication")
+	}
+	return u, ok, err
 }
