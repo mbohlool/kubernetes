@@ -335,6 +335,23 @@ func (c *Config) Complete() completedConfig {
 		}
 		c.ExternalHost = hostAndPort
 	}
+	// All APIs will have the same authentication for now.
+	if c.OpenAPIConfig != nil && c.OpenAPIConfig.SecurityDefinitions != nil {
+		c.OpenAPIConfig.DefaultSecurity = []map[string][]string{}
+		for k := range c.OpenAPIConfig.SecurityDefinitions.SecurityDefinitions {
+			c.OpenAPIConfig.DefaultSecurity = append(c.OpenAPIConfig.DefaultSecurity, map[string][]string{k: {}})
+		}
+		if c.OpenAPIConfig.CommonResponses == nil {
+			c.OpenAPIConfig.CommonResponses = &map[int]spec.Response{}
+		}
+		if _, exists := (*c.OpenAPIConfig.CommonResponses)[http.StatusUnauthorized]; !exists {
+			(*c.OpenAPIConfig.CommonResponses)[http.StatusUnauthorized] = spec.Response{
+				ResponseProps: spec.ResponseProps{
+					Description: "Unauthorized",
+				},
+			}
+		}
+	}
 	return completedConfig{c}
 }
 
