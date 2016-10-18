@@ -127,10 +127,10 @@
     "HTTPBasic": []
    },
    {
-    "TokenBearer": []
+    "LoopbackTokenBearer": []
    },
    {
-    "LoopbackTokenBearer": []
+    "TokenBearer": []
    }
   ]
  }
