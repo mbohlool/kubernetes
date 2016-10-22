@@ -487,7 +487,7 @@ func TestValidOpenAPISpec(t *testing.T) {
 			Version: "unversioned",
 		},
 	}
-	config.GenericConfig.OpenAPIConfig.GetOperationID = openapi.GetOperationID
+	config.GenericConfig.OpenAPIConfig.GetOperationIDAndTags = openapi.GetOperationIDAndTags
 	master, err := config.Complete().New()
 	if err != nil {
 		t.Fatalf("Error in bringing up the master: %v", err)

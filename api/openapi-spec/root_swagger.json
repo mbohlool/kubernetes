@@ -21,7 +21,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getCoreAPIVersions",
+     "tags": [
+      "core"
+     ],
+     "operationId": "getAPIVersions",
      "responses": {
       "200": {
        "description": "OK",
@@ -51,7 +54,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getCoreV1APIResources",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -79,7 +85,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1ComponentStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listComponentStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -151,7 +160,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1ComponentStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readComponentStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -196,7 +208,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1ConfigMapForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listConfigMapForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -268,7 +283,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1EndpointsForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listEndpointsForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -340,7 +358,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1EventForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listEventForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -412,7 +433,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1LimitRangeForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listLimitRangeForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -484,7 +508,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1Namespace",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespace",
      "parameters": [
       {
        "uniqueItems": true,
@@ -547,7 +574,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1Namespace",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespace",
      "parameters": [
       {
        "name": "body",
@@ -583,7 +613,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespace",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespace",
      "parameters": [
       {
        "uniqueItems": true,
@@ -657,7 +690,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedBinding",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedBinding",
      "responses": {
       "200": {
        "description": "OK",
@@ -710,7 +746,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedConfigMap",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedConfigMap",
      "parameters": [
       {
        "uniqueItems": true,
@@ -773,7 +812,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedConfigMap",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedConfigMap",
      "parameters": [
       {
        "name": "body",
@@ -809,7 +851,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedConfigMap",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedConfigMap",
      "parameters": [
       {
        "uniqueItems": true,
@@ -891,7 +936,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedConfigMap",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedConfigMap",
      "parameters": [
       {
        "uniqueItems": true,
@@ -933,7 +981,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedConfigMap",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedConfigMap",
      "parameters": [
       {
        "name": "body",
@@ -969,7 +1020,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedConfigMap",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedConfigMap",
      "parameters": [
       {
        "name": "body",
@@ -1007,7 +1061,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedConfigMap",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedConfigMap",
      "parameters": [
       {
        "name": "body",
@@ -1070,7 +1127,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedEndpoints",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedEndpoints",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1133,7 +1193,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedEndpoints",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedEndpoints",
      "parameters": [
       {
        "name": "body",
@@ -1169,7 +1232,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedEndpoints",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedEndpoints",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1251,7 +1317,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedEndpoints",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedEndpoints",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1293,7 +1362,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedEndpoints",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedEndpoints",
      "parameters": [
       {
        "name": "body",
@@ -1329,7 +1401,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedEndpoints",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedEndpoints",
      "parameters": [
       {
        "name": "body",
@@ -1367,7 +1442,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedEndpoints",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedEndpoints",
      "parameters": [
       {
        "name": "body",
@@ -1430,7 +1508,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedEvent",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedEvent",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1493,7 +1574,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedEvent",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedEvent",
      "parameters": [
       {
        "name": "body",
@@ -1529,7 +1613,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedEvent",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedEvent",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1611,7 +1698,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedEvent",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedEvent",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1653,7 +1743,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedEvent",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedEvent",
      "parameters": [
       {
        "name": "body",
@@ -1689,7 +1782,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedEvent",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedEvent",
      "parameters": [
       {
        "name": "body",
@@ -1727,7 +1823,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedEvent",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedEvent",
      "parameters": [
       {
        "name": "body",
@@ -1790,7 +1889,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedLimitRange",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedLimitRange",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1853,7 +1955,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedLimitRange",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedLimitRange",
      "parameters": [
       {
        "name": "body",
@@ -1889,7 +1994,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedLimitRange",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedLimitRange",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1971,7 +2079,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedLimitRange",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedLimitRange",
      "parameters": [
       {
        "uniqueItems": true,
@@ -2013,7 +2124,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedLimitRange",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedLimitRange",
      "parameters": [
       {
        "name": "body",
@@ -2049,7 +2163,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedLimitRange",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedLimitRange",
      "parameters": [
       {
        "name": "body",
@@ -2087,7 +2204,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedLimitRange",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedLimitRange",
      "parameters": [
       {
        "name": "body",
@@ -2150,7 +2270,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedPersistentVolumeClaim",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedPersistentVolumeClaim",
      "parameters": [
       {
        "uniqueItems": true,
@@ -2213,7 +2336,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedPersistentVolumeClaim",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedPersistentVolumeClaim",
      "parameters": [
       {
        "name": "body",
@@ -2249,7 +2375,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedPersistentVolumeClaim",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedPersistentVolumeClaim",
      "parameters": [
       {
        "uniqueItems": true,
@@ -2331,7 +2460,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedPersistentVolumeClaim",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedPersistentVolumeClaim",
      "parameters": [
       {
        "uniqueItems": true,
@@ -2373,7 +2505,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedPersistentVolumeClaim",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedPersistentVolumeClaim",
      "parameters": [
       {
        "name": "body",
@@ -2409,7 +2544,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedPersistentVolumeClaim",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedPersistentVolumeClaim",
      "parameters": [
       {
        "name": "body",
@@ -2447,7 +2585,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedPersistentVolumeClaim",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedPersistentVolumeClaim",
      "parameters": [
       {
        "name": "body",
@@ -2510,7 +2651,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedPersistentVolumeClaimStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedPersistentVolumeClaimStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -2536,7 +2680,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedPersistentVolumeClaimStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedPersistentVolumeClaimStatus",
      "parameters": [
       {
        "name": "body",
@@ -2574,7 +2721,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedPersistentVolumeClaimStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedPersistentVolumeClaimStatus",
      "parameters": [
       {
        "name": "body",
@@ -2637,7 +2787,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedPod",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedPod",
      "parameters": [
       {
        "uniqueItems": true,
@@ -2700,7 +2853,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedPod",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedPod",
      "parameters": [
       {
        "name": "body",
@@ -2736,7 +2892,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedPod",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedPod",
      "parameters": [
       {
        "uniqueItems": true,
@@ -2818,7 +2977,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "readNamespacedPod",
      "parameters": [
       {
        "uniqueItems": true,
@@ -2860,7 +3023,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "replaceNamespacedPod",
      "parameters": [
       {
        "name": "body",
@@ -2896,7 +3063,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "deleteNamespacedPod",
      "parameters": [
       {
        "name": "body",
@@ -2934,7 +3105,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "patchNamespacedPod",
      "parameters": [
       {
        "name": "body",
@@ -2995,7 +3170,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNamespacedPodAttach",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectGetNamespacedPodAttach",
      "responses": {
       "200": {
        "description": "OK",
@@ -3019,7 +3198,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNamespacedPodAttach",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectPostNamespacedPodAttach",
      "responses": {
       "200": {
        "description": "OK",
@@ -3100,7 +3283,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedBindingBinding",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "createNamespacedBindingBinding",
      "responses": {
       "200": {
        "description": "OK",
@@ -3161,7 +3348,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedEvictionEviction",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "createNamespacedEvictionEviction",
      "responses": {
       "200": {
        "description": "OK",
@@ -3220,7 +3411,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNamespacedPodExec",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectGetNamespacedPodExec",
      "responses": {
       "200": {
        "description": "OK",
@@ -3244,7 +3439,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNamespacedPodExec",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectPostNamespacedPodExec",
      "responses": {
       "200": {
        "description": "OK",
@@ -3333,7 +3532,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedPodLog",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "readNamespacedPodLog",
      "responses": {
       "200": {
        "description": "OK",
@@ -3440,7 +3643,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNamespacedPodPortforward",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectGetNamespacedPodPortforward",
      "responses": {
       "200": {
        "description": "OK",
@@ -3464,7 +3671,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNamespacedPodPortforward",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectPostNamespacedPodPortforward",
      "responses": {
       "200": {
        "description": "OK",
@@ -3508,7 +3719,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNamespacedPodProxy",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectGetNamespacedPodProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -3532,7 +3747,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PutNamespacedPodProxy",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectPutNamespacedPodProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -3556,7 +3775,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNamespacedPodProxy",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectPostNamespacedPodProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -3580,7 +3803,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1DeleteNamespacedPodProxy",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectDeleteNamespacedPodProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -3604,7 +3831,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1OptionsNamespacedPodProxy",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectOptionsNamespacedPodProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -3628,7 +3859,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1HeadNamespacedPodProxy",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectHeadNamespacedPodProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -3679,7 +3914,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNamespacedPodProxyWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectGetNamespacedPodProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -3703,7 +3942,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PutNamespacedPodProxyWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectPutNamespacedPodProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -3727,7 +3970,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNamespacedPodProxyWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectPostNamespacedPodProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -3751,7 +3998,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1DeleteNamespacedPodProxyWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectDeleteNamespacedPodProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -3775,7 +4026,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1OptionsNamespacedPodProxyWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectOptionsNamespacedPodProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -3799,7 +4054,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1HeadNamespacedPodProxyWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "connectHeadNamespacedPodProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -3860,7 +4119,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedPodStatus",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "readNamespacedPodStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -3886,7 +4149,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedPodStatus",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "replaceNamespacedPodStatus",
      "parameters": [
       {
        "name": "body",
@@ -3924,7 +4191,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedPodStatus",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "patchNamespacedPodStatus",
      "parameters": [
       {
        "name": "body",
@@ -3987,7 +4258,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedPodTemplate",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedPodTemplate",
      "parameters": [
       {
        "uniqueItems": true,
@@ -4050,7 +4324,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedPodTemplate",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedPodTemplate",
      "parameters": [
       {
        "name": "body",
@@ -4086,7 +4363,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedPodTemplate",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedPodTemplate",
      "parameters": [
       {
        "uniqueItems": true,
@@ -4168,7 +4448,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedPodTemplate",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedPodTemplate",
      "parameters": [
       {
        "uniqueItems": true,
@@ -4210,7 +4493,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedPodTemplate",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedPodTemplate",
      "parameters": [
       {
        "name": "body",
@@ -4246,7 +4532,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedPodTemplate",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedPodTemplate",
      "parameters": [
       {
        "name": "body",
@@ -4284,7 +4573,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedPodTemplate",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedPodTemplate",
      "parameters": [
       {
        "name": "body",
@@ -4347,7 +4639,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedReplicationController",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedReplicationController",
      "parameters": [
       {
        "uniqueItems": true,
@@ -4410,7 +4705,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedReplicationController",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedReplicationController",
      "parameters": [
       {
        "name": "body",
@@ -4446,7 +4744,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedReplicationController",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedReplicationController",
      "parameters": [
       {
        "uniqueItems": true,
@@ -4528,7 +4829,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedReplicationController",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedReplicationController",
      "parameters": [
       {
        "uniqueItems": true,
@@ -4570,7 +4874,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedReplicationController",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedReplicationController",
      "parameters": [
       {
        "name": "body",
@@ -4606,7 +4913,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedReplicationController",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedReplicationController",
      "parameters": [
       {
        "name": "body",
@@ -4644,7 +4954,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedReplicationController",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedReplicationController",
      "parameters": [
       {
        "name": "body",
@@ -4707,7 +5020,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedScaleScale",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedScaleScale",
      "responses": {
       "200": {
        "description": "OK",
@@ -4733,7 +5049,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedScaleScale",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedScaleScale",
      "parameters": [
       {
        "name": "body",
@@ -4771,7 +5090,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedScaleScale",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedScaleScale",
      "parameters": [
       {
        "name": "body",
@@ -4834,7 +5156,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedReplicationControllerStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedReplicationControllerStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -4860,7 +5185,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedReplicationControllerStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedReplicationControllerStatus",
      "parameters": [
       {
        "name": "body",
@@ -4898,7 +5226,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedReplicationControllerStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedReplicationControllerStatus",
      "parameters": [
       {
        "name": "body",
@@ -4961,7 +5292,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedResourceQuota",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedResourceQuota",
      "parameters": [
       {
        "uniqueItems": true,
@@ -5024,7 +5358,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedResourceQuota",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedResourceQuota",
      "parameters": [
       {
        "name": "body",
@@ -5060,7 +5397,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedResourceQuota",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedResourceQuota",
      "parameters": [
       {
        "uniqueItems": true,
@@ -5142,7 +5482,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedResourceQuota",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedResourceQuota",
      "parameters": [
       {
        "uniqueItems": true,
@@ -5184,7 +5527,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedResourceQuota",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedResourceQuota",
      "parameters": [
       {
        "name": "body",
@@ -5220,7 +5566,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedResourceQuota",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedResourceQuota",
      "parameters": [
       {
        "name": "body",
@@ -5258,7 +5607,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedResourceQuota",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedResourceQuota",
      "parameters": [
       {
        "name": "body",
@@ -5321,7 +5673,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedResourceQuotaStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedResourceQuotaStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -5347,7 +5702,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedResourceQuotaStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedResourceQuotaStatus",
      "parameters": [
       {
        "name": "body",
@@ -5385,7 +5743,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedResourceQuotaStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedResourceQuotaStatus",
      "parameters": [
       {
        "name": "body",
@@ -5448,7 +5809,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedSecret",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedSecret",
      "parameters": [
       {
        "uniqueItems": true,
@@ -5511,7 +5875,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedSecret",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedSecret",
      "parameters": [
       {
        "name": "body",
@@ -5547,7 +5914,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedSecret",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedSecret",
      "parameters": [
       {
        "uniqueItems": true,
@@ -5629,7 +5999,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedSecret",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedSecret",
      "parameters": [
       {
        "uniqueItems": true,
@@ -5671,7 +6044,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedSecret",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedSecret",
      "parameters": [
       {
        "name": "body",
@@ -5707,7 +6083,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedSecret",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedSecret",
      "parameters": [
       {
        "name": "body",
@@ -5745,7 +6124,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedSecret",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedSecret",
      "parameters": [
       {
        "name": "body",
@@ -5808,7 +6190,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedServiceAccount",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedServiceAccount",
      "parameters": [
       {
        "uniqueItems": true,
@@ -5871,7 +6256,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedServiceAccount",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedServiceAccount",
      "parameters": [
       {
        "name": "body",
@@ -5907,7 +6295,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNamespacedServiceAccount",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNamespacedServiceAccount",
      "parameters": [
       {
        "uniqueItems": true,
@@ -5989,7 +6380,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedServiceAccount",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedServiceAccount",
      "parameters": [
       {
        "uniqueItems": true,
@@ -6031,7 +6425,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedServiceAccount",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedServiceAccount",
      "parameters": [
       {
        "name": "body",
@@ -6067,7 +6464,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedServiceAccount",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedServiceAccount",
      "parameters": [
       {
        "name": "body",
@@ -6105,7 +6505,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedServiceAccount",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedServiceAccount",
      "parameters": [
       {
        "name": "body",
@@ -6168,7 +6571,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1NamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNamespacedService",
      "parameters": [
       {
        "uniqueItems": true,
@@ -6231,7 +6637,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1NamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNamespacedService",
      "parameters": [
       {
        "name": "body",
@@ -6286,7 +6695,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedService",
      "parameters": [
       {
        "uniqueItems": true,
@@ -6328,7 +6740,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedService",
      "parameters": [
       {
        "name": "body",
@@ -6364,7 +6779,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1NamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespacedService",
      "responses": {
       "200": {
        "description": "OK",
@@ -6392,7 +6810,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedService",
      "parameters": [
       {
        "name": "body",
@@ -6453,7 +6874,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNamespacedServiceProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectGetNamespacedServiceProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -6477,7 +6901,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PutNamespacedServiceProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectPutNamespacedServiceProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -6501,7 +6928,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNamespacedServiceProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectPostNamespacedServiceProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -6525,7 +6955,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1DeleteNamespacedServiceProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectDeleteNamespacedServiceProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -6549,7 +6982,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1OptionsNamespacedServiceProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectOptionsNamespacedServiceProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -6573,7 +7009,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1HeadNamespacedServiceProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectHeadNamespacedServiceProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -6624,7 +7063,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNamespacedServiceProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectGetNamespacedServiceProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -6648,7 +7090,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PutNamespacedServiceProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectPutNamespacedServiceProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -6672,7 +7117,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNamespacedServiceProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectPostNamespacedServiceProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -6696,7 +7144,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1DeleteNamespacedServiceProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectDeleteNamespacedServiceProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -6720,7 +7171,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1OptionsNamespacedServiceProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectOptionsNamespacedServiceProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -6744,7 +7198,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1HeadNamespacedServiceProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectHeadNamespacedServiceProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -6805,7 +7262,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespacedServiceStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespacedServiceStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -6831,7 +7291,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespacedServiceStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespacedServiceStatus",
      "parameters": [
       {
        "name": "body",
@@ -6869,7 +7332,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespacedServiceStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespacedServiceStatus",
      "parameters": [
       {
        "name": "body",
@@ -6932,7 +7398,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1Namespace",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespace",
      "parameters": [
       {
        "uniqueItems": true,
@@ -6974,7 +7443,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1Namespace",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespace",
      "parameters": [
       {
        "name": "body",
@@ -7010,7 +7482,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1Namespace",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNamespace",
      "parameters": [
       {
        "name": "body",
@@ -7048,7 +7523,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1Namespace",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespace",
      "parameters": [
       {
        "name": "body",
@@ -7103,7 +7581,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespaceFinalize",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespaceFinalize",
      "responses": {
       "200": {
        "description": "OK",
@@ -7156,7 +7637,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NamespaceStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNamespaceStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -7182,7 +7666,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NamespaceStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNamespaceStatus",
      "parameters": [
       {
        "name": "body",
@@ -7220,7 +7707,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NamespaceStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNamespaceStatus",
      "parameters": [
       {
        "name": "body",
@@ -7275,7 +7765,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1Node",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listNode",
      "parameters": [
       {
        "uniqueItems": true,
@@ -7338,7 +7831,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1Node",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createNode",
      "parameters": [
       {
        "name": "body",
@@ -7374,7 +7870,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionNode",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionNode",
      "parameters": [
       {
        "uniqueItems": true,
@@ -7448,7 +7947,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1Node",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNode",
      "parameters": [
       {
        "uniqueItems": true,
@@ -7490,7 +7992,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1Node",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNode",
      "parameters": [
       {
        "name": "body",
@@ -7526,7 +8031,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1Node",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteNode",
      "parameters": [
       {
        "name": "body",
@@ -7564,7 +8072,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1Node",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNode",
      "parameters": [
       {
        "name": "body",
@@ -7617,7 +8128,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNodeProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectGetNodeProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -7641,7 +8155,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PutNodeProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectPutNodeProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -7665,7 +8182,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNodeProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectPostNodeProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -7689,7 +8209,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1DeleteNodeProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectDeleteNodeProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -7713,7 +8236,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1OptionsNodeProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectOptionsNodeProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -7737,7 +8263,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1HeadNodeProxy",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectHeadNodeProxy",
      "responses": {
       "200": {
        "description": "OK",
@@ -7780,7 +8309,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1GetNodeProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectGetNodeProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -7804,7 +8336,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PutNodeProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectPutNodeProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -7828,7 +8363,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1PostNodeProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectPostNodeProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -7852,7 +8390,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1DeleteNodeProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectDeleteNodeProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -7876,7 +8417,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1OptionsNodeProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectOptionsNodeProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -7900,7 +8444,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "connectCoreV1HeadNodeProxyWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "connectHeadNodeProxyWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -7953,7 +8500,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1NodeStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readNodeStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -7979,7 +8529,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1NodeStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replaceNodeStatus",
      "parameters": [
       {
        "name": "body",
@@ -8017,7 +8570,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1NodeStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchNodeStatus",
      "parameters": [
       {
        "name": "body",
@@ -8072,7 +8628,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1PersistentVolumeClaimForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listPersistentVolumeClaimForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -8144,7 +8703,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1PersistentVolume",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listPersistentVolume",
      "parameters": [
       {
        "uniqueItems": true,
@@ -8207,7 +8769,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCoreV1PersistentVolume",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "createPersistentVolume",
      "parameters": [
       {
        "name": "body",
@@ -8243,7 +8808,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1CollectionPersistentVolume",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deleteCollectionPersistentVolume",
      "parameters": [
       {
        "uniqueItems": true,
@@ -8317,7 +8885,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1PersistentVolume",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readPersistentVolume",
      "parameters": [
       {
        "uniqueItems": true,
@@ -8359,7 +8930,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1PersistentVolume",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replacePersistentVolume",
      "parameters": [
       {
        "name": "body",
@@ -8395,7 +8969,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCoreV1PersistentVolume",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "deletePersistentVolume",
      "parameters": [
       {
        "name": "body",
@@ -8433,7 +9010,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1PersistentVolume",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchPersistentVolume",
      "parameters": [
       {
        "name": "body",
@@ -8488,7 +9068,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCoreV1PersistentVolumeStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "readPersistentVolumeStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -8514,7 +9097,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCoreV1PersistentVolumeStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "replacePersistentVolumeStatus",
      "parameters": [
       {
        "name": "body",
@@ -8552,7 +9138,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCoreV1PersistentVolumeStatus",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "patchPersistentVolumeStatus",
      "parameters": [
       {
        "name": "body",
@@ -8607,7 +9196,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1PodForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listPodForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -8679,7 +9271,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1PodTemplateForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listPodTemplateForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -8749,7 +9344,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1GETNamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyGETNamespacedPod",
      "responses": {
       "200": {
        "description": "OK",
@@ -8773,7 +9372,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1PUTNamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyPUTNamespacedPod",
      "responses": {
       "200": {
        "description": "OK",
@@ -8797,7 +9400,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1POSTNamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyPOSTNamespacedPod",
      "responses": {
       "200": {
        "description": "OK",
@@ -8821,7 +9428,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1DELETENamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyDELETENamespacedPod",
      "responses": {
       "200": {
        "description": "OK",
@@ -8845,7 +9456,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1OPTIONSNamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyOPTIONSNamespacedPod",
      "responses": {
       "200": {
        "description": "OK",
@@ -8869,7 +9484,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1HEADNamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyHEADNamespacedPod",
      "responses": {
       "200": {
        "description": "OK",
@@ -8913,7 +9532,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1GETNamespacedPodWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyGETNamespacedPodWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -8937,7 +9560,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1PUTNamespacedPodWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyPUTNamespacedPodWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -8961,7 +9588,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1POSTNamespacedPodWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyPOSTNamespacedPodWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -8985,7 +9616,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1DELETENamespacedPodWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyDELETENamespacedPodWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9009,7 +9644,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1OPTIONSNamespacedPodWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyOPTIONSNamespacedPodWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9033,7 +9672,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1HEADNamespacedPodWithPath",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "proxyHEADNamespacedPodWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9085,7 +9728,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1GETNamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyGETNamespacedService",
      "responses": {
       "200": {
        "description": "OK",
@@ -9109,7 +9755,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1PUTNamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyPUTNamespacedService",
      "responses": {
       "200": {
        "description": "OK",
@@ -9133,7 +9782,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1POSTNamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyPOSTNamespacedService",
      "responses": {
       "200": {
        "description": "OK",
@@ -9157,7 +9809,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1DELETENamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyDELETENamespacedService",
      "responses": {
       "200": {
        "description": "OK",
@@ -9181,7 +9836,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1OPTIONSNamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyOPTIONSNamespacedService",
      "responses": {
       "200": {
        "description": "OK",
@@ -9205,7 +9863,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1HEADNamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyHEADNamespacedService",
      "responses": {
       "200": {
        "description": "OK",
@@ -9249,7 +9910,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1GETNamespacedServiceWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyGETNamespacedServiceWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9273,7 +9937,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1PUTNamespacedServiceWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyPUTNamespacedServiceWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9297,7 +9964,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1POSTNamespacedServiceWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyPOSTNamespacedServiceWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9321,7 +9991,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1DELETENamespacedServiceWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyDELETENamespacedServiceWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9345,7 +10018,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1OPTIONSNamespacedServiceWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyOPTIONSNamespacedServiceWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9369,7 +10045,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1HEADNamespacedServiceWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyHEADNamespacedServiceWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9421,7 +10100,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1GETNode",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyGETNode",
      "responses": {
       "200": {
        "description": "OK",
@@ -9445,7 +10127,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1PUTNode",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyPUTNode",
      "responses": {
       "200": {
        "description": "OK",
@@ -9469,7 +10154,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1POSTNode",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyPOSTNode",
      "responses": {
       "200": {
        "description": "OK",
@@ -9493,7 +10181,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1DELETENode",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyDELETENode",
      "responses": {
       "200": {
        "description": "OK",
@@ -9517,7 +10208,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1OPTIONSNode",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyOPTIONSNode",
      "responses": {
       "200": {
        "description": "OK",
@@ -9541,7 +10235,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1HEADNode",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyHEADNode",
      "responses": {
       "200": {
        "description": "OK",
@@ -9577,7 +10274,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1GETNodeWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyGETNodeWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9601,7 +10301,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1PUTNodeWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyPUTNodeWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9625,7 +10328,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1POSTNodeWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyPOSTNodeWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9649,7 +10355,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1DELETENodeWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyDELETENodeWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9673,7 +10382,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1OPTIONSNodeWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyOPTIONSNodeWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9697,7 +10409,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "proxyCoreV1HEADNodeWithPath",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "proxyHEADNodeWithPath",
      "responses": {
       "200": {
        "description": "OK",
@@ -9743,7 +10458,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1ReplicationControllerForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listReplicationControllerForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -9815,7 +10533,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1ResourceQuotaForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listResourceQuotaForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -9887,7 +10608,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1SecretForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listSecretForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -9959,7 +10683,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1ServiceAccountForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listServiceAccountForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -10031,7 +10758,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCoreV1ServiceForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "listServiceForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -10104,7 +10834,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1ConfigMapListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchConfigMapListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -10177,7 +10910,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1EndpointsListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchEndpointsListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -10250,7 +10986,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1EventListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchEventListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -10323,7 +11062,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1LimitRangeListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchLimitRangeListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -10396,7 +11138,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespaceList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespaceList",
      "responses": {
       "200": {
        "description": "OK",
@@ -10469,7 +11214,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedConfigMapList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedConfigMapList",
      "responses": {
       "200": {
        "description": "OK",
@@ -10550,7 +11298,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedConfigMap",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedConfigMap",
      "responses": {
       "200": {
        "description": "OK",
@@ -10639,7 +11390,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedEndpointsList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedEndpointsList",
      "responses": {
       "200": {
        "description": "OK",
@@ -10720,7 +11474,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedEndpoints",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedEndpoints",
      "responses": {
       "200": {
        "description": "OK",
@@ -10809,7 +11566,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedEventList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedEventList",
      "responses": {
       "200": {
        "description": "OK",
@@ -10890,7 +11650,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedEvent",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedEvent",
      "responses": {
       "200": {
        "description": "OK",
@@ -10979,7 +11742,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedLimitRangeList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedLimitRangeList",
      "responses": {
       "200": {
        "description": "OK",
@@ -11060,7 +11826,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedLimitRange",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedLimitRange",
      "responses": {
       "200": {
        "description": "OK",
@@ -11149,7 +11918,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedPersistentVolumeClaimList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedPersistentVolumeClaimList",
      "responses": {
       "200": {
        "description": "OK",
@@ -11230,7 +12002,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedPersistentVolumeClaim",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedPersistentVolumeClaim",
      "responses": {
       "200": {
        "description": "OK",
@@ -11319,7 +12094,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedPodList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedPodList",
      "responses": {
       "200": {
        "description": "OK",
@@ -11400,7 +12178,11 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedPod",
+     "tags": [
+      "v1_core",
+      "pods"
+     ],
+     "operationId": "watchNamespacedPod",
      "responses": {
       "200": {
        "description": "OK",
@@ -11489,7 +12271,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedPodTemplateList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedPodTemplateList",
      "responses": {
       "200": {
        "description": "OK",
@@ -11570,7 +12355,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedPodTemplate",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedPodTemplate",
      "responses": {
       "200": {
        "description": "OK",
@@ -11659,7 +12447,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedReplicationControllerList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedReplicationControllerList",
      "responses": {
       "200": {
        "description": "OK",
@@ -11740,7 +12531,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedReplicationController",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedReplicationController",
      "responses": {
       "200": {
        "description": "OK",
@@ -11829,7 +12623,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedResourceQuotaList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedResourceQuotaList",
      "responses": {
       "200": {
        "description": "OK",
@@ -11910,7 +12707,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedResourceQuota",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedResourceQuota",
      "responses": {
       "200": {
        "description": "OK",
@@ -11999,7 +12799,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedSecretList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedSecretList",
      "responses": {
       "200": {
        "description": "OK",
@@ -12080,7 +12883,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedSecret",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedSecret",
      "responses": {
       "200": {
        "description": "OK",
@@ -12169,7 +12975,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedServiceAccountList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedServiceAccountList",
      "responses": {
       "200": {
        "description": "OK",
@@ -12250,7 +13059,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedServiceAccount",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedServiceAccount",
      "responses": {
       "200": {
        "description": "OK",
@@ -12339,7 +13151,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedServiceList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedServiceList",
      "responses": {
       "200": {
        "description": "OK",
@@ -12420,7 +13235,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NamespacedService",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespacedService",
      "responses": {
       "200": {
        "description": "OK",
@@ -12509,7 +13327,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1Namespace",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNamespace",
      "responses": {
       "200": {
        "description": "OK",
@@ -12590,7 +13411,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1NodeList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNodeList",
      "responses": {
       "200": {
        "description": "OK",
@@ -12663,7 +13487,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1Node",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchNode",
      "responses": {
       "200": {
        "description": "OK",
@@ -12744,7 +13571,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1PersistentVolumeClaimListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchPersistentVolumeClaimListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -12817,7 +13647,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1PersistentVolumeList",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchPersistentVolumeList",
      "responses": {
       "200": {
        "description": "OK",
@@ -12890,7 +13723,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1PersistentVolume",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchPersistentVolume",
      "responses": {
       "200": {
        "description": "OK",
@@ -12971,7 +13807,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1PodListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchPodListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -13044,7 +13883,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1PodTemplateListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchPodTemplateListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -13117,7 +13959,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1ReplicationControllerListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchReplicationControllerListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -13190,7 +14035,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1ResourceQuotaListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchResourceQuotaListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -13263,7 +14111,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1SecretListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchSecretListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -13336,7 +14187,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1ServiceAccountListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchServiceAccountListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -13409,7 +14263,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCoreV1ServiceListForAllNamespaces",
+     "tags": [
+      "v1_core"
+     ],
+     "operationId": "watchServiceListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -13483,6 +14340,9 @@
      "schemes": [
       "https"
      ],
+     "tags": [
+      "apis"
+     ],
      "operationId": "getAPIVersions",
      "responses": {
       "200": {
@@ -13513,7 +14373,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getAppsAPIGroup",
+     "tags": [
+      "apps"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -13543,7 +14406,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getAppsV1alpha1APIResources",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -13571,7 +14437,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listAppsV1alpha1NamespacedPetSet",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "listNamespacedPetSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -13634,7 +14503,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createAppsV1alpha1NamespacedPetSet",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "createNamespacedPetSet",
      "parameters": [
       {
        "name": "body",
@@ -13670,7 +14542,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteAppsV1alpha1CollectionNamespacedPetSet",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "deleteCollectionNamespacedPetSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -13752,7 +14627,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readAppsV1alpha1NamespacedPetSet",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "readNamespacedPetSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -13794,7 +14672,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceAppsV1alpha1NamespacedPetSet",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "replaceNamespacedPetSet",
      "parameters": [
       {
        "name": "body",
@@ -13830,7 +14711,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteAppsV1alpha1NamespacedPetSet",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "deleteNamespacedPetSet",
      "parameters": [
       {
        "name": "body",
@@ -13868,7 +14752,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchAppsV1alpha1NamespacedPetSet",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "patchNamespacedPetSet",
      "parameters": [
       {
        "name": "body",
@@ -13931,7 +14818,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readAppsV1alpha1NamespacedPetSetStatus",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "readNamespacedPetSetStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -13957,7 +14847,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceAppsV1alpha1NamespacedPetSetStatus",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "replaceNamespacedPetSetStatus",
      "parameters": [
       {
        "name": "body",
@@ -13995,7 +14888,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchAppsV1alpha1NamespacedPetSetStatus",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "patchNamespacedPetSetStatus",
      "parameters": [
       {
        "name": "body",
@@ -14058,7 +14954,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listAppsV1alpha1PetSetForAllNamespaces",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "listPetSetForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -14131,7 +15030,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchAppsV1alpha1NamespacedPetSetList",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "watchNamespacedPetSetList",
      "responses": {
       "200": {
        "description": "OK",
@@ -14212,7 +15114,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchAppsV1alpha1NamespacedPetSet",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "watchNamespacedPetSet",
      "responses": {
       "200": {
        "description": "OK",
@@ -14301,7 +15206,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchAppsV1alpha1PetSetListForAllNamespaces",
+     "tags": [
+      "v1alpha1_apps"
+     ],
+     "operationId": "watchPetSetListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -14375,7 +15283,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getAuthenticationAPIGroup",
+     "tags": [
+      "authentication"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -14405,7 +15316,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getAuthenticationV1beta1APIResources",
+     "tags": [
+      "v1beta1_authentication"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -14433,7 +15347,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createAuthenticationV1beta1TokenReview",
+     "tags": [
+      "v1beta1_authentication"
+     ],
+     "operationId": "createTokenReview",
      "responses": {
       "200": {
        "description": "OK",
@@ -14480,7 +15397,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getAuthorizationAPIGroup",
+     "tags": [
+      "authorization"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -14510,7 +15430,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getAuthorizationV1beta1APIResources",
+     "tags": [
+      "v1beta1_authorization"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -14538,7 +15461,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createAuthorizationV1beta1NamespacedLocalSubjectAccessReview",
+     "tags": [
+      "v1beta1_authorization"
+     ],
+     "operationId": "createNamespacedLocalSubjectAccessReview",
      "responses": {
       "200": {
        "description": "OK",
@@ -14591,7 +15517,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createAuthorizationV1beta1SelfSubjectAccessReview",
+     "tags": [
+      "v1beta1_authorization"
+     ],
+     "operationId": "createSelfSubjectAccessReview",
      "responses": {
       "200": {
        "description": "OK",
@@ -14636,7 +15565,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createAuthorizationV1beta1SubjectAccessReview",
+     "tags": [
+      "v1beta1_authorization"
+     ],
+     "operationId": "createSubjectAccessReview",
      "responses": {
       "200": {
        "description": "OK",
@@ -14683,7 +15615,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getAutoscalingAPIGroup",
+     "tags": [
+      "autoscaling"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -14713,7 +15648,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getAutoscalingV1APIResources",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -14741,7 +15679,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listAutoscalingV1HorizontalPodAutoscalerForAllNamespaces",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "listHorizontalPodAutoscalerForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -14813,7 +15754,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listAutoscalingV1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "listNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "uniqueItems": true,
@@ -14876,7 +15820,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createAutoscalingV1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "createNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "name": "body",
@@ -14912,7 +15859,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteAutoscalingV1CollectionNamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "deleteCollectionNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "uniqueItems": true,
@@ -14994,7 +15944,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readAutoscalingV1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "readNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "uniqueItems": true,
@@ -15036,7 +15989,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceAutoscalingV1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "replaceNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "name": "body",
@@ -15072,7 +16028,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteAutoscalingV1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "deleteNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "name": "body",
@@ -15110,7 +16069,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchAutoscalingV1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "patchNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "name": "body",
@@ -15173,7 +16135,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readAutoscalingV1NamespacedHorizontalPodAutoscalerStatus",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "readNamespacedHorizontalPodAutoscalerStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -15199,7 +16164,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceAutoscalingV1NamespacedHorizontalPodAutoscalerStatus",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "replaceNamespacedHorizontalPodAutoscalerStatus",
      "parameters": [
       {
        "name": "body",
@@ -15237,7 +16205,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchAutoscalingV1NamespacedHorizontalPodAutoscalerStatus",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "patchNamespacedHorizontalPodAutoscalerStatus",
      "parameters": [
       {
        "name": "body",
@@ -15301,7 +16272,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchAutoscalingV1HorizontalPodAutoscalerListForAllNamespaces",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "watchHorizontalPodAutoscalerListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -15374,7 +16348,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchAutoscalingV1NamespacedHorizontalPodAutoscalerList",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "watchNamespacedHorizontalPodAutoscalerList",
      "responses": {
       "200": {
        "description": "OK",
@@ -15455,7 +16432,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchAutoscalingV1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1_autoscaling"
+     ],
+     "operationId": "watchNamespacedHorizontalPodAutoscaler",
      "responses": {
       "200": {
        "description": "OK",
@@ -15545,7 +16525,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getBatchAPIGroup",
+     "tags": [
+      "batch"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -15575,7 +16558,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getBatchV1APIResources",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -15603,7 +16589,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listBatchV1JobForAllNamespaces",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "listJobForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -15675,7 +16664,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listBatchV1NamespacedJob",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "listNamespacedJob",
      "parameters": [
       {
        "uniqueItems": true,
@@ -15738,7 +16730,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createBatchV1NamespacedJob",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "createNamespacedJob",
      "parameters": [
       {
        "name": "body",
@@ -15774,7 +16769,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteBatchV1CollectionNamespacedJob",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "deleteCollectionNamespacedJob",
      "parameters": [
       {
        "uniqueItems": true,
@@ -15856,7 +16854,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readBatchV1NamespacedJob",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "readNamespacedJob",
      "parameters": [
       {
        "uniqueItems": true,
@@ -15898,7 +16899,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceBatchV1NamespacedJob",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "replaceNamespacedJob",
      "parameters": [
       {
        "name": "body",
@@ -15934,7 +16938,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteBatchV1NamespacedJob",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "deleteNamespacedJob",
      "parameters": [
       {
        "name": "body",
@@ -15972,7 +16979,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchBatchV1NamespacedJob",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "patchNamespacedJob",
      "parameters": [
       {
        "name": "body",
@@ -16035,7 +17045,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readBatchV1NamespacedJobStatus",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "readNamespacedJobStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -16061,7 +17074,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceBatchV1NamespacedJobStatus",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "replaceNamespacedJobStatus",
      "parameters": [
       {
        "name": "body",
@@ -16099,7 +17115,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchBatchV1NamespacedJobStatus",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "patchNamespacedJobStatus",
      "parameters": [
       {
        "name": "body",
@@ -16163,7 +17182,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchBatchV1JobListForAllNamespaces",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "watchJobListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -16236,7 +17258,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchBatchV1NamespacedJobList",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "watchNamespacedJobList",
      "responses": {
       "200": {
        "description": "OK",
@@ -16317,7 +17342,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchBatchV1NamespacedJob",
+     "tags": [
+      "v1_batch"
+     ],
+     "operationId": "watchNamespacedJob",
      "responses": {
       "200": {
        "description": "OK",
@@ -16407,7 +17435,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getBatchV2alpha1APIResources",
+     "tags": [
+      "v2alpha1_batch"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -16437,7 +17468,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getCertificatesAPIGroup",
+     "tags": [
+      "certificates"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -16467,7 +17501,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getCertificatesV1alpha1APIResources",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -16495,7 +17532,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listCertificatesV1alpha1CertificateSigningRequest",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "listCertificateSigningRequest",
      "parameters": [
       {
        "uniqueItems": true,
@@ -16558,7 +17598,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createCertificatesV1alpha1CertificateSigningRequest",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "createCertificateSigningRequest",
      "parameters": [
       {
        "name": "body",
@@ -16594,7 +17637,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCertificatesV1alpha1CollectionCertificateSigningRequest",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "deleteCollectionCertificateSigningRequest",
      "parameters": [
       {
        "uniqueItems": true,
@@ -16668,7 +17714,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readCertificatesV1alpha1CertificateSigningRequest",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "readCertificateSigningRequest",
      "parameters": [
       {
        "uniqueItems": true,
@@ -16710,7 +17759,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCertificatesV1alpha1CertificateSigningRequest",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "replaceCertificateSigningRequest",
      "parameters": [
       {
        "name": "body",
@@ -16746,7 +17798,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteCertificatesV1alpha1CertificateSigningRequest",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "deleteCertificateSigningRequest",
      "parameters": [
       {
        "name": "body",
@@ -16784,7 +17839,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchCertificatesV1alpha1CertificateSigningRequest",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "patchCertificateSigningRequest",
      "parameters": [
       {
        "name": "body",
@@ -16839,7 +17897,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCertificatesV1alpha1CertificateSigningRequestApproval",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "replaceCertificateSigningRequestApproval",
      "responses": {
       "200": {
        "description": "OK",
@@ -16892,7 +17953,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceCertificatesV1alpha1CertificateSigningRequestStatus",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "replaceCertificateSigningRequestStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -16946,7 +18010,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCertificatesV1alpha1CertificateSigningRequestList",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "watchCertificateSigningRequestList",
      "responses": {
       "200": {
        "description": "OK",
@@ -17019,7 +18086,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchCertificatesV1alpha1CertificateSigningRequest",
+     "tags": [
+      "v1alpha1_certificates"
+     ],
+     "operationId": "watchCertificateSigningRequest",
      "responses": {
       "200": {
        "description": "OK",
@@ -17101,7 +18171,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getExtensionsAPIGroup",
+     "tags": [
+      "extensions"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -17131,7 +18204,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getExtensionsV1beta1APIResources",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -17159,7 +18235,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1DaemonSetForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listDaemonSetForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -17231,7 +18310,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1DeploymentForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listDeploymentForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -17303,7 +18385,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1HorizontalPodAutoscalerForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listHorizontalPodAutoscalerForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -17375,7 +18460,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1IngressForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listIngressForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -17447,7 +18535,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1JobForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listJobForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -17519,7 +18610,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1NamespacedDaemonSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listNamespacedDaemonSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -17582,7 +18676,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1NamespacedDaemonSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createNamespacedDaemonSet",
      "parameters": [
       {
        "name": "body",
@@ -17618,7 +18715,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1CollectionNamespacedDaemonSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteCollectionNamespacedDaemonSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -17700,7 +18800,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedDaemonSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedDaemonSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -17742,7 +18845,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedDaemonSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedDaemonSet",
      "parameters": [
       {
        "name": "body",
@@ -17778,7 +18884,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1NamespacedDaemonSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteNamespacedDaemonSet",
      "parameters": [
       {
        "name": "body",
@@ -17816,7 +18925,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedDaemonSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedDaemonSet",
      "parameters": [
       {
        "name": "body",
@@ -17879,7 +18991,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedDaemonSetStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedDaemonSetStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -17905,7 +19020,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedDaemonSetStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedDaemonSetStatus",
      "parameters": [
       {
        "name": "body",
@@ -17943,7 +19061,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedDaemonSetStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedDaemonSetStatus",
      "parameters": [
       {
        "name": "body",
@@ -18006,7 +19127,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1NamespacedDeployment",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listNamespacedDeployment",
      "parameters": [
       {
        "uniqueItems": true,
@@ -18069,7 +19193,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1NamespacedDeployment",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createNamespacedDeployment",
      "parameters": [
       {
        "name": "body",
@@ -18105,7 +19232,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1CollectionNamespacedDeployment",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteCollectionNamespacedDeployment",
      "parameters": [
       {
        "uniqueItems": true,
@@ -18187,7 +19317,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedDeployment",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedDeployment",
      "parameters": [
       {
        "uniqueItems": true,
@@ -18229,7 +19362,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedDeployment",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedDeployment",
      "parameters": [
       {
        "name": "body",
@@ -18265,7 +19401,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1NamespacedDeployment",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteNamespacedDeployment",
      "parameters": [
       {
        "name": "body",
@@ -18303,7 +19442,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedDeployment",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedDeployment",
      "parameters": [
       {
        "name": "body",
@@ -18366,7 +19508,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1NamespacedDeploymentRollbackRollback",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createNamespacedDeploymentRollbackRollback",
      "responses": {
       "200": {
        "description": "OK",
@@ -18427,7 +19572,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedDeploymentsScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedDeploymentsScale",
      "responses": {
       "200": {
        "description": "OK",
@@ -18453,7 +19601,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedDeploymentsScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedDeploymentsScale",
      "parameters": [
       {
        "name": "body",
@@ -18491,7 +19642,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedDeploymentsScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedDeploymentsScale",
      "parameters": [
       {
        "name": "body",
@@ -18554,7 +19708,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedDeploymentStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedDeploymentStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -18580,7 +19737,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedDeploymentStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedDeploymentStatus",
      "parameters": [
       {
        "name": "body",
@@ -18618,7 +19778,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedDeploymentStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedDeploymentStatus",
      "parameters": [
       {
        "name": "body",
@@ -18681,7 +19844,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "uniqueItems": true,
@@ -18744,7 +19910,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "name": "body",
@@ -18780,7 +19949,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1CollectionNamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteCollectionNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "uniqueItems": true,
@@ -18862,7 +20034,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "uniqueItems": true,
@@ -18904,7 +20079,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "name": "body",
@@ -18940,7 +20118,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "name": "body",
@@ -18978,7 +20159,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedHorizontalPodAutoscaler",
      "parameters": [
       {
        "name": "body",
@@ -19041,7 +20225,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedHorizontalPodAutoscalerStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedHorizontalPodAutoscalerStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -19067,7 +20254,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedHorizontalPodAutoscalerStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedHorizontalPodAutoscalerStatus",
      "parameters": [
       {
        "name": "body",
@@ -19105,7 +20295,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedHorizontalPodAutoscalerStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedHorizontalPodAutoscalerStatus",
      "parameters": [
       {
        "name": "body",
@@ -19168,7 +20361,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1NamespacedIngress",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listNamespacedIngress",
      "parameters": [
       {
        "uniqueItems": true,
@@ -19231,7 +20427,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1NamespacedIngress",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createNamespacedIngress",
      "parameters": [
       {
        "name": "body",
@@ -19267,7 +20466,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1CollectionNamespacedIngress",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteCollectionNamespacedIngress",
      "parameters": [
       {
        "uniqueItems": true,
@@ -19349,7 +20551,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedIngress",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedIngress",
      "parameters": [
       {
        "uniqueItems": true,
@@ -19391,7 +20596,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedIngress",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedIngress",
      "parameters": [
       {
        "name": "body",
@@ -19427,7 +20635,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1NamespacedIngress",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteNamespacedIngress",
      "parameters": [
       {
        "name": "body",
@@ -19465,7 +20676,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedIngress",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedIngress",
      "parameters": [
       {
        "name": "body",
@@ -19528,7 +20742,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedIngressStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedIngressStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -19554,7 +20771,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedIngressStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedIngressStatus",
      "parameters": [
       {
        "name": "body",
@@ -19592,7 +20812,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedIngressStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedIngressStatus",
      "parameters": [
       {
        "name": "body",
@@ -19655,7 +20878,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1NamespacedJob",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listNamespacedJob",
      "parameters": [
       {
        "uniqueItems": true,
@@ -19718,7 +20944,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1NamespacedJob",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createNamespacedJob",
      "parameters": [
       {
        "name": "body",
@@ -19754,7 +20983,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1CollectionNamespacedJob",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteCollectionNamespacedJob",
      "parameters": [
       {
        "uniqueItems": true,
@@ -19836,7 +21068,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedJob",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedJob",
      "parameters": [
       {
        "uniqueItems": true,
@@ -19878,7 +21113,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedJob",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedJob",
      "parameters": [
       {
        "name": "body",
@@ -19914,7 +21152,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1NamespacedJob",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteNamespacedJob",
      "parameters": [
       {
        "name": "body",
@@ -19952,7 +21193,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedJob",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedJob",
      "parameters": [
       {
        "name": "body",
@@ -20015,7 +21259,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedJobStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedJobStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -20041,7 +21288,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedJobStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedJobStatus",
      "parameters": [
       {
        "name": "body",
@@ -20079,7 +21329,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedJobStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedJobStatus",
      "parameters": [
       {
        "name": "body",
@@ -20142,7 +21395,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1NamespacedNetworkPolicy",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listNamespacedNetworkPolicy",
      "parameters": [
       {
        "uniqueItems": true,
@@ -20205,7 +21461,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1NamespacedNetworkPolicy",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createNamespacedNetworkPolicy",
      "parameters": [
       {
        "name": "body",
@@ -20241,7 +21500,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1CollectionNamespacedNetworkPolicy",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteCollectionNamespacedNetworkPolicy",
      "parameters": [
       {
        "uniqueItems": true,
@@ -20323,7 +21585,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedNetworkPolicy",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedNetworkPolicy",
      "parameters": [
       {
        "uniqueItems": true,
@@ -20365,7 +21630,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedNetworkPolicy",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedNetworkPolicy",
      "parameters": [
       {
        "name": "body",
@@ -20401,7 +21669,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1NamespacedNetworkPolicy",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteNamespacedNetworkPolicy",
      "parameters": [
       {
        "name": "body",
@@ -20439,7 +21710,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedNetworkPolicy",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedNetworkPolicy",
      "parameters": [
       {
        "name": "body",
@@ -20502,7 +21776,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1NamespacedReplicaSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listNamespacedReplicaSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -20565,7 +21842,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1NamespacedReplicaSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createNamespacedReplicaSet",
      "parameters": [
       {
        "name": "body",
@@ -20601,7 +21881,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1CollectionNamespacedReplicaSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteCollectionNamespacedReplicaSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -20683,7 +21966,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedReplicaSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedReplicaSet",
      "parameters": [
       {
        "uniqueItems": true,
@@ -20725,7 +22011,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedReplicaSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedReplicaSet",
      "parameters": [
       {
        "name": "body",
@@ -20761,7 +22050,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1NamespacedReplicaSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteNamespacedReplicaSet",
      "parameters": [
       {
        "name": "body",
@@ -20799,7 +22091,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedReplicaSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedReplicaSet",
      "parameters": [
       {
        "name": "body",
@@ -20862,7 +22157,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedReplicasetsScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedReplicasetsScale",
      "responses": {
       "200": {
        "description": "OK",
@@ -20888,7 +22186,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedReplicasetsScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedReplicasetsScale",
      "parameters": [
       {
        "name": "body",
@@ -20926,7 +22227,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedReplicasetsScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedReplicasetsScale",
      "parameters": [
       {
        "name": "body",
@@ -20989,7 +22293,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedReplicaSetStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedReplicaSetStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -21015,7 +22322,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedReplicaSetStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedReplicaSetStatus",
      "parameters": [
       {
        "name": "body",
@@ -21053,7 +22363,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedReplicaSetStatus",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedReplicaSetStatus",
      "parameters": [
       {
        "name": "body",
@@ -21116,7 +22429,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1NamespacedReplicationcontrollersScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readNamespacedReplicationcontrollersScale",
      "responses": {
       "200": {
        "description": "OK",
@@ -21142,7 +22458,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1NamespacedReplicationcontrollersScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceNamespacedReplicationcontrollersScale",
      "parameters": [
       {
        "name": "body",
@@ -21180,7 +22499,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1NamespacedReplicationcontrollersScale",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchNamespacedReplicationcontrollersScale",
      "parameters": [
       {
        "name": "body",
@@ -21243,7 +22565,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1NetworkPolicyForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listNetworkPolicyForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -21315,7 +22640,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1ReplicaSetForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listReplicaSetForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -21387,7 +22715,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listExtensionsV1beta1ThirdPartyResource",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "listThirdPartyResource",
      "parameters": [
       {
        "uniqueItems": true,
@@ -21450,7 +22781,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createExtensionsV1beta1ThirdPartyResource",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "createThirdPartyResource",
      "parameters": [
       {
        "name": "body",
@@ -21486,7 +22820,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1CollectionThirdPartyResource",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteCollectionThirdPartyResource",
      "parameters": [
       {
        "uniqueItems": true,
@@ -21560,7 +22897,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readExtensionsV1beta1ThirdPartyResource",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "readThirdPartyResource",
      "parameters": [
       {
        "uniqueItems": true,
@@ -21602,7 +22942,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceExtensionsV1beta1ThirdPartyResource",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "replaceThirdPartyResource",
      "parameters": [
       {
        "name": "body",
@@ -21638,7 +22981,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteExtensionsV1beta1ThirdPartyResource",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "deleteThirdPartyResource",
      "parameters": [
       {
        "name": "body",
@@ -21676,7 +23022,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchExtensionsV1beta1ThirdPartyResource",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "patchThirdPartyResource",
      "parameters": [
       {
        "name": "body",
@@ -21732,7 +23081,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1DaemonSetListForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchDaemonSetListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -21805,7 +23157,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1DeploymentListForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchDeploymentListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -21878,7 +23233,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1HorizontalPodAutoscalerListForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchHorizontalPodAutoscalerListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -21951,7 +23309,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1IngressListForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchIngressListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -22024,7 +23385,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1JobListForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchJobListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -22097,7 +23461,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedDaemonSetList",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedDaemonSetList",
      "responses": {
       "200": {
        "description": "OK",
@@ -22178,7 +23545,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedDaemonSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedDaemonSet",
      "responses": {
       "200": {
        "description": "OK",
@@ -22267,7 +23637,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedDeploymentList",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedDeploymentList",
      "responses": {
       "200": {
        "description": "OK",
@@ -22348,7 +23721,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedDeployment",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedDeployment",
      "responses": {
       "200": {
        "description": "OK",
@@ -22437,7 +23813,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedHorizontalPodAutoscalerList",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedHorizontalPodAutoscalerList",
      "responses": {
       "200": {
        "description": "OK",
@@ -22518,7 +23897,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedHorizontalPodAutoscaler",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedHorizontalPodAutoscaler",
      "responses": {
       "200": {
        "description": "OK",
@@ -22607,7 +23989,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedIngressList",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedIngressList",
      "responses": {
       "200": {
        "description": "OK",
@@ -22688,7 +24073,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedIngress",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedIngress",
      "responses": {
       "200": {
        "description": "OK",
@@ -22777,7 +24165,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedJobList",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedJobList",
      "responses": {
       "200": {
        "description": "OK",
@@ -22858,7 +24249,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedJob",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedJob",
      "responses": {
       "200": {
        "description": "OK",
@@ -22947,7 +24341,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedNetworkPolicyList",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedNetworkPolicyList",
      "responses": {
       "200": {
        "description": "OK",
@@ -23028,7 +24425,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedNetworkPolicy",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedNetworkPolicy",
      "responses": {
       "200": {
        "description": "OK",
@@ -23117,7 +24517,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedReplicaSetList",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedReplicaSetList",
      "responses": {
       "200": {
        "description": "OK",
@@ -23198,7 +24601,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NamespacedReplicaSet",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNamespacedReplicaSet",
      "responses": {
       "200": {
        "description": "OK",
@@ -23287,7 +24693,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1NetworkPolicyListForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchNetworkPolicyListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -23360,7 +24769,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1ReplicaSetListForAllNamespaces",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchReplicaSetListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -23433,7 +24845,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1ThirdPartyResourceList",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchThirdPartyResourceList",
      "responses": {
       "200": {
        "description": "OK",
@@ -23506,7 +24921,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchExtensionsV1beta1ThirdPartyResource",
+     "tags": [
+      "v1beta1_extensions"
+     ],
+     "operationId": "watchThirdPartyResource",
      "responses": {
       "200": {
        "description": "OK",
@@ -23588,7 +25006,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getPolicyAPIGroup",
+     "tags": [
+      "policy"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -23618,7 +25039,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getPolicyV1alpha1APIResources",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -23646,7 +25070,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listPolicyV1alpha1NamespacedPodDisruptionBudget",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "listNamespacedPodDisruptionBudget",
      "parameters": [
       {
        "uniqueItems": true,
@@ -23709,7 +25136,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createPolicyV1alpha1NamespacedPodDisruptionBudget",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "createNamespacedPodDisruptionBudget",
      "parameters": [
       {
        "name": "body",
@@ -23745,7 +25175,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deletePolicyV1alpha1CollectionNamespacedPodDisruptionBudget",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "deleteCollectionNamespacedPodDisruptionBudget",
      "parameters": [
       {
        "uniqueItems": true,
@@ -23827,7 +25260,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readPolicyV1alpha1NamespacedPodDisruptionBudget",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "readNamespacedPodDisruptionBudget",
      "parameters": [
       {
        "uniqueItems": true,
@@ -23869,7 +25305,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replacePolicyV1alpha1NamespacedPodDisruptionBudget",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "replaceNamespacedPodDisruptionBudget",
      "parameters": [
       {
        "name": "body",
@@ -23905,7 +25344,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deletePolicyV1alpha1NamespacedPodDisruptionBudget",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "deleteNamespacedPodDisruptionBudget",
      "parameters": [
       {
        "name": "body",
@@ -23943,7 +25385,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchPolicyV1alpha1NamespacedPodDisruptionBudget",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "patchNamespacedPodDisruptionBudget",
      "parameters": [
       {
        "name": "body",
@@ -24006,7 +25451,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readPolicyV1alpha1NamespacedPodDisruptionBudgetStatus",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "readNamespacedPodDisruptionBudgetStatus",
      "responses": {
       "200": {
        "description": "OK",
@@ -24032,7 +25480,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replacePolicyV1alpha1NamespacedPodDisruptionBudgetStatus",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "replaceNamespacedPodDisruptionBudgetStatus",
      "parameters": [
       {
        "name": "body",
@@ -24070,7 +25521,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchPolicyV1alpha1NamespacedPodDisruptionBudgetStatus",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "patchNamespacedPodDisruptionBudgetStatus",
      "parameters": [
       {
        "name": "body",
@@ -24133,7 +25587,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listPolicyV1alpha1PodDisruptionBudgetForAllNamespaces",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "listPodDisruptionBudgetForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -24206,7 +25663,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchPolicyV1alpha1NamespacedPodDisruptionBudgetList",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "watchNamespacedPodDisruptionBudgetList",
      "responses": {
       "200": {
        "description": "OK",
@@ -24287,7 +25747,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchPolicyV1alpha1NamespacedPodDisruptionBudget",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "watchNamespacedPodDisruptionBudget",
      "responses": {
       "200": {
        "description": "OK",
@@ -24376,7 +25839,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchPolicyV1alpha1PodDisruptionBudgetListForAllNamespaces",
+     "tags": [
+      "v1alpha1_policy"
+     ],
+     "operationId": "watchPodDisruptionBudgetListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -24450,7 +25916,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getRbacAuthorizationAPIGroup",
+     "tags": [
+      "rbacAuthorization"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -24480,7 +25949,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getRbacAuthorizationV1alpha1APIResources",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -24508,7 +25980,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listRbacAuthorizationV1alpha1ClusterRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "listClusterRoleBinding",
      "parameters": [
       {
        "uniqueItems": true,
@@ -24571,7 +26046,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createRbacAuthorizationV1alpha1ClusterRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "createClusterRoleBinding",
      "parameters": [
       {
        "name": "body",
@@ -24607,7 +26085,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteRbacAuthorizationV1alpha1CollectionClusterRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "deleteCollectionClusterRoleBinding",
      "parameters": [
       {
        "uniqueItems": true,
@@ -24681,7 +26162,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readRbacAuthorizationV1alpha1ClusterRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "readClusterRoleBinding",
      "responses": {
       "200": {
        "description": "OK",
@@ -24707,7 +26191,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceRbacAuthorizationV1alpha1ClusterRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "replaceClusterRoleBinding",
      "parameters": [
       {
        "name": "body",
@@ -24743,7 +26230,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteRbacAuthorizationV1alpha1ClusterRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "deleteClusterRoleBinding",
      "parameters": [
       {
        "name": "body",
@@ -24781,7 +26271,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchRbacAuthorizationV1alpha1ClusterRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "patchClusterRoleBinding",
      "parameters": [
       {
        "name": "body",
@@ -24836,7 +26329,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listRbacAuthorizationV1alpha1ClusterRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "listClusterRole",
      "parameters": [
       {
        "uniqueItems": true,
@@ -24899,7 +26395,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createRbacAuthorizationV1alpha1ClusterRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "createClusterRole",
      "parameters": [
       {
        "name": "body",
@@ -24935,7 +26434,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteRbacAuthorizationV1alpha1CollectionClusterRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "deleteCollectionClusterRole",
      "parameters": [
       {
        "uniqueItems": true,
@@ -25009,7 +26511,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readRbacAuthorizationV1alpha1ClusterRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "readClusterRole",
      "responses": {
       "200": {
        "description": "OK",
@@ -25035,7 +26540,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceRbacAuthorizationV1alpha1ClusterRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "replaceClusterRole",
      "parameters": [
       {
        "name": "body",
@@ -25071,7 +26579,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteRbacAuthorizationV1alpha1ClusterRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "deleteClusterRole",
      "parameters": [
       {
        "name": "body",
@@ -25109,7 +26620,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchRbacAuthorizationV1alpha1ClusterRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "patchClusterRole",
      "parameters": [
       {
        "name": "body",
@@ -25164,7 +26678,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listRbacAuthorizationV1alpha1NamespacedRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "listNamespacedRoleBinding",
      "parameters": [
       {
        "uniqueItems": true,
@@ -25227,7 +26744,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createRbacAuthorizationV1alpha1NamespacedRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "createNamespacedRoleBinding",
      "parameters": [
       {
        "name": "body",
@@ -25263,7 +26783,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteRbacAuthorizationV1alpha1CollectionNamespacedRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "deleteCollectionNamespacedRoleBinding",
      "parameters": [
       {
        "uniqueItems": true,
@@ -25345,7 +26868,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readRbacAuthorizationV1alpha1NamespacedRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "readNamespacedRoleBinding",
      "responses": {
       "200": {
        "description": "OK",
@@ -25371,7 +26897,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceRbacAuthorizationV1alpha1NamespacedRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "replaceNamespacedRoleBinding",
      "parameters": [
       {
        "name": "body",
@@ -25407,7 +26936,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteRbacAuthorizationV1alpha1NamespacedRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "deleteNamespacedRoleBinding",
      "parameters": [
       {
        "name": "body",
@@ -25445,7 +26977,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchRbacAuthorizationV1alpha1NamespacedRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "patchNamespacedRoleBinding",
      "parameters": [
       {
        "name": "body",
@@ -25508,7 +27043,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listRbacAuthorizationV1alpha1NamespacedRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "listNamespacedRole",
      "parameters": [
       {
        "uniqueItems": true,
@@ -25571,7 +27109,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createRbacAuthorizationV1alpha1NamespacedRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "createNamespacedRole",
      "parameters": [
       {
        "name": "body",
@@ -25607,7 +27148,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteRbacAuthorizationV1alpha1CollectionNamespacedRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "deleteCollectionNamespacedRole",
      "parameters": [
       {
        "uniqueItems": true,
@@ -25689,7 +27233,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readRbacAuthorizationV1alpha1NamespacedRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "readNamespacedRole",
      "responses": {
       "200": {
        "description": "OK",
@@ -25715,7 +27262,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceRbacAuthorizationV1alpha1NamespacedRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "replaceNamespacedRole",
      "parameters": [
       {
        "name": "body",
@@ -25751,7 +27301,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteRbacAuthorizationV1alpha1NamespacedRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "deleteNamespacedRole",
      "parameters": [
       {
        "name": "body",
@@ -25789,7 +27342,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchRbacAuthorizationV1alpha1NamespacedRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "patchNamespacedRole",
      "parameters": [
       {
        "name": "body",
@@ -25852,7 +27408,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listRbacAuthorizationV1alpha1RoleBindingForAllNamespaces",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "listRoleBindingForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -25924,7 +27483,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listRbacAuthorizationV1alpha1RoleForAllNamespaces",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "listRoleForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -25997,7 +27559,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1ClusterRoleBindingList",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchClusterRoleBindingList",
      "responses": {
       "200": {
        "description": "OK",
@@ -26070,7 +27635,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1ClusterRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchClusterRoleBinding",
      "responses": {
       "200": {
        "description": "OK",
@@ -26151,7 +27719,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1ClusterRoleList",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchClusterRoleList",
      "responses": {
       "200": {
        "description": "OK",
@@ -26224,7 +27795,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1ClusterRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchClusterRole",
      "responses": {
       "200": {
        "description": "OK",
@@ -26305,7 +27879,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1NamespacedRoleBindingList",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchNamespacedRoleBindingList",
      "responses": {
       "200": {
        "description": "OK",
@@ -26386,7 +27963,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1NamespacedRoleBinding",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchNamespacedRoleBinding",
      "responses": {
       "200": {
        "description": "OK",
@@ -26475,7 +28055,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1NamespacedRoleList",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchNamespacedRoleList",
      "responses": {
       "200": {
        "description": "OK",
@@ -26556,7 +28139,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1NamespacedRole",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchNamespacedRole",
      "responses": {
       "200": {
        "description": "OK",
@@ -26645,7 +28231,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1RoleBindingListForAllNamespaces",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchRoleBindingListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -26718,7 +28307,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchRbacAuthorizationV1alpha1RoleListForAllNamespaces",
+     "tags": [
+      "v1alpha1_rbacAuthorization"
+     ],
+     "operationId": "watchRoleListForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
@@ -26792,7 +28384,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getStorageAPIGroup",
+     "tags": [
+      "storage"
+     ],
+     "operationId": "getAPIGroup",
      "responses": {
       "200": {
        "description": "OK",
@@ -26822,7 +28417,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "getStorageV1beta1APIResources",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "getAPIResources",
      "responses": {
       "200": {
        "description": "OK",
@@ -26850,7 +28448,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "listStorageV1beta1StorageClass",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "listStorageClass",
      "parameters": [
       {
        "uniqueItems": true,
@@ -26913,7 +28514,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "createStorageV1beta1StorageClass",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "createStorageClass",
      "parameters": [
       {
        "name": "body",
@@ -26949,7 +28553,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteStorageV1beta1CollectionStorageClass",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "deleteCollectionStorageClass",
      "parameters": [
       {
        "uniqueItems": true,
@@ -27023,7 +28630,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "readStorageV1beta1StorageClass",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "readStorageClass",
      "parameters": [
       {
        "uniqueItems": true,
@@ -27065,7 +28675,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "replaceStorageV1beta1StorageClass",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "replaceStorageClass",
      "parameters": [
       {
        "name": "body",
@@ -27101,7 +28714,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "deleteStorageV1beta1StorageClass",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "deleteStorageClass",
      "parameters": [
       {
        "name": "body",
@@ -27139,7 +28755,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "patchStorageV1beta1StorageClass",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "patchStorageClass",
      "parameters": [
       {
        "name": "body",
@@ -27195,7 +28814,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchStorageV1beta1StorageClassList",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "watchStorageClassList",
      "responses": {
       "200": {
        "description": "OK",
@@ -27268,7 +28890,10 @@
      "schemes": [
       "https"
      ],
-     "operationId": "watchStorageV1beta1StorageClass",
+     "tags": [
+      "v1beta1_storage"
+     ],
+     "operationId": "watchStorageClass",
      "responses": {
       "200": {
        "description": "OK",
@@ -27339,6 +28964,9 @@
      "schemes": [
       "https"
      ],
+     "tags": [
+      "logs"
+     ],
      "operationId": "logFileListHandler",
      "responses": {
       "401": {
@@ -27351,6 +28979,9 @@
     "get": {
      "schemes": [
       "https"
+     ],
+     "tags": [
+      "logs"
      ],
      "operationId": "logFileHandler",
      "responses": {
@@ -27381,6 +29012,9 @@
      ],
      "schemes": [
       "https"
+     ],
+     "tags": [
+      "version"
      ],
      "operationId": "getCodeVersion",
      "responses": {
