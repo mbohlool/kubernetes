@@ -19,11 +19,15 @@ package openapi
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 	"unicode"
 
 	"github.com/emicklei/go-restful"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/util"
 )
 
@@ -84,4 +88,35 @@ func GetOperationIDAndTags(servePath string, r *restful.Route) (string, []string
 	default:
 		return op, tags, nil
 	}
+}
+
+type DefinitionNamer struct {
+	typeTags map[string][]string
+}
+
+func gvkToTag(gvk schema.GroupVersionKind) string {
+	return fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
+}
+
+func typeName(t reflect.Type) string {
+	return fmt.Sprintf("%s.%s", t.PkgPath(), t.Name())
+}
+
+func NewDefinitionNamer(s *runtime.Scheme) DefinitionNamer {
+	ret := DefinitionNamer{
+		typeTags: map[string][]string{},
+	}
+	for k, v := range api.Scheme.ExportTypesToGVKMaps() {
+		for _, gvk := range v {
+			ret.typeTags[typeName(k)] = append(ret.typeTags[typeName(k)], gvkToTag(gvk))
+		}
+	}
+	for k, gvk := range api.Scheme.ExportUnversionedTypesMap() {
+		ret.typeTags[typeName(k)] = append(ret.typeTags[typeName(k)], gvkToTag(gvk))
+	}
+	return ret
+}
+
+func (d *DefinitionNamer) GetDefinitionName(servePath string, name string) (string, []string) {
+	return name, d.typeTags[name]
 }

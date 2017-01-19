@@ -43,7 +43,7 @@ func TestValidOpenAPISpec(t *testing.T) {
 	defer etcdserver.Terminate(t)
 
 	config.GenericConfig.EnableIndex = true
-	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(openapigen.OpenAPIDefinitions)
+	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(openapigen.GetOpenAPIDefinitions)
 	config.GenericConfig.OpenAPIConfig.Info = &spec.Info{
 		InfoProps: spec.InfoProps{
 			Title:   "Kubernetes",
@@ -88,6 +88,7 @@ func TestValidOpenAPISpec(t *testing.T) {
 		validator := validate.NewSpecValidator(doc.Schema(), strfmt.Default)
 		res, warns := validator.Validate(doc)
 		assert.NoError(res.AsError())
+
 		if !warns.IsValid() {
 			t.Logf("Open API spec on root has some warnings : %v", warns)
 		}
