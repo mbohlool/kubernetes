@@ -230,6 +230,9 @@ type Volume struct {
 	// If not specified, the Volume is implied to be an EmptyDir.
 	// This implied behavior is deprecated and will be removed in a future version.
 	VolumeSource `json:",inline" protobuf:"bytes,2,opt,name=volumeSource"`
+
+	// Test field
+	BarFoo int `json:"foobar"`
 }
 
 // Represents the source of a volume to mount.
