@@ -3736,6 +3736,9 @@ message Volume {
   // If not specified, the Volume is implied to be an EmptyDir.
   // This implied behavior is deprecated and will be removed in a future version.
   optional VolumeSource volumeSource = 2;
+
+  // Test field
+  optional int64 foobar = 3;
 }
 
 // VolumeMount describes a mounting of a Volume within a container.

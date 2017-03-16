@@ -4436,11 +4436,8 @@ func autoConvert_v1_Volume_To_api_Volume(in *Volume, out *api.Volume, s conversi
 	if err := Convert_v1_VolumeSource_To_api_VolumeSource(&in.VolumeSource, &out.VolumeSource, s); err != nil {
 		return err
 	}
+	// WARNING: in.BarFoo requires manual conversion: does not exist in peer-type
 	return nil
-}
-
-func Convert_v1_Volume_To_api_Volume(in *Volume, out *api.Volume, s conversion.Scope) error {
-	return autoConvert_v1_Volume_To_api_Volume(in, out, s)
 }
 
 func autoConvert_api_Volume_To_v1_Volume(in *api.Volume, out *Volume, s conversion.Scope) error {

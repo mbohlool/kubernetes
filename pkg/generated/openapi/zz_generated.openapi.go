@@ -8854,8 +8854,15 @@ func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.Ope
 								Ref:         ref("k8s.io/kubernetes/pkg/api/v1.ScaleIOVolumeSource"),
 							},
 						},
+						"foobar": {
+							SchemaProps: spec.SchemaProps{
+								Description: "Test field",
+								Type:        []string{"integer"},
+								Format:      "int32",
+							},
+						},
 					},
-					Required: []string{"name"},
+					Required: []string{"name", "foobar"},
 				},
 			},
 			Dependencies: []string{
