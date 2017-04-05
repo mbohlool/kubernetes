@@ -31,7 +31,9 @@ import (
 	"k8s.io/gengo/namer"
 	"k8s.io/gengo/types"
 
+	"github.com/cbroglie/mustache"
 	"github.com/golang/glog"
+	"regexp"
 )
 
 // This is the comment tag that carries parameters for open API generation.
@@ -43,6 +45,8 @@ const (
 	tagValueTrue       = "true"
 	tagValueFalse      = "false"
 	tagExtensionPrefix = "x-kubernetes-"
+	tagPatchStrategy   = "patch-strategy"
+	tagPatchMergeKey   = "patch-merge-key"
 )
 
 func getOpenAPITagValue(comments []string) []string {
@@ -68,6 +72,8 @@ func hasOptionalTag(m *types.Member) bool {
 		reflect.StructTag(m.Tags).Get("json"), "omitempty")
 	return hasOptionalCommentTag || hasOptionalJsonTag
 }
+
+func getPatchStrategy(comments []string) string {}
 
 type identityNamer struct{}
 
@@ -108,7 +114,7 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 	}
 	pkg := context.Universe[arguments.OutputPackagePath]
 	if pkg == nil {
-		glog.Fatalf("Got nil output package: %v", err)
+		glog.Fatalf("Got nil output package")
 	}
 	return generator.Packages{
 		&generator.DefaultPackage{
@@ -137,7 +143,6 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 }
 
 const (
-	specPackagePath          = "github.com/go-openapi/spec"
 	openAPICommonPackagePath = "k8s.io/apimachinery/pkg/openapi"
 )
 
@@ -148,6 +153,7 @@ type openAPIGen struct {
 	targetPackage *types.Package
 	imports       namer.ImportTracker
 	context       *generator.Context
+	template      templateRoot
 }
 
 func NewOpenAPIGen(sanitizedName string, targetPackage *types.Package, context *generator.Context) generator.Generator {
@@ -158,6 +164,9 @@ func NewOpenAPIGen(sanitizedName string, targetPackage *types.Package, context *
 		imports:       generator.NewImportTracker(),
 		targetPackage: targetPackage,
 		context:       context,
+		template:      templateRoot{
+			Definitions: []templateDefinition{},
+		},
 	}
 }
 
@@ -191,44 +200,51 @@ func (g *openAPIGen) Imports(c *generator.Context) []string {
 	for _, singleImport := range g.imports.ImportLines() {
 		importLines = append(importLines, singleImport)
 	}
+	importLines = append(importLines, "spec \"github.com/go-openapi/spec\"", "openapi \"k8s.io/apimachinery/pkg/openapi\"")
 	return importLines
 }
 
-func argsFromType(t *types.Type) generator.Args {
-	return generator.Args{
-		"type":              t,
-		"ReferenceCallback": types.Ref(openAPICommonPackagePath, "ReferenceCallback"),
-		"OpenAPIDefinition": types.Ref(openAPICommonPackagePath, "OpenAPIDefinition"),
-		"SpecSchemaType":    types.Ref(specPackagePath, "Schema"),
-	}
-}
-
 func (g *openAPIGen) Init(c *generator.Context, w io.Writer) error {
-	sw := generator.NewSnippetWriter(w, c, "$", "$")
-	sw.Do("func GetOpenAPIDefinitions(ref $.ReferenceCallback|raw$) map[string]$.OpenAPIDefinition|raw$ {\n", argsFromType(nil))
-	sw.Do("return map[string]$.OpenAPIDefinition|raw${\n", argsFromType(nil))
-	return sw.Error()
+	return nil
 }
 
 func (g *openAPIGen) Finalize(c *generator.Context, w io.Writer) error {
-	sw := generator.NewSnippetWriter(w, c, "$", "$")
-	sw.Do("}\n", nil)
-	sw.Do("}\n", nil)
-	return sw.Error()
+	content, err := mustache.Render(template, g.template)
+	if err != nil {
+		return err
+	}
+	regex, err := regexp.Compile("\n\\s*\n")
+	if err != nil {
+		return err
+	}
+	content = regex.ReplaceAllString(content, "\n")
+	io.WriteString(w, content)
+	// Generate the actual thing here
+	return nil
 }
 
 func (g *openAPIGen) GenerateType(c *generator.Context, t *types.Type, w io.Writer) error {
 	glog.V(5).Infof("generating for type %v", t)
-	sw := generator.NewSnippetWriter(w, c, "$", "$")
-	err := newOpenAPITypeWriter(sw).generate(t)
+	def, err := newOpenAPITypeWriter(g.Namers(c)["raw"]).generate(t)
 	if err != nil {
 		return err
 	}
-	return sw.Error()
+	if def != nil {
+		g.template.Definitions = append(g.template.Definitions, *def)
+	}
+	return nil
 }
 
 func getJsonTags(m *types.Member) []string {
 	jsonTag := reflect.StructTag(m.Tags).Get("json")
+	if jsonTag == "" {
+		return []string{}
+	}
+	return strings.Split(jsonTag, ",")
+}
+
+func getPatchStrategyTags(m *types.Member) []string {
+	jsonTag := reflect.StructTag(m.Tags).Get("patchStrategy")
 	if jsonTag == "" {
 		return []string{}
 	}
@@ -254,15 +270,15 @@ func shouldInlineMembers(m *types.Member) bool {
 }
 
 type openAPITypeWriter struct {
-	*generator.SnippetWriter
 	refTypes               map[string]*types.Type
 	GetDefinitionInterface *types.Type
+	rawNamer namer.Namer
 }
 
-func newOpenAPITypeWriter(sw *generator.SnippetWriter) openAPITypeWriter {
+func newOpenAPITypeWriter(n namer.Namer) openAPITypeWriter {
 	return openAPITypeWriter{
-		SnippetWriter: sw,
 		refTypes:      map[string]*types.Type{},
+		rawNamer: n,
 	}
 }
 
@@ -283,22 +299,18 @@ func hasOpenAPIDefinitionMethod(t *types.Type) bool {
 	return false
 }
 
-// typeShortName returns short package name (e.g. the name x appears in package x definition) dot type name.
-func typeShortName(t *types.Type) string {
-	return filepath.Base(t.Name.Package) + "." + t.Name.Name
-}
-
-func (g openAPITypeWriter) generateMembers(t *types.Type, required []string) ([]string, error) {
-	var err error
+func (g openAPITypeWriter) generateMembers(t *types.Type, required []string) ([]string, []templateProperty, error) {
+	temps := []templateProperty{}
 	for _, m := range t.Members {
 		if hasOpenAPITagValue(m.CommentLines, tagValueFalse) {
 			continue
 		}
 		if shouldInlineMembers(&m) {
-			required, err = g.generateMembers(m.Type, required)
+			required, temps2, err := g.generateMembers(m.Type, required)
 			if err != nil {
-				return required, err
+				return required, temps, err
 			}
+			temps = append(temps, temps2...)
 			continue
 		}
 		name := getReferableName(&m)
@@ -308,36 +320,39 @@ func (g openAPITypeWriter) generateMembers(t *types.Type, required []string) ([]
 		if !hasOptionalTag(&m) {
 			required = append(required, name)
 		}
-		if err = g.generateProperty(&m); err != nil {
-			return required, err
+		temp, err := g.generateProperty(&m)
+		if err != nil {
+			return required, temps, err
+		}
+		if temp != nil {
+			temps = append(temps, *temp)
 		}
 	}
-	return required, nil
+	return required, temps, nil
 }
 
-func (g openAPITypeWriter) generate(t *types.Type) error {
+func (g openAPITypeWriter) generate(t *types.Type) (*templateDefinition, error) {
 	// Only generate for struct type and ignore the rest
 	switch t.Kind {
 	case types.Struct:
-		args := argsFromType(t)
-		g.Do("\"$.$\": ", t.Name)
+		def := templateDefinition{}
+		def.Name = t.Name.String()
 		if hasOpenAPIDefinitionMethod(t) {
-			g.Do("$.type|raw${}.OpenAPIDefinition(),\n", args)
-			return nil
+			def.OpenAPIDefinition = &templateOpenAPIDefinition{
+				TypeName: g.rawNamer.Name(t),
+			}
+			return &def, nil
 		}
-		g.Do("{\nSchema: spec.Schema{\nSchemaProps: spec.SchemaProps{\n", nil)
-		g.generateDescription(t.CommentLines)
-		g.Do("Properties: map[string]$.SpecSchemaType|raw${\n", args)
-		required, err := g.generateMembers(t, []string{})
+		def.Description = g.generateDescription(t.CommentLines)
+		required, temps, err := g.generateMembers(t, []string{})
 		if err != nil {
-			return err
+			return nil, err
 		}
-		g.Do("},\n", nil)
+		def.Properties = temps
 		if len(required) > 0 {
-			g.Do("Required: []string{\"$.$\"},\n", strings.Join(required, "\",\""))
+			def.Required = required
+			def.HasRequired = true
 		}
-		g.Do("},\n},\n", nil)
-		g.Do("Dependencies: []string{\n", args)
 		// Map order is undefined, sort them or we may get a different file generated each time.
 		keys := []string{}
 		for k := range g.refTypes {
@@ -351,41 +366,40 @@ func (g openAPITypeWriter) generate(t *types.Type) error {
 				// Will eliminate special case of time.Time
 				continue
 			}
-			g.Do("\"$.$\",", k)
+			def.Dependencies = append(def.Dependencies, k)
 		}
-		g.Do("},\n", nil)
-		if err := g.generateExtensions(t.CommentLines); err != nil {
-			return err
+		extTemp, err := g.generateExtensions(t.CommentLines)
+		if err != nil {
+			return nil, err
 		}
-		g.Do("},\n", nil)
+		def.Extensions = extTemp
+		return &def, nil
 	}
-	return nil
+	return nil, nil
 }
 
-func (g openAPITypeWriter) generateExtensions(CommentLines []string) error {
+func (g openAPITypeWriter) generateExtensions(CommentLines []string) (templateExtensions, error) {
+	temp := templateExtensions{}
 	tagValues := getOpenAPITagValue(CommentLines)
-	anyExtension := false
 	for _, val := range tagValues {
 		if strings.HasPrefix(val, tagExtensionPrefix) {
-			if !anyExtension {
-				g.Do("spec.VendorExtensible: {\nExtensions: spec.Extensions{\n", nil)
-				anyExtension = true
-			}
 			parts := strings.SplitN(val, ":", 2)
 			if len(parts) != 2 {
-				return fmt.Errorf("Invalid extension value: %v", val)
+				return temp, fmt.Errorf("Invalid extension value: %v", val)
 			}
-			g.Do("\"$.$\": ", parts[0])
-			g.Do("\"$.$\",\n", parts[1])
+			temp.Extension = append(temp.Extension, struct {Name, Value string}{parts[0], parts[1]})
 		}
 	}
-	if anyExtension {
-		g.Do("},\n},\n", nil)
+	if ps := getPatchStrategy(CommentLines); ps != "" {
+		temp.Extension = append(...)
 	}
-	return nil
+	if len(temp.Extension) > 0 {
+		return temp, nil
+	}
+	return nil, nil
 }
 
-func (g openAPITypeWriter) generateDescription(CommentLines []string) {
+func (g openAPITypeWriter) generateDescription(CommentLines []string) string {
 	var buffer bytes.Buffer
 	delPrevChar := func() {
 		if buffer.Len() > 0 {
@@ -424,63 +438,72 @@ func (g openAPITypeWriter) generateDescription(CommentLines []string) {
 	postDoc = strings.Replace(postDoc, "\t", "\\t", -1)
 	postDoc = strings.Trim(postDoc, " ")
 	if postDoc != "" {
-		g.Do("Description: \"$.$\",\n", postDoc)
+		return postDoc
 	}
+	return ""
 }
 
-func (g openAPITypeWriter) generateProperty(m *types.Member) error {
+func (g openAPITypeWriter) generateProperty(m *types.Member) (*templateProperty, error) {
+	temp := templateProperty{}
 	name := getReferableName(m)
 	if name == "" {
-		return nil
+		return nil, nil
 	}
-	g.Do("\"$.$\": {\n", name)
-	if err := g.generateExtensions(m.CommentLines); err != nil {
-		return err
+	temp.Name = name
+	exTemp, err := g.generateExtensions(m.CommentLines)
+	if err != nil {
+		return nil, err
 	}
-	g.Do("SchemaProps: spec.SchemaProps{\n", nil)
-	g.generateDescription(m.CommentLines)
+	if ps := getPatchStrategy(CommentLines); ps != "" {
+		// if struct tag is there
+	}
+	if ps := getPatchStrategy(CommentLines); ps != "" {
+		// if struct tag is there
+	}
+	temp.Extensions = exTemp
+	temp.Description = g.generateDescription(m.CommentLines)
 	jsonTags := getJsonTags(m)
 	if len(jsonTags) > 1 && jsonTags[1] == "string" {
-		g.generateSimpleProperty("string", "")
-		g.Do("},\n},\n", nil)
-		return nil
+		temp.SimpleProperty =  g.generateSimpleProperty("string", "")
+		return &temp, nil
 	}
 	t := resolveAliasAndPtrType(m.Type)
 	// If we can get a openAPI type and format for this type, we consider it to be simple property
 	typeString, format := openapi.GetOpenAPITypeFormat(t.String())
 	if typeString != "" {
-		g.generateSimpleProperty(typeString, format)
-		g.Do("},\n},\n", nil)
-		return nil
+		temp.SimpleProperty =  g.generateSimpleProperty(typeString, format)
+		return &temp, nil
 	}
 	switch t.Kind {
 	case types.Builtin:
-		return fmt.Errorf("please add type %v to getOpenAPITypeFormat function", t)
+		return nil, fmt.Errorf("please add type %v to getOpenAPITypeFormat function", t)
 	case types.Map:
-		if err := g.generateMapProperty(t); err != nil {
-			return err
+		mapTemp, err := g.generateMapProperty(t)
+		if err != nil {
+			return nil, err
 		}
+		temp.MapProperty = mapTemp
 	case types.Slice, types.Array:
-		if err := g.generateSliceProperty(t); err != nil {
-			return err
+		sliceTemp, err := g.generateSliceProperty(t)
+		if err != nil {
+			return nil, err
 		}
+		temp.SliceProperty = sliceTemp
 	case types.Struct, types.Interface:
-		g.generateReferenceProperty(t)
+		temp.ReferenceProperty = g.generateReferenceProperty(t)
 	default:
-		return fmt.Errorf("cannot generate spec for type %v", t)
+		return nil, fmt.Errorf("cannot generate spec for type %v", t)
 	}
-	g.Do("},\n},\n", nil)
-	return g.Error()
+	return &temp, nil
 }
 
-func (g openAPITypeWriter) generateSimpleProperty(typeString, format string) {
-	g.Do("Type: []string{\"$.$\"},\n", typeString)
-	g.Do("Format: \"$.$\",\n", format)
+func (g openAPITypeWriter) generateSimpleProperty(typeString, format string) *templateSimpleProperty {
+	return &templateSimpleProperty{TypeString: typeString, Format: format}
 }
 
-func (g openAPITypeWriter) generateReferenceProperty(t *types.Type) {
+func (g openAPITypeWriter) generateReferenceProperty(t *types.Type) *templateReferenceProperty {
 	g.refTypes[t.Name.String()] = t
-	g.Do("Ref: ref(\"$.$\"),\n", t.Name.String())
+	return &templateReferenceProperty{Name: t.Name.String()}
 }
 
 func resolveAliasAndPtrType(t *types.Type) *types.Type {
@@ -497,54 +520,214 @@ func resolveAliasAndPtrType(t *types.Type) *types.Type {
 	return t
 }
 
-func (g openAPITypeWriter) generateMapProperty(t *types.Type) error {
+func (g openAPITypeWriter) generateMapProperty(t *types.Type) (*templateMapProperty, error) {
+	temp := templateMapProperty{}
 	keyType := resolveAliasAndPtrType(t.Key)
 	elemType := resolveAliasAndPtrType(t.Elem)
 
 	// According to OpenAPI examples, only map from string is supported
 	if keyType.Name.Name != "string" {
-		return fmt.Errorf("map with non-string keys are not supported by OpenAPI in %v", t)
+		return nil, fmt.Errorf("map with non-string keys are not supported by OpenAPI in %v", t)
 	}
-	g.Do("Type: []string{\"object\"},\n", nil)
-	g.Do("AdditionalProperties: &spec.SchemaOrBool{\nSchema: &spec.Schema{\nSchemaProps: spec.SchemaProps{\n", nil)
 	typeString, format := openapi.GetOpenAPITypeFormat(elemType.String())
 	if typeString != "" {
-		g.generateSimpleProperty(typeString, format)
-		g.Do("},\n},\n},\n", nil)
-		return nil
+		temp.SimpleProperty =  g.generateSimpleProperty(typeString, format)
+		return &temp, nil
 	}
 	switch elemType.Kind {
 	case types.Builtin:
-		return fmt.Errorf("please add type %v to getOpenAPITypeFormat function.", elemType)
+		return nil, fmt.Errorf("please add type %v to getOpenAPITypeFormat function.", elemType)
 	case types.Struct:
-		g.generateReferenceProperty(t.Elem)
+		temp.ReferenceProperty = g.generateReferenceProperty(t.Elem)
 	case types.Slice, types.Array:
-		g.generateSliceProperty(elemType)
+		sliceTemp, err := g.generateSliceProperty(elemType)
+		if err != nil {
+			return nil, err
+		}
+		temp.SliceProperty = sliceTemp
 	default:
-		return fmt.Errorf("map Element kind %v is not supported in %v", elemType.Kind, t.Name)
+		return nil, fmt.Errorf("map Element kind %v is not supported in %v", elemType.Kind, t.Name)
 	}
-	g.Do("},\n},\n},\n", nil)
-	return nil
+	return &temp, nil
 }
 
-func (g openAPITypeWriter) generateSliceProperty(t *types.Type) error {
+func (g openAPITypeWriter) generateSliceProperty(t *types.Type) (*templateSliceProperty, error) {
+	temp := templateSliceProperty{}
 	elemType := resolveAliasAndPtrType(t.Elem)
-	g.Do("Type: []string{\"array\"},\n", nil)
-	g.Do("Items: &spec.SchemaOrArray{\nSchema: &spec.Schema{\nSchemaProps: spec.SchemaProps{\n", nil)
 	typeString, format := openapi.GetOpenAPITypeFormat(elemType.String())
 	if typeString != "" {
-		g.generateSimpleProperty(typeString, format)
-		g.Do("},\n},\n},\n", nil)
-		return nil
+		temp.SimpleProperty = g.generateSimpleProperty(typeString, format)
+		return &temp, nil
 	}
 	switch elemType.Kind {
 	case types.Builtin:
-		return fmt.Errorf("please add type %v to getOpenAPITypeFormat function.", elemType)
+		return nil, fmt.Errorf("please add type %v to getOpenAPITypeFormat function.", elemType)
 	case types.Struct:
-		g.generateReferenceProperty(t.Elem)
+		temp.ReferenceProperty = g.generateReferenceProperty(t.Elem)
 	default:
-		return fmt.Errorf("slice Element kind %v is not supported in %v", elemType.Kind, t)
+		return nil, fmt.Errorf("slice Element kind %v is not supported in %v", elemType.Kind, t)
 	}
-	g.Do("},\n},\n},\n", nil)
-	return nil
+	return &temp, nil
 }
+
+
+type templateRoot struct {
+	Definitions []templateDefinition
+}
+
+type templateDefinition struct {
+	OpenAPIDefinition *templateOpenAPIDefinition
+	Name string
+	Description interface{}
+	Properties []templateProperty
+	Required []string
+	HasRequired bool
+	Dependencies []string
+	Extensions templateExtensions
+}
+
+type templateOpenAPIDefinition struct {
+	TypeName string  // use namer here
+}
+
+type templateProperty struct {
+	Name string
+	Extensions templateExtensions
+	Description interface{}
+	SimpleProperty *templateSimpleProperty
+	MapProperty *templateMapProperty
+	SliceProperty *templateSliceProperty
+	ReferenceProperty *templateReferenceProperty
+}
+
+type templateExtensions struct {
+	Extension []struct {
+		Name string
+		Value string
+	}
+}
+
+type templateSimpleProperty struct {
+	TypeString string
+	Format string
+}
+
+type templateMapProperty struct {
+	SimpleProperty *templateSimpleProperty
+	SliceProperty *templateSliceProperty
+	ReferenceProperty *templateReferenceProperty
+}
+
+type templateSliceProperty struct {
+	SimpleProperty *templateSimpleProperty
+	ReferenceProperty *templateReferenceProperty
+}
+
+type templateReferenceProperty struct {
+	Name string
+}
+
+var template string = `
+
+func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
+    return map[string]openapi.OpenAPIDefinition{
+        {{#Definitions}}
+            "{{{Name}}}" :
+                {{#OpenAPIDefinition}} {{{TypeName}}}{}.OpenAPIDefinition(), {{/OpenAPIDefinition}} {{^OpenAPIDefinition}} {
+                    Schema: spec.Schema{
+                        SchemaProps: spec.SchemaProps{
+                            {{#Description}} Description: "{{{Description}}}",
+                            {{/Description}}
+                            Properties: map[string]spec.Schema{
+                                {{#Properties}}
+                                "{{{Name}}}": {
+  				    {{#Extensions}}
+				    spec.VendorExtensible: {
+					Extensions: spec.Extensions{
+					    {{#Extension}}
+					    "{{{Name}}}": "{{{Value}}}",
+					    {{/Extension}}
+					},
+			    	    },
+				    {{/Extensions}}
+                                    SchemaProps: spec.SchemaProps{
+		                        {{#Description}} Description: "{{{Description}}}",
+		                        {{/Description}}
+                                        {{#SimpleProperty}}
+                                            Type: []string{"{{{TypeString}}}"},
+                                            Format: "{{{Format}}}",
+                                        {{/SimpleProperty}}
+                                        {{#MapProperty}}
+                                            Type: []string{"object"},
+                                            AdditionalProperties: &spec.SchemaOrBool{
+                                                Schema: &spec.Schema{
+                                                    SchemaProps: spec.SchemaProps{
+                                                        {{#SimpleProperty}}
+                                                            Type: []string{"{{{TypeString}}}"},
+                                                            Format: "{{{Format}}}",
+                                                        {{/SimpleProperty}}
+                                                        {{#ReferenceProperty}}
+                                                            Ref: ref("{{{Name}}}"),
+                                                        {{/ReferenceProperty}}
+                                                        {{#SliceProperty}}
+                                                            Type: []string{"array"},
+                                                            Items: &spec.SchemaOrArray{
+                                                                    Schema: &spec.Schema{
+                                                                    SchemaProps: spec.SchemaProps{
+                                                                        {{#SimpleProperty}}
+                                                                            Type: []string{"{{{TypeString}}}"},
+                                                                            Format: "{{{Format}}}",
+                                                                        {{/SimpleProperty}}
+                                                                        {{#ReferenceProperty}}
+                                                                            Ref: ref("{{{Name}}}"),
+                                                                        {{/ReferenceProperty}}
+                                                                    },
+                                                                },
+                                                            },
+                                                        {{/SliceProperty}}
+                                                    },
+                                                },
+                                            },
+                                        {{/MapProperty}}
+                                        {{#SliceProperty}}
+                                            Type: []string{"array"},
+                                            Items: &spec.SchemaOrArray{
+                                                Schema: &spec.Schema{
+                                                    SchemaProps: spec.SchemaProps{
+                                                        {{#SimpleProperty}}
+                                                            Type: []string{"{{{TypeString}}}"},
+                                                            Format: "{{{Format}}}",
+                                                        {{/SimpleProperty}}
+                                                        {{#ReferenceProperty}}
+                                                            Ref: ref("{{{Name}}}"),
+                                                        {{/ReferenceProperty}}
+                                                    },
+                                                },
+                                            },
+                                        {{/SliceProperty}}
+                                        {{#ReferenceProperty}}
+                                            Ref: ref("{{{Name}}}"),
+                                        {{/ReferenceProperty}}
+                                    },
+                                },
+                                {{/Properties}}
+				{{#Extensions}}
+				spec.VendorExtensible: {
+					Extensions: spec.Extensions{
+					    {{#Extension}}
+					    "{{{Name}}}": "{{{Value}}}",
+					    {{/Extension}}
+					},
+				},
+				{{/Extensions}}
+                            },
+                                {{#HasRequired}} Required: []string{ {{#Required}}"{{{.}}}", {{/Required}} },{{/HasRequired}}
+                        },
+                    },
+                                Dependencies: []string{
+                                	{{#Dependencies}}"{{{.}}}", {{/Dependencies}} },
+                }, {{/OpenAPIDefinition}}
+        {{/Definitions}}
+    }
+}
+`

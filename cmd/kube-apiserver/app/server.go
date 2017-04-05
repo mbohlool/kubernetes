@@ -725,14 +725,19 @@ func postProcessOpenAPISpecForBackwardCompatibility(s *spec.Swagger) (*spec.Swag
 
 	for k, v := range compatibilityMap {
 		if _, found := s.Definitions[v]; !found {
+			glog.Warning("Did not Found definition for " + v)
 			continue
 		}
+		glog.Warning("Found definition for " + v)
 		s.Definitions[k] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Ref:         spec.MustCreateRef("#/definitions/" + openapi.EscapeJsonPointer(v)),
 				Description: fmt.Sprintf("Deprecated. Please use %s instead.", v),
 			},
 		}
+	}
+	for k := range s.Definitions {
+		glog.Warning("Final definition for " + k)
 	}
 	return s, nil
 }
