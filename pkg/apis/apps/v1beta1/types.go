@@ -103,6 +103,7 @@ type StatefulSetSpec struct {
 	// If unspecified, defaults to 1.
 	// TODO: Consider a rename of this field.
 	// +optional
+	// +k8s:openapi-gen=x-kubernetes-test-tag:test_value
 	Replicas *int32 `json:"replicas,omitempty" protobuf:"varint,1,opt,name=replicas"`
 
 	// Selector is a label query over pods that should match the replica count.

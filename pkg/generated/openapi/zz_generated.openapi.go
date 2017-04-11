@@ -9994,6 +9994,11 @@ func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.Ope
 					Description: "A StatefulSetSpec is the specification of a StatefulSet.",
 					Properties: map[string]spec.Schema{
 						"replicas": {
+							VendorExtensible: spec.VendorExtensible{
+								Extensions: spec.Extensions{
+									"x-kubernetes-test-tag": "test_value",
+								},
+							},
 							SchemaProps: spec.SchemaProps{
 								Description: "Replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
 								Type:        []string{"integer"},

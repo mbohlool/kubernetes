@@ -41891,7 +41891,8 @@
      "replicas": {
       "description": "Replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
       "type": "integer",
-      "format": "int32"
+      "format": "int32",
+      "x-kubernetes-test-tag": "test_value"
      },
      "selector": {
       "description": "Selector is a label query over pods that should match the replica count. If empty, defaulted to labels on the pod template. More info: http://kubernetes.io/docs/user-guide/labels#label-selectors",
