@@ -24,7 +24,6 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	api_v1 "k8s.io/kubernetes/pkg/api/v1"
 	reflect "reflect"
 )
 
@@ -69,6 +68,14 @@ func DeepCopy_v1_JobCondition(in interface{}, out interface{}, c *conversion.Clo
 		in := in.(*JobCondition)
 		out := out.(*JobCondition)
 		*out = *in
+		// in.Status is kind 'Unsupported'
+		if in.Status != nil {
+			if newVal, err := c.DeepCopy(&in.Status); err != nil {
+				return err
+			} else {
+				out.Status = *newVal.(*unnameable_Unsupported)
+			}
+		}
 		out.LastProbeTime = in.LastProbeTime.DeepCopy()
 		out.LastTransitionTime = in.LastTransitionTime.DeepCopy()
 		return nil
@@ -126,8 +133,13 @@ func DeepCopy_v1_JobSpec(in interface{}, out interface{}, c *conversion.Cloner) 
 			*out = new(bool)
 			**out = **in
 		}
-		if err := api_v1.DeepCopy_v1_PodTemplateSpec(&in.Template, &out.Template, c); err != nil {
-			return err
+		// in.Template is kind 'Unsupported'
+		if in.Template != nil {
+			if newVal, err := c.DeepCopy(&in.Template); err != nil {
+				return err
+			} else {
+				out.Template = *newVal.(*unnameable_Unsupported)
+			}
 		}
 		return nil
 	}

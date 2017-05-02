@@ -25,7 +25,6 @@ import (
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
-	api_v1 "k8s.io/kubernetes/pkg/api/v1"
 	reflect "reflect"
 )
 
@@ -211,8 +210,13 @@ func DeepCopy_v1beta1_DaemonSetSpec(in interface{}, out interface{}, c *conversi
 				*out = newVal.(*v1.LabelSelector)
 			}
 		}
-		if err := api_v1.DeepCopy_v1_PodTemplateSpec(&in.Template, &out.Template, c); err != nil {
-			return err
+		// in.Template is kind 'Unsupported'
+		if in.Template != nil {
+			if newVal, err := c.DeepCopy(&in.Template); err != nil {
+				return err
+			} else {
+				out.Template = *newVal.(*unnameable_Unsupported)
+			}
 		}
 		if err := DeepCopy_v1beta1_DaemonSetUpdateStrategy(&in.UpdateStrategy, &out.UpdateStrategy, c); err != nil {
 			return err
@@ -271,6 +275,14 @@ func DeepCopy_v1beta1_DeploymentCondition(in interface{}, out interface{}, c *co
 		in := in.(*DeploymentCondition)
 		out := out.(*DeploymentCondition)
 		*out = *in
+		// in.Status is kind 'Unsupported'
+		if in.Status != nil {
+			if newVal, err := c.DeepCopy(&in.Status); err != nil {
+				return err
+			} else {
+				out.Status = *newVal.(*unnameable_Unsupported)
+			}
+		}
 		out.LastUpdateTime = in.LastUpdateTime.DeepCopy()
 		out.LastTransitionTime = in.LastTransitionTime.DeepCopy()
 		return nil
@@ -329,8 +341,13 @@ func DeepCopy_v1beta1_DeploymentSpec(in interface{}, out interface{}, c *convers
 				*out = newVal.(*v1.LabelSelector)
 			}
 		}
-		if err := api_v1.DeepCopy_v1_PodTemplateSpec(&in.Template, &out.Template, c); err != nil {
-			return err
+		// in.Template is kind 'Unsupported'
+		if in.Template != nil {
+			if newVal, err := c.DeepCopy(&in.Template); err != nil {
+				return err
+			} else {
+				out.Template = *newVal.(*unnameable_Unsupported)
+			}
 		}
 		if err := DeepCopy_v1beta1_DeploymentStrategy(&in.Strategy, &out.Strategy, c); err != nil {
 			return err
@@ -555,8 +572,13 @@ func DeepCopy_v1beta1_IngressStatus(in interface{}, out interface{}, c *conversi
 		in := in.(*IngressStatus)
 		out := out.(*IngressStatus)
 		*out = *in
-		if err := api_v1.DeepCopy_v1_LoadBalancerStatus(&in.LoadBalancer, &out.LoadBalancer, c); err != nil {
-			return err
+		// in.LoadBalancer is kind 'Unsupported'
+		if in.LoadBalancer != nil {
+			if newVal, err := c.DeepCopy(&in.LoadBalancer); err != nil {
+				return err
+			} else {
+				out.LoadBalancer = *newVal.(*unnameable_Unsupported)
+			}
 		}
 		return nil
 	}
@@ -670,8 +692,11 @@ func DeepCopy_v1beta1_NetworkPolicyPort(in interface{}, out interface{}, c *conv
 		*out = *in
 		if in.Protocol != nil {
 			in, out := &in.Protocol, &out.Protocol
-			*out = new(api_v1.Protocol)
-			**out = **in
+			if newVal, err := c.DeepCopy(*in); err != nil {
+				return err
+			} else {
+				*out = newVal.(*unnameable_Unsupported)
+			}
 		}
 		if in.Port != nil {
 			in, out := &in.Port, &out.Port
@@ -747,18 +772,36 @@ func DeepCopy_v1beta1_PodSecurityPolicySpec(in interface{}, out interface{}, c *
 		*out = *in
 		if in.DefaultAddCapabilities != nil {
 			in, out := &in.DefaultAddCapabilities, &out.DefaultAddCapabilities
-			*out = make([]api_v1.Capability, len(*in))
-			copy(*out, *in)
+			*out = make([]unnameable_Unsupported, len(*in))
+			for i := range *in {
+				if newVal, err := c.DeepCopy(&(*in)[i]); err != nil {
+					return err
+				} else {
+					(*out)[i] = *newVal.(*unnameable_Unsupported)
+				}
+			}
 		}
 		if in.RequiredDropCapabilities != nil {
 			in, out := &in.RequiredDropCapabilities, &out.RequiredDropCapabilities
-			*out = make([]api_v1.Capability, len(*in))
-			copy(*out, *in)
+			*out = make([]unnameable_Unsupported, len(*in))
+			for i := range *in {
+				if newVal, err := c.DeepCopy(&(*in)[i]); err != nil {
+					return err
+				} else {
+					(*out)[i] = *newVal.(*unnameable_Unsupported)
+				}
+			}
 		}
 		if in.AllowedCapabilities != nil {
 			in, out := &in.AllowedCapabilities, &out.AllowedCapabilities
-			*out = make([]api_v1.Capability, len(*in))
-			copy(*out, *in)
+			*out = make([]unnameable_Unsupported, len(*in))
+			for i := range *in {
+				if newVal, err := c.DeepCopy(&(*in)[i]); err != nil {
+					return err
+				} else {
+					(*out)[i] = *newVal.(*unnameable_Unsupported)
+				}
+			}
 		}
 		if in.Volumes != nil {
 			in, out := &in.Volumes, &out.Volumes
@@ -811,6 +854,14 @@ func DeepCopy_v1beta1_ReplicaSetCondition(in interface{}, out interface{}, c *co
 		in := in.(*ReplicaSetCondition)
 		out := out.(*ReplicaSetCondition)
 		*out = *in
+		// in.Status is kind 'Unsupported'
+		if in.Status != nil {
+			if newVal, err := c.DeepCopy(&in.Status); err != nil {
+				return err
+			} else {
+				out.Status = *newVal.(*unnameable_Unsupported)
+			}
+		}
 		out.LastTransitionTime = in.LastTransitionTime.DeepCopy()
 		return nil
 	}
@@ -852,8 +903,13 @@ func DeepCopy_v1beta1_ReplicaSetSpec(in interface{}, out interface{}, c *convers
 				*out = newVal.(*v1.LabelSelector)
 			}
 		}
-		if err := api_v1.DeepCopy_v1_PodTemplateSpec(&in.Template, &out.Template, c); err != nil {
-			return err
+		// in.Template is kind 'Unsupported'
+		if in.Template != nil {
+			if newVal, err := c.DeepCopy(&in.Template); err != nil {
+				return err
+			} else {
+				out.Template = *newVal.(*unnameable_Unsupported)
+			}
 		}
 		return nil
 	}
@@ -949,8 +1005,11 @@ func DeepCopy_v1beta1_SELinuxStrategyOptions(in interface{}, out interface{}, c 
 		*out = *in
 		if in.SELinuxOptions != nil {
 			in, out := &in.SELinuxOptions, &out.SELinuxOptions
-			*out = new(api_v1.SELinuxOptions)
-			**out = **in
+			if newVal, err := c.DeepCopy(*in); err != nil {
+				return err
+			} else {
+				*out = newVal.(*unnameable_Unsupported)
+			}
 		}
 		return nil
 	}

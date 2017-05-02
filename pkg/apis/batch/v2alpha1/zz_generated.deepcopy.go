@@ -24,7 +24,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	api_v1 "k8s.io/kubernetes/pkg/api/v1"
 	batch_v1 "k8s.io/kubernetes/pkg/apis/batch/v1"
 	reflect "reflect"
 )
@@ -123,8 +122,14 @@ func DeepCopy_v2alpha1_CronJobStatus(in interface{}, out interface{}, c *convers
 		*out = *in
 		if in.Active != nil {
 			in, out := &in.Active, &out.Active
-			*out = make([]api_v1.ObjectReference, len(*in))
-			copy(*out, *in)
+			*out = make([]unnameable_Unsupported, len(*in))
+			for i := range *in {
+				if newVal, err := c.DeepCopy(&(*in)[i]); err != nil {
+					return err
+				} else {
+					(*out)[i] = *newVal.(*unnameable_Unsupported)
+				}
+			}
 		}
 		if in.LastScheduleTime != nil {
 			in, out := &in.LastScheduleTime, &out.LastScheduleTime

@@ -24,7 +24,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	api_v1 "k8s.io/kubernetes/pkg/api/v1"
 	reflect "reflect"
 )
 
@@ -70,6 +69,14 @@ func DeepCopy_v1beta1_ClusterCondition(in interface{}, out interface{}, c *conve
 		in := in.(*ClusterCondition)
 		out := out.(*ClusterCondition)
 		*out = *in
+		// in.Status is kind 'Unsupported'
+		if in.Status != nil {
+			if newVal, err := c.DeepCopy(&in.Status); err != nil {
+				return err
+			} else {
+				out.Status = *newVal.(*unnameable_Unsupported)
+			}
+		}
 		out.LastProbeTime = in.LastProbeTime.DeepCopy()
 		out.LastTransitionTime = in.LastTransitionTime.DeepCopy()
 		return nil
@@ -106,8 +113,11 @@ func DeepCopy_v1beta1_ClusterSpec(in interface{}, out interface{}, c *conversion
 		}
 		if in.SecretRef != nil {
 			in, out := &in.SecretRef, &out.SecretRef
-			*out = new(api_v1.LocalObjectReference)
-			**out = **in
+			if newVal, err := c.DeepCopy(*in); err != nil {
+				return err
+			} else {
+				*out = newVal.(*unnameable_Unsupported)
+			}
 		}
 		return nil
 	}

@@ -25,7 +25,6 @@ import (
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
-	api_v1 "k8s.io/kubernetes/pkg/api/v1"
 	reflect "reflect"
 )
 
@@ -81,6 +80,14 @@ func DeepCopy_v1beta1_DeploymentCondition(in interface{}, out interface{}, c *co
 		in := in.(*DeploymentCondition)
 		out := out.(*DeploymentCondition)
 		*out = *in
+		// in.Status is kind 'Unsupported'
+		if in.Status != nil {
+			if newVal, err := c.DeepCopy(&in.Status); err != nil {
+				return err
+			} else {
+				out.Status = *newVal.(*unnameable_Unsupported)
+			}
+		}
 		out.LastUpdateTime = in.LastUpdateTime.DeepCopy()
 		out.LastTransitionTime = in.LastTransitionTime.DeepCopy()
 		return nil
@@ -139,8 +146,13 @@ func DeepCopy_v1beta1_DeploymentSpec(in interface{}, out interface{}, c *convers
 				*out = newVal.(*v1.LabelSelector)
 			}
 		}
-		if err := api_v1.DeepCopy_v1_PodTemplateSpec(&in.Template, &out.Template, c); err != nil {
-			return err
+		// in.Template is kind 'Unsupported'
+		if in.Template != nil {
+			if newVal, err := c.DeepCopy(&in.Template); err != nil {
+				return err
+			} else {
+				out.Template = *newVal.(*unnameable_Unsupported)
+			}
 		}
 		if err := DeepCopy_v1beta1_DeploymentStrategy(&in.Strategy, &out.Strategy, c); err != nil {
 			return err
@@ -324,15 +336,22 @@ func DeepCopy_v1beta1_StatefulSetSpec(in interface{}, out interface{}, c *conver
 				*out = newVal.(*v1.LabelSelector)
 			}
 		}
-		if err := api_v1.DeepCopy_v1_PodTemplateSpec(&in.Template, &out.Template, c); err != nil {
-			return err
+		// in.Template is kind 'Unsupported'
+		if in.Template != nil {
+			if newVal, err := c.DeepCopy(&in.Template); err != nil {
+				return err
+			} else {
+				out.Template = *newVal.(*unnameable_Unsupported)
+			}
 		}
 		if in.VolumeClaimTemplates != nil {
 			in, out := &in.VolumeClaimTemplates, &out.VolumeClaimTemplates
-			*out = make([]api_v1.PersistentVolumeClaim, len(*in))
+			*out = make([]unnameable_Unsupported, len(*in))
 			for i := range *in {
-				if err := api_v1.DeepCopy_v1_PersistentVolumeClaim(&(*in)[i], &(*out)[i], c); err != nil {
+				if newVal, err := c.DeepCopy(&(*in)[i]); err != nil {
 					return err
+				} else {
+					(*out)[i] = *newVal.(*unnameable_Unsupported)
 				}
 			}
 		}

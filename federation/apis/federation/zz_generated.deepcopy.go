@@ -25,7 +25,6 @@ import (
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	api "k8s.io/kubernetes/pkg/api"
-	api_v1 "k8s.io/kubernetes/pkg/api/v1"
 	reflect "reflect"
 )
 
@@ -120,8 +119,14 @@ func DeepCopy_federation_ClusterServiceIngress(in interface{}, out interface{}, 
 		*out = *in
 		if in.Items != nil {
 			in, out := &in.Items, &out.Items
-			*out = make([]api_v1.LoadBalancerIngress, len(*in))
-			copy(*out, *in)
+			*out = make([]unnameable_Unsupported, len(*in))
+			for i := range *in {
+				if newVal, err := c.DeepCopy(&(*in)[i]); err != nil {
+					return err
+				} else {
+					(*out)[i] = *newVal.(*unnameable_Unsupported)
+				}
+			}
 		}
 		return nil
 	}

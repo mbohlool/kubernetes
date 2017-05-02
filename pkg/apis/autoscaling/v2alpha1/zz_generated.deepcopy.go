@@ -255,6 +255,14 @@ func DeepCopy_v2alpha1_ResourceMetricSource(in interface{}, out interface{}, c *
 		in := in.(*ResourceMetricSource)
 		out := out.(*ResourceMetricSource)
 		*out = *in
+		// in.Name is kind 'Unsupported'
+		if in.Name != nil {
+			if newVal, err := c.DeepCopy(&in.Name); err != nil {
+				return err
+			} else {
+				out.Name = *newVal.(*unnameable_Unsupported)
+			}
+		}
 		if in.TargetAverageUtilization != nil {
 			in, out := &in.TargetAverageUtilization, &out.TargetAverageUtilization
 			*out = new(int32)
@@ -274,6 +282,14 @@ func DeepCopy_v2alpha1_ResourceMetricStatus(in interface{}, out interface{}, c *
 		in := in.(*ResourceMetricStatus)
 		out := out.(*ResourceMetricStatus)
 		*out = *in
+		// in.Name is kind 'Unsupported'
+		if in.Name != nil {
+			if newVal, err := c.DeepCopy(&in.Name); err != nil {
+				return err
+			} else {
+				out.Name = *newVal.(*unnameable_Unsupported)
+			}
+		}
 		if in.CurrentAverageUtilization != nil {
 			in, out := &in.CurrentAverageUtilization, &out.CurrentAverageUtilization
 			*out = new(int32)

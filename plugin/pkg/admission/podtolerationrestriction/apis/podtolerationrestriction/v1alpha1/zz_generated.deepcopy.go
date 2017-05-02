@@ -23,7 +23,6 @@ package v1alpha1
 import (
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	v1 "k8s.io/kubernetes/pkg/api/v1"
 	reflect "reflect"
 )
 
@@ -46,19 +45,23 @@ func DeepCopy_v1alpha1_Configuration(in interface{}, out interface{}, c *convers
 		*out = *in
 		if in.Default != nil {
 			in, out := &in.Default, &out.Default
-			*out = make([]v1.Toleration, len(*in))
+			*out = make([]unnameable_Unsupported, len(*in))
 			for i := range *in {
-				if err := v1.DeepCopy_v1_Toleration(&(*in)[i], &(*out)[i], c); err != nil {
+				if newVal, err := c.DeepCopy(&(*in)[i]); err != nil {
 					return err
+				} else {
+					(*out)[i] = *newVal.(*unnameable_Unsupported)
 				}
 			}
 		}
 		if in.Whitelist != nil {
 			in, out := &in.Whitelist, &out.Whitelist
-			*out = make([]v1.Toleration, len(*in))
+			*out = make([]unnameable_Unsupported, len(*in))
 			for i := range *in {
-				if err := v1.DeepCopy_v1_Toleration(&(*in)[i], &(*out)[i], c); err != nil {
+				if newVal, err := c.DeepCopy(&(*in)[i]); err != nil {
 					return err
+				} else {
+					(*out)[i] = *newVal.(*unnameable_Unsupported)
 				}
 			}
 		}
