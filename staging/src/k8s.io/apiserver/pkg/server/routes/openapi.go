@@ -33,7 +33,7 @@ type OpenAPI struct {
 
 // Install adds the SwaggerUI webservice to the given mux.
 func (oa OpenAPI) Install(c *restful.Container, mux *mux.PathRecorderMux) {
-	err := apiserveropenapi.RegisterOpenAPIService("/swagger.json", c.RegisteredWebServices(), oa.Config, mux)
+	err := apiserveropenapi.RegisterOpenAPIService("/swagger", c.RegisteredWebServices(), oa.Config, mux)
 	if err != nil {
 		glog.Fatalf("Failed to register open api spec for root: %v", err)
 	}

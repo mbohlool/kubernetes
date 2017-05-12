@@ -21,30 +21,51 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"encoding/json"
+	"gopkg.in/yaml.v2"
+	"compress/gzip"
+	"crypto/sha512"
+	"bytes"
 
 	"github.com/emicklei/go-restful"
 	"github.com/go-openapi/spec"
 
 	"k8s.io/apimachinery/pkg/openapi"
-	"k8s.io/apimachinery/pkg/util/json"
 	genericmux "k8s.io/apiserver/pkg/server/mux"
 	"k8s.io/apiserver/pkg/util/trie"
+
+	"github.com/googleapis/gnostic/OpenAPIv2"
+	"github.com/googleapis/gnostic/compiler"
+	"github.com/golang/protobuf/proto"
 )
 
 const (
 	OpenAPIVersion  = "2.0"
 	extensionPrefix = "x-kubernetes-"
+
+	ContentType                   = "Content-Type"
+	MIME_JSON = "application/json"
+	MIME_PB = "application/com.github.googleapis.gnostic.OpenAPIv2+protobuf"
+	MIME_PB_GZ = "application/x-gzip"
 )
 
 type openAPI struct {
 	config       *openapi.Config
 	swagger      *spec.Swagger
+	swaggerBytes    []byte
+	swaggerPb       []byte
+	swaggerPbGz     []byte
+	swaggerHash     [sha512.Size]byte
+	swaggerPbHash   [sha512.Size]byte
+	swaggerPbGzHash [sha512.Size]byte
 	protocolList []string
 	servePath    string
 	definitions  map[string]openapi.OpenAPIDefinition
 }
 
 // RegisterOpenAPIService registers a handler to provides standard OpenAPI specification.
+// Note: servePath is the path to the filename with no extension. Supported extensions
+// will be added to the path (e.g. .json, .pb, etc.).
 func RegisterOpenAPIService(servePath string, webServices []*restful.WebService, config *openapi.Config, mux *genericmux.PathRecorderMux) (err error) {
 	o := openAPI{
 		config:    config,
@@ -64,14 +85,34 @@ func RegisterOpenAPIService(servePath string, webServices []*restful.WebService,
 		return err
 	}
 
-	mux.UnlistedHandleFunc(servePath, func(w http.ResponseWriter, r *http.Request) {
-		resp := restful.NewResponse(w)
-		if r.URL.Path != servePath {
-			resp.WriteErrorString(http.StatusNotFound, "Path not found!")
-		}
-		// TODO: we can cache json string and return it here.
-		resp.WriteAsJson(o.swagger)
-	})
+	type endpoint struct {
+		data []byte
+		mime string
+	}
+
+	serves := map[string]endpoint {
+		".json": {o.swaggerBytes, MIME_JSON},
+		".pb": {o.swaggerPb, MIME_PB},
+		".pb.gz": {o.swaggerPbGz, MIME_PB_GZ},
+		".json.sha": {o.swaggerHash[:], MIME_JSON},
+		".pb.sha": {o.swaggerPbHash[:], MIME_PB},
+		".pb.gz.sha": {o.swaggerPbGzHash[:], MIME_PB_GZ},
+	}
+
+	for ext, ep := range serves {
+		path := servePath + ext
+		endPoint := ep
+		mux.UnlistedHandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+			resp := restful.NewResponse(w)
+			if r.URL.Path != path {
+				resp.WriteErrorString(http.StatusNotFound, "Path not found!")
+			}
+			resp.Header().Set(ContentType, endPoint.mime)
+			resp.WriteHeader(http.StatusOK)
+			resp.Write(endPoint.data)
+		})
+	}
+
 	return nil
 }
 
@@ -107,6 +148,40 @@ func (o *openAPI) init(webServices []*restful.WebService) error {
 			return err
 		}
 	}
+	if err := o.makeAdditionalFormats(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *openAPI) makeAdditionalFormats() error {
+	var err error
+	o.swaggerBytes, err = json.MarshalIndent(o.swagger, " ", " ")
+	if err != nil {
+		return err
+	}
+	var info yaml.MapSlice
+	err = yaml.Unmarshal(o.swaggerBytes, &info)
+	if err != nil {
+		return err
+	}
+	document, err := openapi_v2.NewDocument(info, compiler.NewContext("$root", nil))
+	if err != nil {
+		return err
+	}
+	o.swaggerPb, err = proto.Marshal(document)
+	if err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	zw.Write(o.swaggerPb)
+	zw.Close()
+	o.swaggerPbGz = buf.Bytes()
+	o.swaggerHash = sha512.Sum512(o.swaggerBytes)
+	o.swaggerPbHash = sha512.Sum512(o.swaggerPb)
+	o.swaggerPbGzHash = sha512.Sum512(o.swaggerPbGz)
 	return nil
 }
 
