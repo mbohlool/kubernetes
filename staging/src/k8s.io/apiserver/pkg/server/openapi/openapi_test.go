@@ -27,6 +27,8 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/openapi"
+	"github.com/googleapis/gnostic/OpenAPIv2"
+	"github.com/golang/protobuf/proto"
 )
 
 // setUp is a convenience function for setting up for (most) tests.
@@ -462,4 +464,11 @@ func TestBuildSwaggerSpec(t *testing.T) {
 		return
 	}
 	assert.Equal(string(expected_json), string(actual_json))
+	doc := openapi_v2.Document{}
+	err = proto.Unmarshal(o.swaggerPb, &doc)
+	if !assert.NoError(err) {
+		return
+	}
+	proto_actual_json, err := json.Marshal(fromProto(doc))
+	assert.Equal(string(expected_json), string(proto_actual_json))
 }
