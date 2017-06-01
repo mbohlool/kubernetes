@@ -49,7 +49,6 @@ func createAggregatorConfig(kubeAPIServerConfig genericapiserver.Config, command
 
 	// the aggregator doesn't wire these up.  It just delegates them to the kubeapiserver
 	genericConfig.EnableSwaggerUI = false
-	genericConfig.OpenAPIConfig = nil
 	genericConfig.SwaggerConfig = nil
 
 	// copy the loopbackclientconfig.  We're going to change the contenttype back to json until we get protobuf serializations for it
