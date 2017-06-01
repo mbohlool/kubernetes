@@ -279,11 +279,10 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		if err := s.updateOpenAPISpec(); err != nil {
 			return nil, err
 		}
+		s.GenericAPIServer.OpenAPIService.AddUpdateHook(func(r *http.Request) {
+			s.tryLoadingOpenAPISpecs(r)
+		})
 	}
-
-	s.GenericAPIServer.OpenAPIService.AddUpdateHook(func(r *http.Request) {
-		s.tryLoadingOpenAPISpecs(r)
-	})
 
 	return s, nil
 }
