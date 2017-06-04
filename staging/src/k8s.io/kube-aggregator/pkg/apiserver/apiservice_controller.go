@@ -32,6 +32,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
 	informers "k8s.io/kube-aggregator/pkg/client/informers/internalversion/apiregistration/internalversion"
 	listers "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/internalversion"
@@ -57,6 +58,11 @@ type APIServiceRegistrationController struct {
 	syncFn func(key string) error
 
 	queue workqueue.RateLimitingInterface
+}
+
+type Job struct {
+	key  string
+	user user.Info
 }
 
 func NewAPIServiceRegistrationController(apiServiceInformer informers.APIServiceInformer, serviceInformer v1informers.ServiceInformer, apiHandlerManager APIHandlerManager) *APIServiceRegistrationController {
@@ -258,4 +264,10 @@ func (c *APIServiceRegistrationController) deleteService(obj interface{}) {
 	for _, apiService := range c.getAPIServicesFor(castObj) {
 		c.enqueue(apiService)
 	}
+}
+
+type loadSpecJob struct {
+	name     string
+	userInfo user.Info
+	retry    int
 }

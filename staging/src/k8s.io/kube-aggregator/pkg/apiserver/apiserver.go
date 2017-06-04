@@ -56,6 +56,7 @@ import (
 	listers "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/internalversion"
 	statuscontrollers "k8s.io/kube-aggregator/pkg/controllers/status"
 	apiservicestorage "k8s.io/kube-aggregator/pkg/registry/apiservice/etcd"
+	"k8s.io/apiserver/pkg/authentication/user"
 )
 
 var (
@@ -437,28 +438,19 @@ func (_ *APIAggregator) loadOpenAPISpec(p *proxyHandler, r *http.Request) (*spec
 }
 
 // Returns true if any Spec is loaded
-func (s *APIAggregator) tryLoadingOpenAPISpecs(r *http.Request) bool {
+func (s *APIAggregator) LoadingOpenAPISpecs(name string, usr user.Info) bool {
 	s.specMutex.Lock()
 	defer s.specMutex.Unlock()
-	if len(s.toLoadAPISpec) == 0 {
-		return false
-	}
 	loaded := false
-	newList := map[string]int{}
-	for name, retries := range s.toLoadAPISpec {
-		if retries >= LOAD_OPENAPI_SPEC_MAX_RETRIES {
-			continue
-		}
-		proxyHandler := s.proxyHandlers[name]
-		if spec, err := s.loadOpenAPISpec(proxyHandler, r); err != nil {
-			glog.Warningf("Failed to Load OpenAPI spec (try %d of %d) for %s, err=%s", retries+1, LOAD_OPENAPI_SPEC_MAX_RETRIES, name, err)
-			newList[name] = retries + 1
-		} else if spec != nil {
-			s.apiServiceSpecs[name] = spec
-			loaded = true
-		}
-		s.toLoadAPISpec = newList
+	proxyHandler := s.proxyHandlers[name]
+	if spec, err := s.loadOpenAPISpec(proxyHandler, r); err != nil {
+		glog.Warningf("Failed to Load OpenAPI spec (try %d of %d) for %s, err=%s", retries+1, LOAD_OPENAPI_SPEC_MAX_RETRIES, name, err)
+		newList[name] = retries + 1
+	} else if spec != nil {
+		s.apiServiceSpecs[name] = spec
+		loaded = true
 	}
+	s.toLoadAPISpec = newList
 	return loaded
 }
 
