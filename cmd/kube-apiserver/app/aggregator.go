@@ -196,7 +196,7 @@ var apiVersionPriorities = map[schema.GroupVersion]priority{
 	{Group: "admissionregistration.k8s.io", Version: "v1alpha1"}: {group: 16700, version: 9},
 }
 
-func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, registration aggregatorapiserver.APIAggregator) []*apiregistration.APIService {
+func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, registration *aggregatorapiserver.APIAggregator) []*apiregistration.APIService {
 	apiServices := []*apiregistration.APIService{}
 
 	for _, curr := range delegateAPIServer.ListedPaths() {
