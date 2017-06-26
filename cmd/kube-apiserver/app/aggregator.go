@@ -97,7 +97,7 @@ func createAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, delega
 		return nil, err
 	}
 	autoRegistrationController := autoregister.NewAutoRegisterController(aggregatorServer.APIRegistrationInformers.Apiregistration().InternalVersion().APIServices(), apiRegistrationClient)
-	apiServices := apiServicesToRegister(delegateAPIServer, autoRegistrationController)
+	apiServices := apiServicesToRegister(delegateAPIServer, aggregatorServer)
 	tprRegistrationController := thirdparty.NewAutoRegistrationController(
 		kubeInformers.Extensions().InternalVersion().ThirdPartyResources(),
 		apiExtensionInformers.Apiextensions().InternalVersion().CustomResourceDefinitions(),
@@ -196,13 +196,13 @@ var apiVersionPriorities = map[schema.GroupVersion]priority{
 	{Group: "admissionregistration.k8s.io", Version: "v1alpha1"}: {group: 16700, version: 9},
 }
 
-func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, registration autoregister.AutoAPIServiceRegistration) []*apiregistration.APIService {
+func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, registration aggregatorapiserver.APIAggregator) []*apiregistration.APIService {
 	apiServices := []*apiregistration.APIService{}
 
 	for _, curr := range delegateAPIServer.ListedPaths() {
 		if curr == "/api/v1" {
 			apiService := makeAPIService(schema.GroupVersion{Group: "", Version: "v1"})
-			registration.AddAPIServiceToSync(apiService)
+			registration.AddAPIService(apiService)
 			apiServices = append(apiServices, apiService)
 			continue
 		}
@@ -220,7 +220,7 @@ func apiServicesToRegister(delegateAPIServer genericapiserver.DelegationTarget, 
 		if apiService == nil {
 			continue
 		}
-		registration.AddAPIServiceToSync(apiService)
+		registration.AddAPIService(apiService)
 		apiServices = append(apiServices, apiService)
 	}
 
