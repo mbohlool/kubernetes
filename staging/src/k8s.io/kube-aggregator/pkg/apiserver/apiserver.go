@@ -219,14 +219,6 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		return nil, err
 	}
 
-	apisHandler := &apisHandler{
-		codecs: Codecs,
-		lister: s.lister,
-		mapper: s.contextMapper,
-	}
-	s.GenericAPIServer.Handler.NonGoRestfulMux.Handle("/apis", apisHandler)
-	s.GenericAPIServer.Handler.NonGoRestfulMux.UnlistedHandle("/apis/", apisHandler)
-
 	apiserviceRegistrationController := NewAPIServiceRegistrationController(informerFactory.Apiregistration().InternalVersion().APIServices(), c.CoreKubeInformers.Core().V1().Services(), s)
 	availableController := statuscontrollers.NewAvailableConditionController(
 		informerFactory.Apiregistration().InternalVersion().APIServices(),
@@ -264,6 +256,16 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 	}
 
 	return s, nil
+}
+
+func (s *APIAggregator) RegisterDiscoveryHandler() {
+	apisHandler := &apisHandler{
+		codecs: Codecs,
+		lister: s.lister,
+		mapper: s.contextMapper,
+	}
+	s.GenericAPIServer.Handler.NonGoRestfulMux.Handle("/apis", apisHandler)
+	s.GenericAPIServer.Handler.NonGoRestfulMux.UnlistedHandle("/apis/", apisHandler)
 }
 
 // AddAPIService adds an API service.  It is not thread-safe, so only call it on one thread at a time please.

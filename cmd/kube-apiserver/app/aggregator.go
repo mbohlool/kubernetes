@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 
@@ -43,6 +44,7 @@ import (
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 	informers "k8s.io/kubernetes/pkg/client/informers/informers_generated/internalversion"
 	"k8s.io/kubernetes/pkg/master/thirdparty"
+	coreclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/internalversion"
 )
 
 func createAggregatorConfig(kubeAPIServerConfig genericapiserver.Config, commandOptions *options.ServerRunOptions, externalInformers kubeexternalinformers.SharedInformerFactory, serviceResolver aggregatorapiserver.ServiceResolver, proxyTransport *http.Transport) (*aggregatorapiserver.Config, error) {
@@ -137,6 +139,24 @@ func createAggregatorServer(aggregatorConfig *aggregatorapiserver.Config, delega
 		}
 		return nil
 	}))
+	aggregatorServer.GenericAPIServer.AddPostStartHook("register-discovery-handler-on-healthy-server", func (context genericapiserver.PostStartHookContext) error {
+		client, err := coreclient.NewForConfig(context.LoopbackClientConfig)
+		if err != nil {
+			// Adding the hook in case of error anyway.
+			aggregatorServer.RegisterDiscoveryHandler()
+			return err
+		}
+		for start := time.Now(); time.Since(start) < time.Minute; time.Sleep(5 * time.Second) {
+			body, err := client.RESTClient().Get().AbsPath("/healthz").Do().Raw()
+			if err == nil && string(body) == "ok" {
+				aggregatorServer.RegisterDiscoveryHandler()
+				return nil
+			}
+		}
+		// Adding the hook in case of error anyway.
+		aggregatorServer.RegisterDiscoveryHandler()
+		return fmt.Errorf("waiting for apiserver timed out")
+	})
 
 	return aggregatorServer, nil
 }
