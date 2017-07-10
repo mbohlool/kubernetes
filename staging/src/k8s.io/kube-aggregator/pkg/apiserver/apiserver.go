@@ -286,10 +286,7 @@ func (h *fileResponseWriter) WriteHeader(code int) {
 }
 
 func (h *fileResponseWriter) Write(in []byte) (int, error) {
-	h.data = make([]byte, len(in))
-	for i, v := range(in) {
-		h.data[i] = v
-	}
+	h.data = append(h.data, in...)
 	return len(in), nil
 }
 
