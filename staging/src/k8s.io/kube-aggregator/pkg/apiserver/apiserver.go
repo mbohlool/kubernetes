@@ -193,7 +193,6 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 	s := &APIAggregator{
 		GenericAPIServer: genericServer,
 		delegateHandler:  delegationTarget.UnprotectedHandler(),
-		delegationSpec:   delegationTarget.OpenAPISpec(),
 		contextMapper:    c.GenericConfig.RequestContextMapper,
 		proxyClientCert:  c.ProxyClientCert,
 		proxyClientKey:   c.ProxyClientKey,
@@ -206,6 +205,8 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		APIRegistrationInformers: informerFactory,
 		serviceResolver:          c.ServiceResolver,
 	}
+
+	s.loadDelegateSpec()
 
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(apiregistration.GroupName, registry, Scheme, metav1.ParameterCodec, Codecs)
 	apiGroupInfo.GroupMeta.GroupVersion = v1beta1.SchemeGroupVersion
@@ -265,6 +266,43 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 
 	return s, nil
 }
+
+
+type fileResponseWriter struct {
+	header http.Header
+	respCode int
+	data []byte
+}
+
+func (h *fileResponseWriter) Header() http.Header {
+	if h.header == nil {
+		h.header = http.Header{}
+	}
+	return h.header
+}
+
+func (h *fileResponseWriter) WriteHeader(code int) {
+	h.respCode = code
+}
+
+func (h *fileResponseWriter) Write(in []byte) (int, error) {
+	h.data = make([]byte, len(in))
+	for i, v := range(in) {
+		h.data[i] = v
+	}
+	return len(in), nil
+}
+
+func (s *APIAggregator) loadDelegateSpec() {
+	writer := fileResponseWriter{}
+	s.delegateHandler.ServeHTTP(writer, http.NewRequest("GET", "/swagger.json", nil))
+	glog.Warning("ZZZ: writer respCode:", writer.respCode)
+	glog.Warning("ZZZ: writer data length:", len(writer.data))
+	if err := json.Unmarshal(writer.data, s.delegationSpec); err != nil {
+		glog.Warning("Unmarshaling of local spec failed:", err)
+	}
+}
+
 
 // AddAPIService adds an API service.  It is not thread-safe, so only call it on one thread at a time please.
 // It's a slow moving API, so its ok to run the controller on a single thread
