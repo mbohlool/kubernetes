@@ -295,7 +295,12 @@ func (h *fileResponseWriter) Write(in []byte) (int, error) {
 
 func (s *APIAggregator) loadDelegateSpec() {
 	writer := fileResponseWriter{}
-	s.delegateHandler.ServeHTTP(writer, http.NewRequest("GET", "/swagger.json", nil))
+	req, err := http.NewRequest("GET", "/swagger.json", nil)
+	if err != nil {
+		glog.Warning("Error creating request. ", err)
+		return
+	}
+	s.delegateHandler.ServeHTTP(&writer, req)
 	glog.Warning("ZZZ: writer respCode:", writer.respCode)
 	glog.Warning("ZZZ: writer data length:", len(writer.data))
 	if err := json.Unmarshal(writer.data, s.delegationSpec); err != nil {
