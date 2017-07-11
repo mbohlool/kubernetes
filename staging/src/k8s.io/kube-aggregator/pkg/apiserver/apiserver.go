@@ -300,6 +300,7 @@ func (s *APIAggregator) loadDelegateSpec() {
 	s.delegateHandler.ServeHTTP(&writer, req)
 	glog.Warning("ZZZ: writer respCode:", writer.respCode)
 	glog.Warning("ZZZ: writer data length:", len(writer.data))
+	s.delegationSpec = &spec.Swagger{}
 	if err := json.Unmarshal(writer.data, s.delegationSpec); err != nil {
 		glog.Warning("Unmarshaling of local spec failed:", err)
 	}
