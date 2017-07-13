@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package openapi
+package handler
 
 import (
 	"bytes"
@@ -33,6 +33,16 @@ import (
 	"github.com/googleapis/gnostic/compiler"
 	"gopkg.in/yaml.v2"
 	genericmux "k8s.io/apiserver/pkg/server/mux"
+	"crypto/sha512"
+)
+
+const (
+	jsonExt = ".json"
+
+	mimeJson = "application/json"
+	// TODO(mehdy): change @68f4ded to a version tag when gnostic add version tags.
+	mimePb = "application/com.github.googleapis.gnostic.OpenAPIv2@68f4ded+protobuf"
+	mimePbGz = "application/x-gzip"
 )
 
 type OpenAPIService struct {
@@ -44,22 +54,26 @@ type OpenAPIService struct {
 	updateHooks  []func(*http.Request)
 }
 
+func computeEtag(data []byte) string {
+	return fmt.Sprintf("\"%X\"", sha512.Sum512(data))
+}
+
 // RegisterOpenAPIService registers a handler to provides standard OpenAPI specification.
 func RegisterOpenAPIService(openapiSpec *spec.Swagger, servePath string, mux *genericmux.PathRecorderMux) (*OpenAPIService, error) {
-	if !strings.HasSuffix(servePath, JSON_EXT) {
-		return nil, fmt.Errorf("Serving path must ends with \"%s\".", JSON_EXT)
+	if !strings.HasSuffix(servePath, jsonExt) {
+		return nil, fmt.Errorf("Serving path must ends with \"%s\".", jsonExt)
 	}
 
-	servePathBase := servePath[:len(servePath)-len(JSON_EXT)]
+	servePathBase := servePath[:len(servePath)-len(jsonExt)]
 
 	o := OpenAPIService{}
 	if err := o.UpdateSpec(openapiSpec); err != nil {
 		return nil, err
 	}
 
-	mime.AddExtensionType(".json", MIME_JSON)
-	mime.AddExtensionType(".pb-v1", MIME_PB)
-	mime.AddExtensionType(".gz", MIME_PB_GZ)
+	mime.AddExtensionType(".json", mimeJson)
+	mime.AddExtensionType(".pb-v1", mimePb)
+	mime.AddExtensionType(".gz", mimePbGz)
 
 	type fileInfo struct {
 		ext     string

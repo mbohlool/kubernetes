@@ -31,7 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/apimachinery"
 	"k8s.io/apimachinery/pkg/apimachinery/registered"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	openapicommon "k8s.io/apimachinery/pkg/openapi"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -43,9 +42,10 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/server/healthz"
-	"k8s.io/apiserver/pkg/server/openapi"
+	openapi "k8s.io/kube-openapi/pkg/handler"
 	"k8s.io/apiserver/pkg/server/routes"
 	restclient "k8s.io/client-go/rest"
+	openapicommon "k8s.io/kube-openapi/pkg/common"
 )
 
 // Info about an API group.

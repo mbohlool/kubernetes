@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package openapi
+package build
 
 import (
 	"sort"
@@ -37,7 +37,7 @@ func (s byNameIn) Less(i, j int) bool {
 	return s.parameters[i].Name < s.parameters[j].Name || (s.parameters[i].Name == s.parameters[j].Name && s.parameters[i].In < s.parameters[j].In)
 }
 
-// SortParameters sorts parameters by Name and In fields.
+// sortParameters sorts parameters by Name and In fields.
 func sortParameters(p []spec.Parameter) {
 	sort.Sort(byNameIn{p})
 }

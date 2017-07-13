@@ -43,7 +43,6 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"k8s.io/apiserver/pkg/server/openapi"
 	"k8s.io/client-go/transport"
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration/install"
@@ -53,6 +52,7 @@ import (
 	listers "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/internalversion"
 	statuscontrollers "k8s.io/kube-aggregator/pkg/controllers/status"
 	apiservicestorage "k8s.io/kube-aggregator/pkg/registry/apiservice/etcd"
+	openapiaggregator "k8s.io/kube-openapi/pkg/aggregator"
 )
 
 var (
@@ -440,15 +440,15 @@ func (s *APIAggregator) updateOpenAPISpec() error {
 	if s.GenericAPIServer.OpenAPIService == nil {
 		return nil
 	}
-	sp, err := openapi.CloneSpec(s.rootSpec)
+	sp, err := openapiaggregator.CloneSpec(s.rootSpec)
 	if err != nil {
 		return err
 	}
-	openapi.FilterSpecByPaths(sp, []string{"/apis/apiregistration.k8s.io/"})
+	openapiaggregator.FilterSpecByPaths(sp, []string{"/apis/apiregistration.k8s.io/"})
 	if _, found := sp.Paths.Paths["/version/"]; found {
 		return fmt.Errorf("Cleanup didn't work")
 	}
-	if err := openapi.MergeSpecs(sp, s.delegationSpec); err != nil {
+	if err := openapiaggregator.MergeSpecs(sp, s.delegationSpec); err != nil {
 		return err
 	}
 
@@ -460,12 +460,12 @@ func (s *APIAggregator) updateOpenAPISpec() error {
 		if k == legacyAPIServiceName {
 			proxyPath = "/api/"
 		}
-		spc, err := openapi.CloneSpec(v)
+		spc, err := openapiaggregator.CloneSpec(v)
 		if err != nil {
 			return err
 		}
-		openapi.FilterSpecByPaths(spc, []string{proxyPath})
-		if err := openapi.MergeSpecs(sp, spc); err != nil {
+		openapiaggregator.FilterSpecByPaths(spc, []string{proxyPath})
+		if err := openapiaggregator.MergeSpecs(sp, spc); err != nil {
 			return err
 		}
 	}

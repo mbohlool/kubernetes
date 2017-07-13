@@ -19,9 +19,10 @@ package routes
 import (
 	"github.com/emicklei/go-restful"
 
-	"k8s.io/apimachinery/pkg/openapi"
 	"k8s.io/apiserver/pkg/server/mux"
-	apiserveropenapi "k8s.io/apiserver/pkg/server/openapi"
+	openapi "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/build"
+	"k8s.io/kube-openapi/pkg/handler"
 
 	"github.com/golang/glog"
 )
@@ -32,13 +33,13 @@ type OpenAPI struct {
 }
 
 // Install adds the SwaggerUI webservice to the given mux.
-func (oa OpenAPI) Install(c *restful.Container, mux *mux.PathRecorderMux) *apiserveropenapi.OpenAPIService {
-	openapiSpec, err := apiserveropenapi.BuildSwaggerSpec(c.RegisteredWebServices(), oa.Config)
+func (oa OpenAPI) Install(c *restful.Container, mux *mux.PathRecorderMux) *handler.OpenAPIService {
+	openapiSpec, err := build.BuildSwaggerSpec(c.RegisteredWebServices(), oa.Config)
 	if err != nil {
 		glog.Fatalf("Failed to register open api spec for root: %v", err)
 		return nil
 	}
-	service, err := apiserveropenapi.RegisterOpenAPIService(openapiSpec, "/swagger.json", mux)
+	service, err := handler.RegisterOpenAPIService(openapiSpec, "/swagger.json", mux)
 	if err != nil {
 		glog.Fatalf("Failed to register open api spec for root: %v", err)
 		return nil

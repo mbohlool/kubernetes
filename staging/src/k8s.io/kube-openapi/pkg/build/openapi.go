@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package openapi
+package build
 
 import (
 	"crypto/sha512"
@@ -27,34 +27,23 @@ import (
 	restful "github.com/emicklei/go-restful"
 	"github.com/go-openapi/spec"
 
-	"k8s.io/apimachinery/pkg/openapi"
 	"k8s.io/apiserver/pkg/util/trie"
+	"k8s.io/kube-openapi/pkg/common"
 )
 
 const (
 	OpenAPIVersion  = "2.0"
 	extensionPrefix = "x-kubernetes-"
-
-	JSON_EXT = ".json"
-
-	MIME_JSON = "application/json"
-	// TODO(mehdy): change @68f4ded to a version tag when gnostic add version tags.
-	MIME_PB    = "application/com.github.googleapis.gnostic.OpenAPIv2@68f4ded+protobuf"
-	MIME_PB_GZ = "application/x-gzip"
 )
 
 type openAPI struct {
-	config       *openapi.Config
+	config       *common.Config
 	swagger      *spec.Swagger
 	protocolList []string
-	definitions  map[string]openapi.OpenAPIDefinition
+	definitions  map[string]common.OpenAPIDefinition
 }
 
-func computeEtag(data []byte) string {
-	return fmt.Sprintf("\"%X\"", sha512.Sum512(data))
-}
-
-func BuildSwaggerSpec(webServices []*restful.WebService, config *openapi.Config) (*spec.Swagger, error) {
+func BuildSwaggerSpec(webServices []*restful.WebService, config *common.Config) (*spec.Swagger, error) {
 	o := openAPI{
 		config: config,
 		swagger: &spec.Swagger{
@@ -88,7 +77,7 @@ func (o *openAPI) init(webServices []*restful.WebService) error {
 	}
 	o.definitions = o.config.GetDefinitions(func(name string) spec.Ref {
 		defName, _ := o.config.GetDefinitionName(name)
-		return spec.MustCreateRef(DEFINITION_PREFIX + openapi.EscapeJsonPointer(defName))
+		return spec.MustCreateRef(common.DefinitionPrefix + common.EscapeJsonPointer(defName))
 	})
 	if o.config.CommonResponses == nil {
 		o.config.CommonResponses = map[int]spec.Response{}
@@ -166,7 +155,7 @@ func (o *openAPI) buildDefinitionForType(sample interface{}) (string, error) {
 		return "", err
 	}
 	defName, _ := o.config.GetDefinitionName(name)
-	return DEFINITION_PREFIX + openapi.EscapeJsonPointer(defName), nil
+	return common.DefinitionPrefix + common.EscapeJsonPointer(defName), nil
 }
 
 // buildPaths builds OpenAPI paths using go-restful's web services.
@@ -358,7 +347,7 @@ func (o *openAPI) findCommonParameters(routes []restful.Route) (map[interface{}]
 }
 
 func (o *openAPI) toSchema(model interface{}) (_ *spec.Schema, err error) {
-	if openAPIType, openAPIFormat := openapi.GetOpenAPITypeFormat(getCanonicalizeTypeName(reflect.TypeOf(model))); openAPIType != "" {
+	if openAPIType, openAPIFormat := common.GetOpenAPITypeFormat(getCanonicalizeTypeName(reflect.TypeOf(model))); openAPIType != "" {
 		return &spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type:   []string{openAPIType},
@@ -412,7 +401,7 @@ func (o *openAPI) buildParameter(restParam restful.ParameterData, bodySample int
 	default:
 		return ret, fmt.Errorf("unknown restful operation kind : %v", restParam.Kind)
 	}
-	openAPIType, openAPIFormat := openapi.GetOpenAPITypeFormat(restParam.DataType)
+	openAPIType, openAPIFormat := common.GetOpenAPITypeFormat(restParam.DataType)
 	if openAPIType == "" {
 		return ret, fmt.Errorf("non-body Restful parameter type should be a simple type, but got : %v", restParam.DataType)
 	}

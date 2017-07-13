@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package openapi
+package aggregator
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	DEFINITION_PREFIX = "#/definitions/"
+	DefinitionPrefix = "#/definitions/"
 )
 
 var cloner = conversion.NewCloner()
@@ -57,8 +57,8 @@ func (s *walkAllRefs) walkRef(ref spec.Ref) spec.Ref {
 		// inside the same spec file. If that is the case, walk through
 		// those definitions too.
 		// We do not support external references yet.
-		if strings.HasPrefix(refStr, DEFINITION_PREFIX) {
-			def := s.root.Definitions[refStr[len(DEFINITION_PREFIX):]]
+		if strings.HasPrefix(refStr, DefinitionPrefix) {
+			def := s.root.Definitions[refStr[len(DefinitionPrefix):]]
 			s.walkSchema(&def)
 		}
 	}
@@ -180,8 +180,8 @@ func FilterSpecByPaths(sp *spec.Swagger, keepPathPrefixes []string) {
 	newWalkAllRefs(func(ref spec.Ref) spec.Ref {
 		if ref.String() != "" {
 			refStr := ref.String()
-			if strings.HasPrefix(refStr, DEFINITION_PREFIX) {
-				usedDefinitions[refStr[len(DEFINITION_PREFIX):]] = true
+			if strings.HasPrefix(refStr, DefinitionPrefix) {
+				usedDefinitions[refStr[len(DefinitionPrefix):]] = true
 			}
 		}
 		return ref
@@ -410,8 +410,8 @@ func EqualSchema(s1, s2 *spec.Schema) bool {
 }
 
 func renameDefinition(s *spec.Swagger, old, new string) {
-	old_ref := DEFINITION_PREFIX + old
-	new_ref := DEFINITION_PREFIX + new
+	old_ref := DefinitionPrefix + old
+	new_ref := DefinitionPrefix + new
 	newWalkAllRefs(func(ref spec.Ref) spec.Ref {
 		if ref.String() == old_ref {
 			return spec.MustCreateRef(new_ref)

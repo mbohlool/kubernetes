@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// package openapi holds shared codes and types between open API code generator and spec generator.
-package openapi
+// package openapi/common holds shared codes and types between open API code generator and spec generator.
+package common

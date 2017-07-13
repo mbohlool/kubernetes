@@ -25,7 +25,7 @@ import (
 	"sort"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/openapi"
+	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/gengo/args"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/namer"
@@ -153,7 +153,7 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 
 const (
 	specPackagePath          = "github.com/go-openapi/spec"
-	openAPICommonPackagePath = "k8s.io/apimachinery/pkg/openapi"
+	openAPICommonPackagePath = "k8s.io/kube-openapi/pkg/common"
 )
 
 // openApiGen produces a file with auto-generated OpenAPI functions.
