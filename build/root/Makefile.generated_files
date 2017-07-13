@@ -522,7 +522,7 @@ $(META_DIR)/$(OPENAPI_GEN).mk:
 	(echo -n "$(OPENAPI_GEN): ";                                          \
 	 ./hack/run-in-gopath.sh go list                                      \
 	     -f '{{.ImportPath}}{{"\n"}}{{range .Deps}}{{.}}{{"\n"}}{{end}}'  \
-	     ./cmd/libs/go2idl/openapi-gen                                    \
+	     ./vendor/k8s.io/kube-openapi/cmd/openapi-gen                     \
 	     | grep --color=never "^$(PRJ_SRC_PATH)/"                         \
 	     | xargs ./hack/run-in-gopath.sh go list                          \
 	         -f '{{$$d := .Dir}}{{$$d}}{{"\n"}}{{range .GoFiles}}{{$$d}}/{{.}}{{"\n"}}{{end}}'  \
@@ -547,7 +547,7 @@ sinclude $(META_DIR)/$(OPENAPI_GEN).mk
 # newer than the binary, and try to rebuild it over and over.  So we touch it,
 # and make is happy.
 $(OPENAPI_GEN):
-	hack/make-rules/build.sh cmd/libs/go2idl/openapi-gen
+	hack/make-rules/build.sh vendor/k8s.io/kube-openapi/cmd/openapi-gen
 	touch $@
 
 #
