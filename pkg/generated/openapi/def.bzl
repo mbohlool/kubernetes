@@ -4,7 +4,7 @@ load("@io_kubernetes_build//defs:go.bzl", "go_genrule")
 def openapi_library(name, tags, srcs, openapi_targets=[], vendor_targets=[]):
   deps = [
       "//vendor/github.com/go-openapi/spec:go_default_library",
-      "//vendor/k8s.io/apimachinery/pkg/openapi:go_default_library",
+      "//vendor/k8s.io/kube-openapi/pkg/common:go_default_library",
   ] + ["//%s:go_default_library" % target for target in openapi_targets] + ["//vendor/%s:go_default_library" % target for target in vendor_targets]
   go_library(
       name=name,
@@ -17,7 +17,7 @@ def openapi_library(name, tags, srcs, openapi_targets=[], vendor_targets=[]):
       srcs = srcs + ["//hack/boilerplate:boilerplate.go.txt"],
       outs = ["zz_generated.openapi.go"],
       cmd = " ".join([
-        "$(location //cmd/libs/go2idl/openapi-gen)",
+        "$(location //vendor/k8s.io/kube-openapi/cmd/openapi-gen)",
         "--v 1",
         "--logtostderr",
         "--go-header-file $(location //hack/boilerplate:boilerplate.go.txt)",
@@ -27,5 +27,5 @@ def openapi_library(name, tags, srcs, openapi_targets=[], vendor_targets=[]):
         "&& cp pkg/generated/openapi/zz_generated.openapi.go $(GENDIR)/pkg/generated/openapi",
       ]),
       go_deps = deps,
-      tools = ["//cmd/libs/go2idl/openapi-gen"],
+      tools = ["//vendor/k8s.io/kube-openapi/cmd/openapi-gen"],
 )

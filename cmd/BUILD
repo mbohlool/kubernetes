@@ -39,7 +39,6 @@ filegroup(
         "//cmd/libs/go2idl/import-boss:all-srcs",
         "//cmd/libs/go2idl/informer-gen:all-srcs",
         "//cmd/libs/go2idl/lister-gen:all-srcs",
-        "//cmd/libs/go2idl/openapi-gen:all-srcs",
         "//cmd/libs/go2idl/set-gen:all-srcs",
         "//cmd/linkcheck:all-srcs",
         "//cmd/mungedocs:all-srcs",
