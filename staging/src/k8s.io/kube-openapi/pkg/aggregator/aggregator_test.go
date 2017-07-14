@@ -518,3 +518,16 @@ definitions:
 
 	assert.Equal(string(expected_yaml), string(spec1_yaml))
 }
+
+func TestEqualStringArray(t *testing.T) {
+	assert := assert.New(t)
+	assert.True(equalStringArray([]string{}, []string{}))
+	assert.True(equalStringArray([]string{"a"}, []string{"a"}))
+	assert.True(equalStringArray([]string{"a", "a"}, []string{"a"}))
+	assert.True(equalStringArray([]string{"a", "b"}, []string{"b", "a"}))
+	assert.True(equalStringArray([]string{"a", "a", "b"}, []string{"a", "b", "a"}))
+	assert.False(equalStringArray([]string{"a"}, []string{}))
+	assert.False(equalStringArray([]string{""}, []string{}))
+	assert.False(equalStringArray([]string{"a"}, []string{"b"}))
+	assert.False(equalStringArray([]string{"a"}, []string{"a", "b"}))
+}

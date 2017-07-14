@@ -19,6 +19,7 @@ package aggregator
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/go-openapi/spec"
@@ -209,11 +210,29 @@ func equalSchemaMap(s1, s2 map[string]spec.Schema) bool {
 	return true
 }
 
-func equalSchemaArray(s1, s2 []spec.Schema) bool {
-	// TODO(mehdy): check for duplicates in the array.
-	if s1 == nil || s2 == nil {
-		return s1 == nil && s2 == nil
+func toSchemaArrayWithUniqueItems(in []spec.Schema) []spec.Schema {
+	out := []spec.Schema{}
+	if in == nil || len(in) == 0 {
+		return out
 	}
+	for _, v1 := range in {
+		found := false
+		for _, v2 := range out {
+			if EqualSchema(&v1, &v2) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			out = append(out, v1)
+		}
+	}
+	return out
+}
+
+func equalSchemaArray(in1, in2 []spec.Schema) bool {
+	s1 := toSchemaArrayWithUniqueItems(in1)
+	s2 := toSchemaArrayWithUniqueItems(in2)
 	if len(s1) != len(s2) {
 		return false
 	}
@@ -270,31 +289,32 @@ func equalSchemaOrArray(s1, s2 *spec.SchemaOrArray) bool {
 	return true
 }
 
-func equalStringArray(s1, s2 []string) bool {
+func toSortedUnifiedStringArray(in []string) []string {
+	sorted := []string{}
+	if len(in) == 0 {
+		return sorted
+	}
+	sorted = append([]string{}, in...)
+	sort.Strings(sorted)
+	last := sorted[0]
+	ret := []string{last}
+	for _, v := range sorted {
+		if v != last {
+			last = v
+			ret = append(ret, last)
+		}
+	}
+	return ret
+}
+
+func equalStringArray(in1, in2 []string) bool {
+	s1 := toSortedUnifiedStringArray(in1)
+	s2 := toSortedUnifiedStringArray(in2)
 	if len(s1) != len(s2) {
 		return false
 	}
-	for _, v1 := range s1 {
-		found := false
-		for _, v2 := range s2 {
-			if v1 == v2 {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	for _, v2 := range s2 {
-		found := false
-		for _, v1 := range s1 {
-			if v1 == v2 {
-				found = true
-				break
-			}
-		}
-		if !found {
+	for i, v1 := range s1 {
+		if v1 != s2[i] {
 			return false
 		}
 	}
@@ -478,12 +498,12 @@ func CloneSpec(source *spec.Swagger) (*spec.Swagger, error) {
 	// TODO(mehdy): Find a faster way to clone an spec
 	bytes, err := json.Marshal(source)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var ret spec.Swagger
 	err = json.Unmarshal(bytes, &ret)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return ret, nil
+	return &ret, nil
 }
