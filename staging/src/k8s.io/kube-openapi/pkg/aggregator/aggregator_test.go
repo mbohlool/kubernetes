@@ -517,4 +517,3 @@ definitions:
 
 	assert.Equal(string(expected_yaml), string(spec1_yaml))
 }
-
