@@ -73,7 +73,7 @@ func computeETag(data []byte) string {
 
 // BuildAndRegisterOpenAPIService first build and spec and then registers a handler to provides access to it.
 // Use this method if your OpenAPI spec is static. If you want to update the spec, use BuildOpenAPISpec then RegisterOpenAPIService.
-func BuildAndRegisterOpenAPIService(servePath string, webServices []*restful.WebService, config *common.Config, handler common.Handler) (*OpenAPIService, error) {
+func BuildAndRegisterOpenAPIService(servePath string, webServices []*restful.WebService, config *common.Config, handler common.PathHandler) (*OpenAPIService, error) {
 	spec, err := builder.BuildOpenAPISpec(webServices, config)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func BuildAndRegisterOpenAPIService(servePath string, webServices []*restful.Web
 // RegisterOpenAPIService registers a handler to provides access to provided swagger spec.
 // Note: servePath should end with ".json" as the RegisterOpenAPIService assume it is serving a
 // json file and will also serve .pb and .gz files.
-func RegisterOpenAPIService(openapiSpec *spec.Swagger, servePath string, handler common.Handler) (*OpenAPIService, error) {
+func RegisterOpenAPIService(openapiSpec *spec.Swagger, servePath string, handler common.PathHandler) (*OpenAPIService, error) {
 	if !strings.HasSuffix(servePath, jsonExt) {
 		return nil, fmt.Errorf("serving path must ends with \"%s\"", jsonExt)
 	}

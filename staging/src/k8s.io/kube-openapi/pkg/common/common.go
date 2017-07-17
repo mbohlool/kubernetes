@@ -43,7 +43,7 @@ type OpenAPIDefinitionGetter interface {
 	OpenAPIDefinition() *OpenAPIDefinition
 }
 
-type Handler interface {
+type PathHandler interface {
 	Handle(path string, handler http.Handler)
 }
 
