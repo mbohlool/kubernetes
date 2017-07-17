@@ -39,7 +39,6 @@ cmd/libs/go2idl/go-to-protobuf/protoc-gen-gogo
 cmd/libs/go2idl/import-boss
 cmd/libs/go2idl/informer-gen
 cmd/libs/go2idl/lister-gen
-cmd/libs/go2idl/openapi-gen
 cmd/libs/go2idl/set-gen
 cmd/linkcheck
 examples
@@ -449,6 +448,7 @@ staging/src/k8s.io/kube-aggregator/pkg/client/informers/internalversion/apiregis
 staging/src/k8s.io/kube-aggregator/pkg/client/listers/apiregistration/internalversion
 staging/src/k8s.io/kube-aggregator/pkg/client/listers/apiregistration/v1beta1
 staging/src/k8s.io/kube-aggregator/pkg/controllers
+staging/src/k8s.io/kube-openapi/cmd/openapi-gen
 staging/src/k8s.io/metrics/pkg/apis/custom_metrics/install
 staging/src/k8s.io/metrics/pkg/apis/metrics/install
 staging/src/k8s.io/sample-apiserver
