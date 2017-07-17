@@ -19,10 +19,11 @@ package aggregator
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/go-openapi/spec"
+
+	"reflect"
 
 	"k8s.io/kube-openapi/pkg/util"
 )
@@ -194,240 +195,6 @@ func FilterSpecByPaths(sp *spec.Swagger, keepPathPrefixes []string) {
 	}
 }
 
-func equalSchemaMap(s1, s2 map[string]spec.Schema) bool {
-	if len(s1) != len(s2) {
-		return false
-	}
-	for k, v := range s1 {
-		v2, found := s2[k]
-		if !found {
-			return false
-		}
-		if !EqualSchema(&v, &v2) {
-			return false
-		}
-	}
-	return true
-}
-
-func toSchemaArrayWithUniqueItems(in []spec.Schema) []spec.Schema {
-	out := []spec.Schema{}
-	if in == nil || len(in) == 0 {
-		return out
-	}
-	for _, v1 := range in {
-		found := false
-		for _, v2 := range out {
-			if EqualSchema(&v1, &v2) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			out = append(out, v1)
-		}
-	}
-	return out
-}
-
-func equalSchemaArray(in1, in2 []spec.Schema) bool {
-	s1 := toSchemaArrayWithUniqueItems(in1)
-	s2 := toSchemaArrayWithUniqueItems(in2)
-	if len(s1) != len(s2) {
-		return false
-	}
-	for _, v1 := range s1 {
-		found := false
-		for _, v2 := range s2 {
-			if EqualSchema(&v1, &v2) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	for _, v2 := range s2 {
-		found := false
-		for _, v1 := range s1 {
-			if EqualSchema(&v1, &v2) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
-}
-
-func equalSchemaOrBool(s1, s2 *spec.SchemaOrBool) bool {
-	if s1 == nil || s2 == nil {
-		return s1 == s2
-	}
-	if s1.Allows != s2.Allows {
-		return false
-	}
-	if !EqualSchema(s1.Schema, s2.Schema) {
-		return false
-	}
-	return true
-}
-
-func equalSchemaOrArray(s1, s2 *spec.SchemaOrArray) bool {
-	if s1 == nil || s2 == nil {
-		return s1 == s2
-	}
-	if !EqualSchema(s1.Schema, s2.Schema) {
-		return false
-	}
-	if !equalSchemaArray(s1.Schemas, s2.Schemas) {
-		return false
-	}
-	return true
-}
-
-func toSortedUnifiedStringArray(in []string) []string {
-	sorted := []string{}
-	if len(in) == 0 {
-		return sorted
-	}
-	sorted = append([]string{}, in...)
-	sort.Strings(sorted)
-	last := sorted[0]
-	ret := []string{last}
-	for _, v := range sorted {
-		if v != last {
-			last = v
-			ret = append(ret, last)
-		}
-	}
-	return ret
-}
-
-func equalStringArray(in1, in2 []string) bool {
-	s1 := toSortedUnifiedStringArray(in1)
-	s2 := toSortedUnifiedStringArray(in2)
-	if len(s1) != len(s2) {
-		return false
-	}
-	for i, v1 := range s1 {
-		if v1 != s2[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func equalFloatPointer(s1, s2 *float64) bool {
-	if s1 == nil || s2 == nil {
-		return s1 == s2
-	}
-	return *s1 == *s2
-}
-
-func equalIntPointer(s1, s2 *int64) bool {
-	if s1 == nil || s2 == nil {
-		return s1 == s2
-	}
-	return *s1 == *s2
-}
-
-// EqualSchema returns true if models have the same properties and references
-// even if they have different documentation.
-// Note: Dependencies and Enum are not supported. EqualSchema will return
-// false if they are set.
-func EqualSchema(s1, s2 *spec.Schema) bool {
-	if s1 == nil || s2 == nil {
-		return s1 == s2
-	}
-	if s1.Ref.String() != s2.Ref.String() {
-		return false
-	}
-	if !equalSchemaMap(s1.Definitions, s2.Definitions) {
-		return false
-	}
-	if !equalSchemaMap(s1.Properties, s2.Properties) {
-		fmt.Println("Not equal props")
-		return false
-	}
-	if !equalSchemaMap(s1.PatternProperties, s2.PatternProperties) {
-		return false
-	}
-	if !equalSchemaArray(s1.AllOf, s2.AllOf) {
-		return false
-	}
-	if !equalSchemaArray(s1.AnyOf, s2.AnyOf) {
-		return false
-	}
-	if !equalSchemaArray(s1.OneOf, s2.OneOf) {
-		return false
-	}
-	if !EqualSchema(s1.Not, s2.Not) {
-		return false
-	}
-	if !equalSchemaOrBool(s1.AdditionalProperties, s2.AdditionalProperties) {
-		return false
-	}
-	if !equalSchemaOrBool(s1.AdditionalItems, s2.AdditionalItems) {
-		return false
-	}
-	if !equalSchemaOrArray(s1.Items, s2.Items) {
-		return false
-	}
-	if !equalStringArray(s1.Type, s2.Type) {
-		return false
-	}
-	if s1.Format != s2.Format {
-		return false
-	}
-	if !equalFloatPointer(s1.Minimum, s2.Minimum) {
-		return false
-	}
-	if !equalFloatPointer(s1.Maximum, s2.Maximum) {
-		return false
-	}
-	if s1.ExclusiveMaximum != s2.ExclusiveMaximum {
-		return false
-	}
-	if s1.ExclusiveMinimum != s2.ExclusiveMinimum {
-		return false
-	}
-	if !equalFloatPointer(s1.MultipleOf, s2.MultipleOf) {
-		return false
-	}
-	if !equalIntPointer(s1.MaxLength, s2.MaxLength) {
-		return false
-	}
-	if !equalIntPointer(s1.MinLength, s2.MinLength) {
-		return false
-	}
-	if !equalIntPointer(s1.MaxItems, s2.MaxItems) {
-		return false
-	}
-	if !equalIntPointer(s1.MinItems, s2.MinItems) {
-		return false
-	}
-	if s1.Pattern != s2.Pattern {
-		return false
-	}
-	if s1.UniqueItems != s2.UniqueItems {
-		return false
-	}
-	if !equalIntPointer(s1.MaxProperties, s2.MaxProperties) {
-		return false
-	}
-	if !equalIntPointer(s1.MinProperties, s2.MinProperties) {
-		return false
-	}
-	if !equalStringArray(s1.Required, s2.Required) {
-		return false
-	}
-	return len(s1.Enum) == 0 && len(s2.Enum) == 0 && len(s1.Dependencies) == 0 && len(s2.Dependencies) == 0
-}
-
 func renameDefinition(s *spec.Swagger, old, new string) {
 	old_ref := definitionPrefix + old
 	new_ref := definitionPrefix + new
@@ -465,7 +232,8 @@ func MergeSpecs(dest, source *spec.Swagger) error {
 	for k, v := range sourceCopy.Definitions {
 		v2, found := dest.Definitions[k]
 		if usedNames[k] {
-			if found && EqualSchema(&v, &v2) {
+			// Reuse model iff they are exactly the same.
+			if found && reflect.DeepEqual(v, v2) {
 				continue
 			}
 			i := 2

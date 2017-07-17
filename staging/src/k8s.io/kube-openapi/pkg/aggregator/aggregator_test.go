@@ -311,7 +311,6 @@ paths:
           $ref: "#/definitions/Test"
 definitions:
   Test:
-    description: "This Test has a description"
     type: "object"
     properties:
       id:
@@ -319,7 +318,7 @@ definitions:
         format: "int64"
       status:
         type: "string"
-        description: "This status has another description"
+        description: "Status"
   InvalidInput:
     type: "string"
     format: "string"
@@ -519,15 +518,3 @@ definitions:
 	assert.Equal(string(expected_yaml), string(spec1_yaml))
 }
 
-func TestEqualStringArray(t *testing.T) {
-	assert := assert.New(t)
-	assert.True(equalStringArray([]string{}, []string{}))
-	assert.True(equalStringArray([]string{"a"}, []string{"a"}))
-	assert.True(equalStringArray([]string{"a", "a"}, []string{"a"}))
-	assert.True(equalStringArray([]string{"a", "b"}, []string{"b", "a"}))
-	assert.True(equalStringArray([]string{"a", "a", "b"}, []string{"a", "b", "a"}))
-	assert.False(equalStringArray([]string{"a"}, []string{}))
-	assert.False(equalStringArray([]string{""}, []string{}))
-	assert.False(equalStringArray([]string{"a"}, []string{"b"}))
-	assert.False(equalStringArray([]string{"a"}, []string{"a", "b"}))
-}
