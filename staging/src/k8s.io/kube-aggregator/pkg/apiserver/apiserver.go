@@ -20,10 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"time"
 
-	"github.com/go-openapi/spec"
 	"k8s.io/apimachinery/pkg/apimachinery/announced"
 	"k8s.io/apimachinery/pkg/apimachinery/registered"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,9 +34,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/pkg/version"
-	"k8s.io/kube-openapi/pkg/aggregator"
-	"k8s.io/kube-openapi/pkg/builder"
-	"k8s.io/kube-openapi/pkg/handler"
 
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration/install"
@@ -109,8 +104,6 @@ type APIAggregator struct {
 	proxyClientKey  []byte
 	proxyTransport  *http.Transport
 
-	openAPISpecs map[string]*openAPISpecInfo
-
 	// proxyHandlers are the proxy handlers that are currently registered, keyed by apiservice.name
 	proxyHandlers map[string]*proxyHandler
 	// handledGroups are the groups that already have routes
@@ -126,14 +119,7 @@ type APIAggregator struct {
 	// Information needed to determine routing for the aggregator
 	serviceResolver ServiceResolver
 
-	// provided for dynamic OpenAPI spec
-	openAPIService *handler.OpenAPIService
-
-	// Aggregator's openapi spec.
-	aggregatorsOpenAPISpec *spec.Swagger
-
-	// Local delegate's openapi spec.
-	localDelegatesOpenAPISpec *spec.Swagger
+	openAPIAggregator openAPIAggregator
 }
 
 type completedConfig struct {
@@ -188,7 +174,6 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		proxyClientKey:   c.ProxyClientKey,
 		proxyTransport:   c.ProxyTransport,
 		proxyHandlers:    map[string]*proxyHandler{},
-		openAPISpecs:     map[string]*openAPISpecInfo{},
 		handledGroups:    sets.String{},
 		lister:           informerFactory.Apiregistration().InternalVersion().APIServices().Lister(),
 		APIRegistrationInformers: informerFactory,
@@ -238,25 +223,12 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 	})
 
 	if openApiConfig != nil {
-		s.localDelegatesOpenAPISpec, err = s.loadDelegateOpenAPISpec()
+		s.openAPIAggregator, err = newOpenAPIAggregator(
+			s.delegateHandler,
+			s.GenericAPIServer.Handler.GoRestfulContainer.RegisteredWebServices(),
+			openApiConfig,
+			s.GenericAPIServer.Handler.NonGoRestfulMux)
 		if err != nil {
-			return nil, err
-		}
-		// Install Aggregator's OpenAPI Handler with an initial spec
-		s.aggregatorsOpenAPISpec, err = builder.BuildOpenAPISpec(
-			s.GenericAPIServer.Handler.GoRestfulContainer.RegisteredWebServices(), openApiConfig)
-		if err != nil {
-			return nil, err
-		}
-		// Remove any non-API endpoints from aggregator's spec. aggregatorsOpenAPISpec
-		// is the source of truth for al non-api endpoints.
-		aggregator.FilterSpecByPaths(s.aggregatorsOpenAPISpec, []string{"/apis/"})
-		s.openAPIService, err = handler.RegisterOpenAPIService(
-			s.localDelegatesOpenAPISpec, "/swagger.json", s.GenericAPIServer.Handler.NonGoRestfulMux)
-		if err != nil {
-			return nil, err
-		}
-		if err = s.updateOpenAPISpec(); err != nil {
 			return nil, err
 		}
 	}
@@ -300,92 +272,6 @@ func (r *inMemoryResponseWriter) jsonUnmarshal(v interface{}) error {
 	}
 }
 
-type openAPISpecInfo struct {
-	serviceName string
-	spec        *spec.Swagger
-	priority    int32
-}
-
-type byPriority []openAPISpecInfo
-
-func (a byPriority) Len() int      { return len(a) }
-func (a byPriority) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a byPriority) Less(i, j int) bool {
-	if a[i].priority != a[j].priority {
-		// Sort by priority, higher first
-		return a[i].priority > a[j].priority
-	} else {
-		// Sort by service name, lower first.
-		return a[i].serviceName < a[j].serviceName
-	}
-}
-
-// updateOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe.
-func (s *APIAggregator) updateOpenAPISpec() error {
-	if s.openAPIService == nil {
-		return nil
-	}
-	specToServe, err := aggregator.CloneSpec(s.localDelegatesOpenAPISpec)
-	if err != nil {
-		return err
-	}
-	if err := aggregator.MergeSpecs(specToServe, s.aggregatorsOpenAPISpec); err != nil {
-		return fmt.Errorf("cannot merge local delegate spec with aggregator spec: %s", err.Error())
-	}
-	specs := []openAPISpecInfo{}
-	for name, specInfo := range s.openAPISpecs {
-		specs = append(specs, openAPISpecInfo{name, specInfo.spec, specInfo.priority})
-	}
-	sort.Sort(byPriority(specs))
-	for _, specInfo := range specs {
-		if err := aggregator.MergeSpecs(specToServe, specInfo.spec); err != nil {
-			return err
-		}
-	}
-	return s.openAPIService.UpdateSpec(specToServe)
-}
-
-func loadOpenAPISpec(handler http.Handler) (*spec.Swagger, error) {
-	req, err := http.NewRequest("GET", "/swagger.json", nil)
-	if err != nil {
-		return nil, err
-	}
-	writer := inMemoryResponseWriter{}
-	handler.ServeHTTP(&writer, req)
-	openApiSpec := &spec.Swagger{}
-	if err := writer.jsonUnmarshal(openApiSpec); err != nil {
-		return nil, err
-	}
-	return openApiSpec, nil
-}
-
-// loadDelegateOpenAPISpec loads local delegate OpenAPI spec to be used
-// as the source of all merged.
-func (s *APIAggregator) loadDelegateOpenAPISpec() (*spec.Swagger, error) {
-	return loadOpenAPISpec(s.delegateHandler)
-}
-
-func max(i, j int32) int32 {
-	if i > j {
-		return i
-	}
-	return j
-}
-
-func (s *APIAggregator) loadApiServiceSpec(proxyHandler *proxyHandler, apiService *apiregistration.APIService) error {
-	openApiSpec, err := loadOpenAPISpec(proxyHandler)
-	if err != nil {
-		return err
-	}
-	aggregator.FilterSpecByPaths(openApiSpec, []string{"/apis/" + apiService.Spec.Group + "/"})
-	s.openAPISpecs[apiService.Name] = &openAPISpecInfo{
-		serviceName: apiService.Name,
-		spec:        openApiSpec,
-		priority:    max(apiService.Spec.VersionPriority, apiService.Spec.GroupPriorityMinimum),
-	}
-	return s.updateOpenAPISpec()
-}
-
 // AddAPIService adds an API service.  It is not thread-safe, so only call it on one thread at a time please.
 // It's a slow moving API, so its ok to run the controller on a single thread
 func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) error {
@@ -393,7 +279,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		return s.loadApiServiceSpec(proxyHandler, apiService)
+		return s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService)
 	}
 
 	proxyPath := "/apis/" + apiService.Spec.Group + "/" + apiService.Spec.Version
@@ -412,7 +298,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 		serviceResolver: s.serviceResolver,
 	}
 	proxyHandler.updateAPIService(apiService)
-	if err := s.loadApiServiceSpec(proxyHandler, apiService); err != nil {
+	if err := s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService); err != nil {
 		return err
 	}
 	s.proxyHandlers[apiService.Name] = proxyHandler
