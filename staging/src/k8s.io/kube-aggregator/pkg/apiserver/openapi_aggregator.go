@@ -185,17 +185,21 @@ func max(i, j int32) int32 {
 	return j
 }
 
+func (s *openAPIAggregator) handlerWithUser(handler http.Handler, info user.Info) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if ctx, ok := s.contextMapper.Get(req); ok {
+			s.contextMapper.Update(req, request.WithUser(ctx, info))
+		}
+		handler.ServeHTTP(w, req)
+	})
+}
+
 func (s *openAPIAggregator) loadApiServiceSpec(handler http.Handler, apiService *apiregistration.APIService) error {
 	if apiService.Spec.Service == nil {
 		return nil
 	}
 
-	handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if ctx, ok := s.contextMapper.Get(req); ok {
-			s.contextMapper.Update(req, request.WithUser(ctx, &user.DefaultInfo{Name: "system:aggregator"}))
-		}
-	})
-
+	handler = s.handlerWithUser(handler, &user.DefaultInfo{Name: "system:aggregator"})
 	handler = request.WithRequestContext(handler, s.contextMapper)
 
 	openApiSpec, err := loadOpenAPISpec(handler)
