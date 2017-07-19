@@ -42,8 +42,8 @@ type openAPIAggregator struct {
 	localDelegatesOpenAPISpec *spec.Swagger
 }
 
-func newOpenAPIAggregator(delegateHandler http.Handler, webServices []*restful.WebService, config *common.Config, pathHandler common.PathHandler) (s openAPIAggregator, err error) {
-	s = openAPIAggregator{}
+func newOpenAPIAggregator(delegateHandler http.Handler, webServices []*restful.WebService, config *common.Config, pathHandler common.PathHandler) (s *openAPIAggregator, err error) {
+	s = &openAPIAggregator{}
 	s.localDelegatesOpenAPISpec, err = loadOpenAPISpec(delegateHandler)
 	if err != nil {
 		return nil, err
@@ -125,12 +125,6 @@ func loadOpenAPISpec(handler http.Handler) (*spec.Swagger, error) {
 		return nil, err
 	}
 	return openApiSpec, nil
-}
-
-// loadDelegateOpenAPISpec loads local delegate OpenAPI spec to be used
-// as the source of all merged.
-func (s *openAPIAggregator) loadDelegateOpenAPISpec() (*spec.Swagger, error) {
-	return loadOpenAPISpec(s.delegateHandler)
 }
 
 func max(i, j int32) int32 {

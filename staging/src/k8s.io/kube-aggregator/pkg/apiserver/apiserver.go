@@ -119,7 +119,7 @@ type APIAggregator struct {
 	// Information needed to determine routing for the aggregator
 	serviceResolver ServiceResolver
 
-	openAPIAggregator openAPIAggregator
+	openAPIAggregator *openAPIAggregator
 }
 
 type completedConfig struct {
