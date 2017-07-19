@@ -39,8 +39,8 @@ import (
 )
 
 type APIHandlerManager interface {
-	AddAPIService(apiService *apiregistration.APIService)
-	RemoveAPIService(apiServiceName string)
+	AddAPIService(apiService *apiregistration.APIService) error
+	RemoveAPIService(apiServiceName string) error
 }
 
 type APIServiceRegistrationController struct {
@@ -89,8 +89,7 @@ func NewAPIServiceRegistrationController(apiServiceInformer informers.APIService
 func (c *APIServiceRegistrationController) sync(key string) error {
 	apiService, err := c.apiServiceLister.Get(key)
 	if apierrors.IsNotFound(err) {
-		c.apiHandlerManager.RemoveAPIService(key)
-		return nil
+		return c.apiHandlerManager.RemoveAPIService(key)
 	}
 	if err != nil {
 		return err
@@ -98,12 +97,10 @@ func (c *APIServiceRegistrationController) sync(key string) error {
 
 	// remove registration handling for APIServices which are not available
 	if !apiregistration.IsAPIServiceConditionTrue(apiService, apiregistration.Available) {
-		c.apiHandlerManager.RemoveAPIService(key)
-		return nil
+		return c.apiHandlerManager.RemoveAPIService(key)
 	}
 
-	c.apiHandlerManager.AddAPIService(apiService)
-	return nil
+	return c.apiHandlerManager.AddAPIService(apiService)
 }
 
 func (c *APIServiceRegistrationController) Run(stopCh <-chan struct{}) {
