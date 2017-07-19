@@ -30,7 +30,6 @@ import (
 	"k8s.io/kube-openapi/pkg/handler"
 
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
-	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type openAPIAggregator struct {
@@ -139,6 +138,14 @@ func (r *inMemoryResponseWriter) Write(in []byte) (int, error) {
 	return len(in), nil
 }
 
+func (r *inMemoryResponseWriter) ErrorMessage() string {
+	s := fmt.Sprintf("ResponseCode: %d" , r.respCode)
+	if r.data != nil {
+		s += fmt.Sprintf(", Body: %s", string(r.data))
+	}
+	return s
+}
+
 // inMemoryResponseWriter checks response code first. If response code is http OK then it will unmarshal the response
 // into json object v.
 func (r *inMemoryResponseWriter) jsonUnmarshal(v interface{}) error {
@@ -149,7 +156,7 @@ func (r *inMemoryResponseWriter) jsonUnmarshal(v interface{}) error {
 		}
 		return nil
 	default:
-		return fmt.Errorf("failed to retrive openAPI spec, http error code %d", r.respCode)
+		return fmt.Errorf("failed to retrive openAPI spec, http error: %s", r.ErrorMessage())
 	}
 }
 
