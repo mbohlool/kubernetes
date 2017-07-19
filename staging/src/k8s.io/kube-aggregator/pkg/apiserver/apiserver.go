@@ -377,6 +377,7 @@ func (s *APIAggregator) loadApiServiceSpec(proxyHandler *proxyHandler, apiServic
 	if err != nil {
 		return err
 	}
+	aggregator.FilterSpecByPaths(openApiSpec, []string{"/apis/" + apiService.Spec.Group + "/"})
 	s.openAPISpecs[apiService.Name] = &openAPISpecInfo{
 		serviceName: apiService.Name,
 		spec:        openApiSpec,
