@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2017 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,16 +17,20 @@ limitations under the License.
 package apiserver
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sort"
+
+	"github.com/emicklei/go-restful"
 	"github.com/go-openapi/spec"
 	"k8s.io/kube-openapi/pkg/aggregator"
 	"k8s.io/kube-openapi/pkg/builder"
-	"k8s.io/kube-openapi/pkg/handler"
-	"net/http"
-	"sort"
-	"fmt"
-	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
-	"github.com/emicklei/go-restful"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/handler"
+
+	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type openAPIAggregator struct {
@@ -113,6 +117,42 @@ func (s *openAPIAggregator) updateOpenAPISpec() error {
 	return s.openAPIService.UpdateSpec(specToServe)
 }
 
+type inMemoryResponseWriter struct {
+	header   http.Header
+	respCode int
+	data     []byte
+}
+
+func (r *inMemoryResponseWriter) Header() http.Header {
+	if r.header == nil {
+		r.header = http.Header{}
+	}
+	return r.header
+}
+
+func (r *inMemoryResponseWriter) WriteHeader(code int) {
+	r.respCode = code
+}
+
+func (r *inMemoryResponseWriter) Write(in []byte) (int, error) {
+	r.data = append(r.data, in...)
+	return len(in), nil
+}
+
+// inMemoryResponseWriter checks response code first. If response code is http OK then it will unmarshal the response
+// into json object v.
+func (r *inMemoryResponseWriter) jsonUnmarshal(v interface{}) error {
+	switch r.respCode {
+	case http.StatusOK:
+		if err := json.Unmarshal(r.data, v); err != nil {
+			return err
+		}
+		return nil
+	default:
+		return fmt.Errorf("failed to retrive openAPI spec, http error code %d", r.respCode)
+	}
+}
+
 func loadOpenAPISpec(handler http.Handler) (*spec.Swagger, error) {
 	req, err := http.NewRequest("GET", "/swagger.json", nil)
 	if err != nil {
@@ -134,11 +174,11 @@ func max(i, j int32) int32 {
 	return j
 }
 
-func (s *openAPIAggregator) loadApiServiceSpec(proxyHandler *proxyHandler, apiService *apiregistration.APIService) error {
+func (s *openAPIAggregator) loadApiServiceSpec(handler http.Handler, apiService *apiregistration.APIService) error {
 	if apiService.Spec.Service == nil {
 		return nil
 	}
-	openApiSpec, err := loadOpenAPISpec(proxyHandler)
+	openApiSpec, err := loadOpenAPISpec(handler)
 	if err != nil {
 		return err
 	}
@@ -148,5 +188,10 @@ func (s *openAPIAggregator) loadApiServiceSpec(proxyHandler *proxyHandler, apiSe
 		spec:        openApiSpec,
 		priority:    max(apiService.Spec.VersionPriority, apiService.Spec.GroupPriorityMinimum),
 	}
-	return s.updateOpenAPISpec()
+	err = s.updateOpenAPISpec()
+	if err != nil {
+		delete(s.openAPISpecs, apiService.Name)
+		return err
+	}
+	return nil
 }

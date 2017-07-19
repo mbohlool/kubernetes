@@ -17,8 +17,6 @@ limitations under the License.
 package apiserver
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -236,42 +234,6 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 	return s, nil
 }
 
-type inMemoryResponseWriter struct {
-	header   http.Header
-	respCode int
-	data     []byte
-}
-
-func (r *inMemoryResponseWriter) Header() http.Header {
-	if r.header == nil {
-		r.header = http.Header{}
-	}
-	return r.header
-}
-
-func (r *inMemoryResponseWriter) WriteHeader(code int) {
-	r.respCode = code
-}
-
-func (r *inMemoryResponseWriter) Write(in []byte) (int, error) {
-	r.data = append(r.data, in...)
-	return len(in), nil
-}
-
-// inMemoryResponseWriter checks response code first. If response code is http OK then it will unmarshal the response
-// into json object v.
-func (r *inMemoryResponseWriter) jsonUnmarshal(v interface{}) error {
-	switch r.respCode {
-	case http.StatusOK:
-		if err := json.Unmarshal(r.data, v); err != nil {
-			return err
-		}
-		return nil
-	default:
-		return fmt.Errorf("failed to retrive openAPI spec, http error code %d", r.respCode)
-	}
-}
-
 // AddAPIService adds an API service.  It is not thread-safe, so only call it on one thread at a time please.
 // It's a slow moving API, so its ok to run the controller on a single thread
 func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) error {
@@ -279,7 +241,8 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		return s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService)
+		return s.openAPIAggregator.loadApiServiceSpec(
+			genericapirequest.WithRequestContext(proxyHandler, s.contextMapper), apiService)
 	}
 
 	proxyPath := "/apis/" + apiService.Spec.Group + "/" + apiService.Spec.Version
@@ -304,7 +267,6 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	s.proxyHandlers[apiService.Name] = proxyHandler
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Handle(proxyPath, proxyHandler)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.UnlistedHandlePrefix(proxyPath+"/", proxyHandler)
-
 
 	// if we're dealing with the legacy group, we're done here
 	if apiService.Name == legacyAPIServiceName {
