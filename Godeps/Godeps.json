@@ -2639,7 +2639,6 @@
 		},
 		{
 			"ImportPath": "github.com/xiang90/probing",
-			"Comment": "0.0.1",
 			"Rev": "07dd2e8dfe18522e9c447ba95f2fe95262f63bb2"
 		},
 		{
@@ -3026,6 +3025,26 @@
 			"ImportPath": "k8s.io/heapster/metrics/api/v1/types",
 			"Comment": "v1.2.0-beta.1",
 			"Rev": "c2ac40f1adf8c42a79badddb2a2acd673cae3bcb"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/aggregator",
+			"Rev": "7c66362e60e15fdb3fe3a0fc981210f65f1d640e"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/builder",
+			"Rev": "7c66362e60e15fdb3fe3a0fc981210f65f1d640e"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/common",
+			"Rev": "7c66362e60e15fdb3fe3a0fc981210f65f1d640e"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/handler",
+			"Rev": "7c66362e60e15fdb3fe3a0fc981210f65f1d640e"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/util",
+			"Rev": "7c66362e60e15fdb3fe3a0fc981210f65f1d640e"
 		},
 		{
 			"ImportPath": "vbom.ml/util/sortorder",
