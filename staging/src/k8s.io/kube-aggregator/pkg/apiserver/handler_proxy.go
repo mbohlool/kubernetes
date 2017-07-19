@@ -17,7 +17,9 @@ limitations under the License.
 package apiserver
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -25,10 +27,12 @@ import (
 
 	"github.com/golang/glog"
 
+	"github.com/go-openapi/spec"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/apimachinery/pkg/util/httpstream/spdy"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	genericfeatures "k8s.io/apiserver/pkg/features"
@@ -37,6 +41,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 	apiregistrationapi "k8s.io/kube-aggregator/pkg/apis/apiregistration"
+	"k8s.io/kube-openapi/pkg/aggregator"
 )
 
 // proxyHandler provides a http.Handler which will proxy traffic to locations
@@ -57,6 +62,10 @@ type proxyHandler struct {
 	serviceResolver ServiceResolver
 
 	handlingInfo atomic.Value
+
+	groupPath string
+
+	disableOpenAPI bool
 }
 
 type proxyHandlingInfo struct {
@@ -74,6 +83,36 @@ type proxyHandlingInfo struct {
 	serviceName string
 	// namespace is the namespace the service lives in
 	serviceNamespace string
+
+	servicePriority int32
+	// OpenAPI spec of the service, if available.
+	openAPISpec *spec.Swagger
+}
+
+func max(x, y int32) int32 {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func (r *proxyHandler) rewriteRequest(req *http.Request, serviceNamespace, serviceName string) (*http.Request, error) {
+	// write a new location based on the existing request pointed at the target service
+	location := &url.URL{}
+	location.Scheme = "https"
+	rloc, err := r.serviceResolver.ResolveEndpoint(serviceNamespace, serviceName)
+	if err != nil {
+		return nil, fmt.Errorf("missing route (%s)", err.Error())
+	}
+	location.Host = rloc.Host
+	location.Path = req.URL.Path
+	location.RawQuery = req.URL.Query().Encode()
+
+	// WithContext creates a shallow clone of the request with the new context.
+	newReq := req.WithContext(context.Background())
+	newReq.Header = utilnet.CloneHeader(req.Header)
+	newReq.URL = location
+	return newReq, nil
 }
 
 func (r *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -108,23 +147,12 @@ func (r *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// write a new location based on the existing request pointed at the target service
-	location := &url.URL{}
-	location.Scheme = "https"
-	rloc, err := r.serviceResolver.ResolveEndpoint(handlingInfo.serviceNamespace, handlingInfo.serviceName)
+	newReq, err := r.rewriteRequest(req, handlingInfo.serviceNamespace, handlingInfo.serviceName)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("missing route (%s)", err.Error()), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	location.Host = rloc.Host
-	location.Path = req.URL.Path
-	location.RawQuery = req.URL.Query().Encode()
-
-	// WithContext creates a shallow clone of the request with the new context.
-	newReq := req.WithContext(context.Background())
-	newReq.Header = utilnet.CloneHeader(req.Header)
-	newReq.URL = location
-
+	location := newReq.URL
 	if handlingInfo.proxyRoundTripper == nil {
 		http.Error(w, "", http.StatusNotFound)
 		return
@@ -187,10 +215,10 @@ func (r *responder) Error(err error) {
 
 // these methods provide locked access to fields
 
-func (r *proxyHandler) updateAPIService(apiService *apiregistrationapi.APIService) {
+func (r *proxyHandler) updateAPIService(apiService *apiregistrationapi.APIService) error {
 	if apiService.Spec.Service == nil {
 		r.handlingInfo.Store(proxyHandlingInfo{local: true})
-		return
+		return nil
 	}
 
 	newInfo := proxyHandlingInfo{
@@ -205,6 +233,7 @@ func (r *proxyHandler) updateAPIService(apiService *apiregistrationapi.APIServic
 		},
 		serviceName:      apiService.Spec.Service.Name,
 		serviceNamespace: apiService.Spec.Service.Namespace,
+		servicePriority:  max(apiService.Spec.VersionPriority, apiService.Spec.GroupPriorityMinimum),
 	}
 	newInfo.proxyRoundTripper, newInfo.transportBuildingError = restclient.TransportFor(newInfo.restConfig)
 	if newInfo.transportBuildingError == nil && r.proxyTransport.Dial != nil {
@@ -216,5 +245,66 @@ func (r *proxyHandler) updateAPIService(apiService *apiregistrationapi.APIServic
 			glog.Warning(newInfo.transportBuildingError.Error())
 		}
 	}
+	if !r.disableOpenAPI {
+		if err := r.updateOpenAPISpec(&newInfo); err != nil {
+			return err
+		}
+	}
 	r.handlingInfo.Store(newInfo)
+	return nil
+}
+
+func (r *proxyHandler) defaultUserInfo() user.Info {
+	return &user.DefaultInfo{Name: "system:aggregator"}
+}
+
+func (r *proxyHandler) updateOpenAPISpec(handlingInfo *proxyHandlingInfo) error {
+	if handlingInfo.local {
+		return nil
+	}
+	if handlingInfo.transportBuildingError != nil {
+		return handlingInfo.transportBuildingError
+	}
+	if handlingInfo.proxyRoundTripper == nil {
+		return fmt.Errorf("handlingInfo.proxyRoundTripper is nil.")
+	}
+
+	req, err := http.NewRequest("GET", "/swagger.json", nil)
+	if err != nil {
+		return err
+	}
+	req, err = r.rewriteRequest(req, handlingInfo.serviceNamespace, handlingInfo.serviceName)
+	if err != nil {
+		return err
+	}
+
+	user := r.defaultUserInfo()
+	roundTripper := transport.NewAuthProxyRoundTripper(user.GetName(), user.GetGroups(), user.GetExtra(), handlingInfo.proxyRoundTripper)
+	resp, err := roundTripper.RoundTrip(req)
+	if resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to retrive openAPI spec, http error code %d", resp.StatusCode)
+	}
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	bytes := buf.Bytes()
+
+	openAPISpec := &spec.Swagger{}
+	if err := json.Unmarshal(bytes, &openAPISpec); err != nil {
+		return err
+	}
+	aggregator.FilterSpecByPaths(openAPISpec, []string{r.groupPath + "/"})
+	handlingInfo.openAPISpec = openAPISpec
+	return nil
+}
+
+func (r *proxyHandler) OpenAPISpec() (*spec.Swagger, int32) {
+	value := r.handlingInfo.Load()
+	if value == nil {
+		return nil, 0
+	}
+	handlingInfo := value.(proxyHandlingInfo)
+	return handlingInfo.openAPISpec, handlingInfo.servicePriority
 }
