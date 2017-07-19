@@ -225,7 +225,8 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 			s.delegateHandler,
 			s.GenericAPIServer.Handler.GoRestfulContainer.RegisteredWebServices(),
 			openApiConfig,
-			s.GenericAPIServer.Handler.NonGoRestfulMux)
+			s.GenericAPIServer.Handler.NonGoRestfulMux,
+			s.contextMapper)
 		if err != nil {
 			return nil, err
 		}
@@ -241,8 +242,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		return s.openAPIAggregator.loadApiServiceSpec(
-			genericapirequest.WithRequestContext(proxyHandler, s.contextMapper), apiService)
+		return s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService)
 	}
 
 	proxyPath := "/apis/" + apiService.Spec.Group + "/" + apiService.Spec.Version

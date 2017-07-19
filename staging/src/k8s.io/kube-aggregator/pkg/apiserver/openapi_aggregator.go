@@ -24,12 +24,14 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/go-openapi/spec"
+	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/kube-openapi/pkg/aggregator"
 	"k8s.io/kube-openapi/pkg/builder"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/handler"
 
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 type openAPIAggregator struct {
@@ -43,10 +45,12 @@ type openAPIAggregator struct {
 
 	// Local delegate's openapi spec.
 	localDelegatesOpenAPISpec *spec.Swagger
+
+	contextMapper request.RequestContextMapper
 }
 
-func newOpenAPIAggregator(delegateHandler http.Handler, webServices []*restful.WebService, config *common.Config, pathHandler common.PathHandler) (s *openAPIAggregator, err error) {
-	s = &openAPIAggregator{}
+func newOpenAPIAggregator(delegateHandler http.Handler, webServices []*restful.WebService, config *common.Config, pathHandler common.PathHandler, contextMapper request.RequestContextMapper) (s *openAPIAggregator, err error) {
+	s = &openAPIAggregator{contextMapper: contextMapper}
 	s.localDelegatesOpenAPISpec, err = loadOpenAPISpec(delegateHandler)
 	if err != nil {
 		return nil, err
@@ -185,6 +189,15 @@ func (s *openAPIAggregator) loadApiServiceSpec(handler http.Handler, apiService 
 	if apiService.Spec.Service == nil {
 		return nil
 	}
+
+	handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if ctx, ok := s.contextMapper.Get(req); ok {
+			s.contextMapper.Update(req, request.WithUser(ctx, &user.DefaultInfo{Name: "system:aggregator"}))
+		}
+	})
+
+	handler = request.WithRequestContext(handler, s.contextMapper)
+
 	openApiSpec, err := loadOpenAPISpec(handler)
 	if err != nil {
 		return err
