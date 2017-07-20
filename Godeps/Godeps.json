@@ -3033,6 +3033,26 @@
 			"Rev": "c2ac40f1adf8c42a79badddb2a2acd673cae3bcb"
 		},
 		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/aggregator",
+			"Rev": "2387de1e2a2ded90444910405c2d0884b45173d0"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/builder",
+			"Rev": "2387de1e2a2ded90444910405c2d0884b45173d0"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/common",
+			"Rev": "2387de1e2a2ded90444910405c2d0884b45173d0"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/handler",
+			"Rev": "2387de1e2a2ded90444910405c2d0884b45173d0"
+		},
+		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/util",
+			"Rev": "2387de1e2a2ded90444910405c2d0884b45173d0"
+		},
+		{
 			"ImportPath": "k8s.io/utils/exec",
 			"Rev": "9fdc871a36f37980dd85f96d576b20d564cc0784"
 		},
