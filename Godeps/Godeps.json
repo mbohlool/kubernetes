@@ -3045,6 +3045,10 @@
 			"Rev": "2387de1e2a2ded90444910405c2d0884b45173d0"
 		},
 		{
+			"ImportPath": "k8s.io/kube-openapi/pkg/generators",
+			"Rev": "2387de1e2a2ded90444910405c2d0884b45173d0"
+		},
+		{
 			"ImportPath": "k8s.io/kube-openapi/pkg/handler",
 			"Rev": "2387de1e2a2ded90444910405c2d0884b45173d0"
 		},
