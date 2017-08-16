@@ -260,6 +260,14 @@ func MergeSpecs(dest, source *spec.Swagger) error {
 	return nil
 }
 
+func SpecToString(source *spec.Swagger) string {
+	bytes, err := json.Marshal(source)
+	if err != nil {
+		return "ERROR: " + err.Error()
+	}
+	return string(bytes)
+}
+
 // Clone OpenAPI spec
 func CloneSpec(source *spec.Swagger) (*spec.Swagger, error) {
 	// TODO(mehdy): Find a faster way to clone an spec

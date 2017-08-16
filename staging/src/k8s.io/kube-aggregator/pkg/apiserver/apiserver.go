@@ -119,7 +119,7 @@ type APIAggregator struct {
 	// Information needed to determine routing for the aggregator
 	serviceResolver ServiceResolver
 
-	openAPIAggregator *openAPIAggregator
+	OpenAPIAggregator *openAPIAggregator
 }
 
 type completedConfig struct {
@@ -222,7 +222,7 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 	})
 
 	if openApiConfig != nil {
-		s.openAPIAggregator, err = buildAndRegisterOpenAPIAggregator(
+		s.OpenAPIAggregator, err = buildAndRegisterOpenAPIAggregator(
 			s.delegateHandler,
 			s.GenericAPIServer.Handler.GoRestfulContainer.RegisteredWebServices(),
 			openApiConfig,
@@ -243,7 +243,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		return s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService)
+		return s.OpenAPIAggregator.loadApiServiceSpec(proxyHandler, apiService)
 	}
 
 	proxyPath := "/apis/" + apiService.Spec.Group + "/" + apiService.Spec.Version
@@ -262,7 +262,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 		serviceResolver: s.serviceResolver,
 	}
 	proxyHandler.updateAPIService(apiService)
-	if err := s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService); err != nil {
+	if err := s.OpenAPIAggregator.loadApiServiceSpec(proxyHandler, apiService); err != nil {
 		utilruntime.HandleError(fmt.Errorf("unable to load OpenAPI spec for API service %s: %v", apiService.Name, err))
 	}
 	s.proxyHandlers[apiService.Name] = proxyHandler

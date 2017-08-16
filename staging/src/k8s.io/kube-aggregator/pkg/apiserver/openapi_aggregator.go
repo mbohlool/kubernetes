@@ -33,6 +33,7 @@ import (
 	"k8s.io/kube-openapi/pkg/builder"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/handler"
+	"github.com/golang/glog"
 )
 
 const (
@@ -47,13 +48,27 @@ type openAPIAggregator struct {
 	// provided for dynamic OpenAPI spec
 	openAPIService *handler.OpenAPIService
 
-	// Aggregator's OpenAPI spec (holds apiregistration group).
-	aggregatorOpenAPISpec *spec.Swagger
-
 	// Local (in process) delegate's OpenAPI spec.
-	inProcessDelegatesOpenAPISpec *spec.Swagger
+	inProcessDelegatesOpenAPISpecs []*spec.Swagger
 
 	contextMapper request.RequestContextMapper
+}
+
+func (s *openAPIAggregator) AddLocalSpec(localHandler http.Handler, filterPaths []string) error {
+	glog.Warningf("ZZZ: Called AddLocalSpec")
+	spec, err := s.downloadOpenAPISpec(localHandler)
+	if err != nil {
+		return err
+	}
+	if filterPaths == nil {
+		filterPaths = []string{"/apis/"}
+		glog.Warningf("ZZZ: Spec: %s", aggregator.SpecToString(spec))
+	}
+	if len(filterPaths) > 0 {
+		aggregator.FilterSpecByPaths(spec, filterPaths)
+	}
+	s.inProcessDelegatesOpenAPISpecs = append(s.inProcessDelegatesOpenAPISpecs, spec)
+	return nil
 }
 
 func buildAndRegisterOpenAPIAggregator(delegateHandler http.Handler, webServices []*restful.WebService, config *common.Config, pathHandler common.PathHandler, contextMapper request.RequestContextMapper) (s *openAPIAggregator, err error) {
@@ -62,21 +77,21 @@ func buildAndRegisterOpenAPIAggregator(delegateHandler http.Handler, webServices
 		contextMapper: contextMapper,
 	}
 
-	// Get Local delegate's Spec
-	s.inProcessDelegatesOpenAPISpec, err = s.downloadOpenAPISpec(delegateHandler)
-	if err != nil {
+	if err = s.AddLocalSpec(delegateHandler, []string{}); err != nil {
 		return nil, err
 	}
 
 	// Build Aggregator's spec
-	s.aggregatorOpenAPISpec, err = builder.BuildOpenAPISpec(
+	aggregatorOpenAPISpec, err := builder.BuildOpenAPISpec(
 		webServices, config)
 	if err != nil {
 		return nil, err
 	}
 	// Remove any non-API endpoints from aggregator's spec. aggregatorOpenAPISpec
 	// is the source of truth for all non-api endpoints.
-	aggregator.FilterSpecByPaths(s.aggregatorOpenAPISpec, []string{"/apis/"})
+	aggregator.FilterSpecByPaths(aggregatorOpenAPISpec, []string{"/apis/"})
+
+	s.inProcessDelegatesOpenAPISpecs = append(s.inProcessDelegatesOpenAPISpecs, aggregatorOpenAPISpec)
 
 	// Build initial spec to serve.
 	specToServe, err := s.buildOpenAPISpec()
@@ -141,12 +156,17 @@ func sortByPriority(specs []openAPISpecInfo) {
 
 // buildOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe.
 func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err error) {
-	specToReturn, err = aggregator.CloneSpec(s.inProcessDelegatesOpenAPISpec)
+	if len(s.inProcessDelegatesOpenAPISpecs) < 1 {
+		return nil, fmt.Errorf("At least one local OpenAPI spec is expected.")
+	}
+	specToReturn, err = aggregator.CloneSpec(s.inProcessDelegatesOpenAPISpecs[0])
 	if err != nil {
 		return nil, err
 	}
-	if err := aggregator.MergeSpecs(specToReturn, s.aggregatorOpenAPISpec); err != nil {
-		return nil, fmt.Errorf("cannot merge local delegate spec with aggregator spec: %s", err.Error())
+	for i := 1; i < len(s.inProcessDelegatesOpenAPISpecs); i++ {
+		if err := aggregator.MergeSpecs(specToReturn, s.inProcessDelegatesOpenAPISpecs[i]); err != nil {
+			return nil, fmt.Errorf("cannot merge local delegate specs: %s", err.Error())
+		}
 	}
 	specs := []openAPISpecInfo{}
 	for _, specInfo := range s.openAPISpecs {
