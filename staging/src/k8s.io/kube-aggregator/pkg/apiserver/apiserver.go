@@ -231,6 +231,10 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		if err != nil {
 			return nil, err
 		}
+		s.GenericAPIServer.AddPostStartHook("apiservice-openapi-controller", func(context genericapiserver.PostStartHookContext) error {
+			go s.openAPIAggregator.openAPIAggregationController.Run(context.StopCh)
+			return nil
+		})
 	}
 
 	return s, nil
