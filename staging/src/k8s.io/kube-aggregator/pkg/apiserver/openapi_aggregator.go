@@ -286,3 +286,16 @@ func (s *openAPIAggregator) loadApiServiceSpec(handler http.Handler, apiService 
 	}
 	return nil
 }
+
+func (s *openAPIAggregator) removeApiServiceSpec(apiServiceName string) error {
+	if _, existingService := s.openAPISpecs[apiServiceName]; existingService {
+		oldSpecs := s.openAPISpecs
+		delete(s.openAPISpecs, apiServiceName)
+		err := s.updateOpenAPISpec()
+		if err != nil {
+			s.openAPISpecs = oldSpecs
+			return err
+		}
+	}
+	return nil
+}
