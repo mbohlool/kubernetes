@@ -307,6 +307,7 @@ func (s *APIAggregator) RemoveAPIService(apiServiceName string) {
 	}
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath + "/")
+	s.openAPIAggregator.RemoveApiServiceSpec(apiServiceName)
 	delete(s.proxyHandlers, apiServiceName)
 
 	// TODO unregister group level discovery when there are no more versions for the group
