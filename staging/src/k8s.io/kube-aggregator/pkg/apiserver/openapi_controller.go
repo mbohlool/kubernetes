@@ -40,7 +40,7 @@ func NewOpenAPIAggregationController(openAPIAggregationManager OpenAPIAggregatio
 	c := &OpenAPIAggregationController{
 		openAPIAggregationManager: openAPIAggregationManager,
 		queue: workqueue.NewNamedRateLimitingQueue(
-			workqueue.NewItemExponentialFailureRateLimiter(time.Minute, time.Hour), "APIServiceRegistrationController"),
+			workqueue.NewItemExponentialFailureRateLimiter(time.Minute, time.Hour), "APIServiceOpenAPIAggregationController"),
 	}
 
 	return c
@@ -68,16 +68,14 @@ func (c *OpenAPIAggregationController) runWorker() {
 
 	for key, shutdown := c.queue.Get(); !shutdown; {
 		keys = append(keys, key.(string))
-		changed, deleted, err := c.openAPIAggregationManager.UpdateApiServiceSpec(key.(string))
+		shouldBeRateLimited, deleted, err := c.openAPIAggregationManager.UpdateApiServiceSpec(key.(string))
 
 		if err != nil {
 			utilruntime.HandleError(fmt.Errorf("%v failed with : %v", key, err))
-		} else if changed {
-			glog.Infof("Updated OpenAPISpec for service '%s'", key)
 		}
 
 		if !deleted {
-			if err != nil || changed {
+			if shouldBeRateLimited {
 				// rate limit both updated or failed calls
 				c.queue.AddRateLimited(key)
 			} else {
