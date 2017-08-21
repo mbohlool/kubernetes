@@ -317,6 +317,10 @@ func (s *openAPIAggregator) downloadOpenAPISpec(handler http.Handler, etag strin
 // loadApiServiceSpec loads OpenAPI spec for the given API Service and then updates aggregator's spec.
 func (s *openAPIAggregator) loadApiServiceSpec(handler http.Handler, apiService *apiregistration.APIService) error {
 
+	if apiService.DisableOpenAPIAggregation != nil && *apiService.DisableOpenAPIAggregation {
+		return nil
+	}
+
 	// Ignore local services
 	if apiService.Spec.Service == nil {
 		return nil

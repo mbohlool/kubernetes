@@ -249,7 +249,9 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		return s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService)
+		if err := s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService); err != nil {
+			return err
+		}
 	}
 
 	proxyPath := "/apis/" + apiService.Spec.Group + "/" + apiService.Spec.Version
@@ -269,7 +271,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	}
 	proxyHandler.updateAPIService(apiService)
 	if err := s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService); err != nil {
-		utilruntime.HandleError(fmt.Errorf("unable to load OpenAPI spec for API service %s: %v", apiService.Name, err))
+		return err
 	}
 	s.proxyHandlers[apiService.Name] = proxyHandler
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Handle(proxyPath, proxyHandler)

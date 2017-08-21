@@ -133,4 +133,12 @@ type APIService struct {
 	Spec APIServiceSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 	// Status contains derived information about an API server
 	Status APIServiceStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+
+	// DisableOpenAPIAggregation controls aggregation of OpenAPI spec.
+	// Note that if a service provider does not provides an OpenAPI spec and
+	// returns appropriate http status for /swagger.json endpoint (e.g. 404)
+	// the aggregation will be disabled for that service by default. This flag
+	// can be used in case of an unsupported http response to allow the aggregation
+	// work without OpenAPI spec.
+	DisableOpenAPIAggregation *bool `json:"disableOpenAPIAggregation,omitempty" protobuf:"varint,4,opt,name=disableOpenAPIAggregation"`
 }
