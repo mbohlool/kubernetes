@@ -38,6 +38,7 @@ go_library(
         "handler_apis.go",
         "handler_proxy.go",
         "openapi_aggregator.go",
+        "openapi_controller.go",
         "resolvers.go",
     ],
     deps = [
