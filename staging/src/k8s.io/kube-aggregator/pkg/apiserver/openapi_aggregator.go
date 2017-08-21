@@ -35,12 +35,16 @@ import (
 	"k8s.io/kube-openapi/pkg/builder"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/handler"
+	"strings"
 )
 
 const (
 	aggregatorUser                = "system:aggregator"
 	specDownloadTimeout           = 60 * time.Second
 	localDelegateChainNamePattern = "k8s_internal_local_delegation_chain_%d"
+
+	// A randomly generated UUID to differentiate local and remote eTags.
+	locallyGeneratedEtagPrefix = "\"6E8F849B434D4B98A569B9D7718876E9-"
 )
 
 type openAPIAggregator struct {
@@ -270,7 +274,7 @@ func (s *openAPIAggregator) handlerWithUser(handler http.Handler, info user.Info
 }
 
 func etagFor(data []byte) string {
-	return fmt.Sprintf("\"%X\"", sha512.Sum512(data))
+	return fmt.Sprintf("%s%X\"", locallyGeneratedEtagPrefix, sha512.Sum512(data))
 }
 
 // downloadOpenAPISpec downloads openAPI spec from /swagger.json endpoint of the given handler.
@@ -284,9 +288,12 @@ func (s *openAPIAggregator) downloadOpenAPISpec(handler http.Handler, etag strin
 	if err != nil {
 		return nil, "", 0, err
 	}
-	if len(etag) > 0 {
+
+	// Only pass eTag if it is not generated locally
+	if len(etag) > 0 && !strings.HasPrefix(etag, locallyGeneratedEtagPrefix) {
 		req.Header.Add("If-None-Match", etag)
 	}
+
 	writer := newInMemoryResponseWriter()
 	handler.ServeHTTP(writer, req)
 
@@ -304,9 +311,18 @@ func (s *openAPIAggregator) downloadOpenAPISpec(handler http.Handler, etag strin
 		if err := json.Unmarshal(writer.data, openApiSpec); err != nil {
 			return nil, "", 0, err
 		}
-		etag = writer.Header().Get("Etag")
-		if len(etag) == 0 {
-			etag = etagFor(writer.data)
+		newEtag = writer.Header().Get("Etag")
+		if len(newEtag) == 0 {
+			newEtag = etagFor(writer.data)
+			if len(etag) > 0 && strings.HasPrefix(etag, locallyGeneratedEtagPrefix) {
+				// The function call with an etag and server does not report an etag.
+				// That means this server does not support etag and the etag that passed
+				// to the function generated previously by us. Just compare etags and
+				// return StatusNotModified if they are the same.
+				if etag == newEtag {
+					return nil, etag, http.StatusNotModified, nil
+				}
+			}
 		}
 		return openApiSpec, etag, http.StatusOK, nil
 	default:

@@ -209,52 +209,78 @@ func renameDefinition(s *spec.Swagger, old, new string) {
 	delete(s.Definitions, old)
 }
 
+// SafeMergeSpecs is differ from MergeSpecs as it assumers dest and source does not
+// have any name conflicts. In case of a conflict, merging will fail.
+func SafeMergeSpecs(dest, source *spec.Swagger) error {
+	return mergeSpecs(dest, source, false)
+}
+
 // Copy paths and definitions from source to dest, rename definitions if needed.
 // dest will be mutated, and source will not be changed.
 func MergeSpecs(dest, source *spec.Swagger) error {
-	sourceCopy, err := CloneSpec(source)
-	if err != nil {
-		return err
-	}
-	for k, v := range sourceCopy.Paths.Paths {
-		if _, found := dest.Paths.Paths[k]; found {
-			return fmt.Errorf("unable to merge: duplicated path %s", k)
-		}
-		dest.Paths.Paths[k] = v
-	}
-	usedNames := map[string]bool{}
-	for k := range dest.Definitions {
-		usedNames[k] = true
-	}
-	type Rename struct {
-		from, to string
-	}
-	renames := []Rename{}
-	for k, v := range sourceCopy.Definitions {
-		if usedNames[k] {
-			v2, found := dest.Definitions[k]
-			// Reuse model iff they are exactly the same.
-			if found && reflect.DeepEqual(v, v2) {
-				continue
+	return mergeSpecs(dest, source, true)
+}
+
+func mergeSpecs(dest, source *spec.Swagger, renameConflicts bool) error {
+	// Check to see if there is any conflicts
+	conflicts := false
+	for k := range source.Definitions {
+		if _, found := dest.Definitions[k]; found {
+			if !renameConflicts {
+				return fmt.Errorf("Model name conflict in merging OpenAPI spec: %s", k)
 			}
-			i := 2
-			newName := fmt.Sprintf("%s_v%d", k, i)
-			_, foundInSource := sourceCopy.Definitions[newName]
-			for usedNames[newName] || foundInSource {
-				i += 1
-				newName = fmt.Sprintf("%s_v%d", k, i)
-				_, foundInSource = sourceCopy.Definitions[newName]
-			}
-			renames = append(renames, Rename{from: k, to: newName})
-			usedNames[newName] = true
+			conflicts = true
+			break
 		}
 	}
-	for _, r := range renames {
-		renameDefinition(sourceCopy, r.from, r.to)
+
+	if conflicts {
+		source, err := CloneSpec(source)
+		if err != nil {
+			return err
+		}
+		for k, v := range source.Paths.Paths {
+			if _, found := dest.Paths.Paths[k]; found {
+				return fmt.Errorf("unable to merge: duplicated path %s", k)
+			}
+			dest.Paths.Paths[k] = v
+		}
+		usedNames := map[string]bool{}
+		for k := range dest.Definitions {
+			usedNames[k] = true
+		}
+		type Rename struct {
+			from, to string
+		}
+		renames := []Rename{}
+		for k, v := range source.Definitions {
+			if usedNames[k] {
+				v2, found := dest.Definitions[k]
+				// Reuse model iff they are exactly the same.
+				if found && reflect.DeepEqual(v, v2) {
+					continue
+				}
+				i := 2
+				newName := fmt.Sprintf("%s_v%d", k, i)
+				_, foundInSource := source.Definitions[newName]
+				for usedNames[newName] || foundInSource {
+					i += 1
+					newName = fmt.Sprintf("%s_v%d", k, i)
+					_, foundInSource = source.Definitions[newName]
+				}
+				renames = append(renames, Rename{from: k, to: newName})
+				usedNames[newName] = true
+			}
+		}
+		for _, r := range renames {
+			renameDefinition(source, r.from, r.to)
+		}
 	}
-	for k, v := range sourceCopy.Definitions {
-		if _, found := dest.Definitions[k]; !found {
+	for k, v := range source.Definitions {
+		if _, found := dest.Definitions[k]; found {
 			dest.Definitions[k] = v
+		} else {
+			return fmt.Errorf("Model name conflict in merging OpenAPI spec: %s", k)
 		}
 	}
 	return nil
