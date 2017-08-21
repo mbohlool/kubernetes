@@ -58,7 +58,6 @@ type openAPIAggregator struct {
 func (s *openAPIAggregator) addLocalSpec(spec *spec.Swagger, localHandler http.Handler, name, etag string) {
 	localApiService := apiregistration.APIService{}
 	localApiService.Name = name
-	localApiService.Spec.Service = nil
 	s.openAPISpecs[name] = &openAPISpecInfo{
 		etag:       etag,
 		apiService: localApiService,
@@ -88,6 +87,9 @@ func buildAndRegisterOpenAPIAggregator(delegationTarget server.DelegationTarget,
 		if delegateSpec == nil {
 			continue
 		}
+		// First spec is the base for all other specs. Keep all of its path
+		// e.g. /api/ from this spec. For any other spec after first one we
+		// should only be interested in things in /apis/ path.
 		if i != 0 {
 			aggregator.FilterSpecByPaths(delegateSpec, []string{"/apis/"})
 		}
@@ -101,7 +103,7 @@ func buildAndRegisterOpenAPIAggregator(delegationTarget server.DelegationTarget,
 	if err != nil {
 		return nil, err
 	}
-	// Remove any non-API endpoints from aggregator's spec. aggregatorOpenAPISpec
+	// Remove any non-API endpoints from aggregator's spec. first delegate's OpenAPI spec
 	// is the source of truth for all non-api endpoints.
 	aggregator.FilterSpecByPaths(aggregatorOpenAPISpec, []string{"/apis/"})
 
@@ -143,6 +145,7 @@ func (a byPriority) Len() int      { return len(a.specs) }
 func (a byPriority) Swap(i, j int) { a.specs[i], a.specs[j] = a.specs[j], a.specs[i] }
 func (a byPriority) Less(i, j int) bool {
 	// All local specs will come first
+	// WARNING: This will result in not following priorities for local APIServices.
 	if a.specs[i].apiService.Spec.Service == nil {
 		return true
 	}
