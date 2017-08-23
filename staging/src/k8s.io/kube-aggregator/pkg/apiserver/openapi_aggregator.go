@@ -348,7 +348,7 @@ func (s *openAPIAggregator) downloadOpenAPISpec(handler http.Handler, etag strin
 				}
 			}
 		}
-		return openApiSpec, etag, http.StatusOK, nil
+		return openApiSpec, newEtag, http.StatusOK, nil
 	default:
 		return nil, "", 0, fmt.Errorf("failed to retrieve openAPI spec, http error: %s", writer.String())
 	}
@@ -442,12 +442,15 @@ func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string) (shouldB
 		return true, false, nil
 	}
 
+	// Trying new spec by putting it into openAPISpecs's item and aggregate the result
+	// If we failed to aggregate, we will restore the spec to its original value.
 	oldSpec := specInfo.spec
 	specInfo.spec = spec
 	if err := s.updateOpenAPISpec(); err != nil {
 		specInfo.spec = oldSpec
 		return true, false, err
 	}
+
 	specInfo.etag = etag
 	return true, false, nil
 }
