@@ -27,10 +27,18 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
+const (
+	successfullUpdateDelay  = time.Minute
+	failedUpdateMaxExpDelay = time.Hour
+)
+
+// OpenAPIAggregationManager is the interface between this controller and OpenAPI Aggregator service.
 type OpenAPIAggregationManager interface {
 	UpdateApiServiceSpec(apiServiceName string) (changed, deleted bool, err error)
 }
 
+// OpenAPIAggregationController periodically check for changes in OpenAPI specs of APIServices and update/remove
+// them if necessary.
 type OpenAPIAggregationController struct {
 	openAPIAggregationManager OpenAPIAggregationManager
 	queue                     workqueue.RateLimitingInterface
@@ -40,7 +48,7 @@ func NewOpenAPIAggregationController(openAPIAggregationManager OpenAPIAggregatio
 	c := &OpenAPIAggregationController{
 		openAPIAggregationManager: openAPIAggregationManager,
 		queue: workqueue.NewNamedRateLimitingQueue(
-			workqueue.NewItemExponentialFailureRateLimiter(time.Minute, time.Hour), "APIServiceOpenAPIAggregationController"),
+			workqueue.NewItemExponentialFailureRateLimiter(successfullUpdateDelay, failedUpdateMaxExpDelay), "APIServiceOpenAPIAggregationControllerQueue1"),
 	}
 
 	return c
@@ -53,38 +61,39 @@ func (c *OpenAPIAggregationController) Run(stopCh <-chan struct{}) {
 	glog.Infof("Starting OpenAPIAggregationController")
 	defer glog.Infof("Shutting down OpenAPIAggregationController")
 
-	go wait.Until(c.runWorker, time.Minute, stopCh)
+	go wait.Until(c.runWorker, time.Second, stopCh)
 
 	<-stopCh
 }
 
 func (c *OpenAPIAggregationController) runWorker() {
-	keys := []string{}
-	defer func() {
-		for _, key := range keys {
-			c.queue.Done(key)
-		}
-	}()
-
-	for key, shutdown := c.queue.Get(); !shutdown; {
-		keys = append(keys, key.(string))
-		shouldBeRateLimited, deleted, err := c.openAPIAggregationManager.UpdateApiServiceSpec(key.(string))
-
-		if err != nil {
-			utilruntime.HandleError(fmt.Errorf("%v failed with : %v", key, err))
-		}
-
-		if !deleted {
-			if shouldBeRateLimited {
-				// rate limit both updated or failed calls
-				c.queue.AddRateLimited(key)
-			} else {
-				c.queue.Add(key)
-			}
-		}
+	for c.processNextWorkItem() {
 	}
 }
 
+// processNextWorkItem deals with one key off the queue.  It returns false when it's time to quit.
+func (c *OpenAPIAggregationController) processNextWorkItem() bool {
+	key, quit := c.queue.Get()
+	defer c.queue.Done(key)
+	if quit {
+		return false
+	}
+	shouldBeRateLimited, deleted, err := c.openAPIAggregationManager.UpdateApiServiceSpec(key.(string))
+
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf("%v failed with : %v", key, err))
+	}
+
+	if !deleted {
+		if shouldBeRateLimited {
+			c.queue.AddRateLimited(key)
+		} else {
+			c.queue.AddAfter(key, successfullUpdateDelay)
+		}
+	}
+	return true
+}
+
 func (c *OpenAPIAggregationController) enqueue(key string) {
-	c.queue.Add(key)
+	c.queue.AddAfter(key, successfullUpdateDelay)
 }
