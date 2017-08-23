@@ -88,12 +88,24 @@ func (c *OpenAPIAggregationController) processNextWorkItem() bool {
 		if shouldBeRateLimited {
 			c.queue.AddRateLimited(key)
 		} else {
+			c.queue.Forget(key)
 			c.queue.AddAfter(key, successfullUpdateDelay)
 		}
 	}
 	return true
 }
 
-func (c *OpenAPIAggregationController) enqueue(key string) {
-	c.queue.AddAfter(key, successfullUpdateDelay)
+func (c *OpenAPIAggregationController) AddAPIService(key string) {
+	c.queue.AddAfter(key, time.Second)
+}
+
+func (c *OpenAPIAggregationController) UpdateAPIService(key string) {
+	if c.queue.NumRequeues(key) > 0 {
+		// The item has failed before. Remove it from failure queue and
+		// update it immediately
+		c.queue.Forget(key)
+		c.queue.AddAfter(key, time.Second)
+	}
+	// Else: The item has been succeeded before and it will be updated soon (after successfullUpdateDelay)
+	// we don't add it again as it will cause a duplication of items.
 }

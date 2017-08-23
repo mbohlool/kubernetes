@@ -17,7 +17,6 @@ limitations under the License.
 package apiserver
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -27,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -247,7 +245,8 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		return s.openAPIAggregator.LoadApiServiceSpec(proxyHandler, apiService)
+		s.openAPIAggregator.AddApiServiceSpec(proxyHandler, apiService)
+		return nil
 	}
 
 	proxyPath := "/apis/" + apiService.Spec.Group + "/" + apiService.Spec.Version
@@ -266,9 +265,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 		serviceResolver: s.serviceResolver,
 	}
 	proxyHandler.updateAPIService(apiService)
-	if err := s.openAPIAggregator.LoadApiServiceSpec(proxyHandler, apiService); err != nil {
-		utilruntime.HandleError(fmt.Errorf("unable to load OpenAPI spec for API service %s: %v", apiService.Name, err))
-	}
+	s.openAPIAggregator.AddApiServiceSpec(proxyHandler, apiService)
 	s.proxyHandlers[apiService.Name] = proxyHandler
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Handle(proxyPath, proxyHandler)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.UnlistedHandlePrefix(proxyPath+"/", proxyHandler)

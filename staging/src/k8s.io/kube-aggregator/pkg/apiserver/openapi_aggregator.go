@@ -37,6 +37,7 @@ import (
 	"k8s.io/kube-openapi/pkg/builder"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/handler"
+	"github.com/golang/glog"
 )
 
 const (
@@ -159,9 +160,11 @@ func buildAndRegisterOpenAPIAggregator(delegationTarget server.DelegationTarget,
 // It can be used to sort specs with their priorities.
 type openAPISpecInfo struct {
 	apiService apiregistration.APIService
-	spec       *spec.Swagger
-	handler    http.Handler
-	etag       string
+
+	// Specification of this API Service. If null then the spec is not loaded yet.
+	spec    *spec.Swagger
+	handler http.Handler
+	etag    string
 }
 
 // byPriority can be used in sort.Sort to sort specs with their priorities.
@@ -222,7 +225,7 @@ func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err 
 	}
 	specs := []openAPISpecInfo{}
 	for serviceName, specInfo := range s.openAPISpecs {
-		if serviceName == s.baseForMergeSpecName {
+		if serviceName == s.baseForMergeSpecName || specInfo.spec == nil {
 			continue
 		}
 		specs = append(specs, openAPISpecInfo{specInfo.apiService, specInfo.spec, specInfo.handler, specInfo.etag})
@@ -354,45 +357,28 @@ func (s *openAPIAggregator) downloadOpenAPISpec(handler http.Handler, etag strin
 	}
 }
 
-// LoadApiServiceSpec loads OpenAPI spec for the given API Service and then updates aggregator's spec.  It is thread safe.
-func (s *openAPIAggregator) LoadApiServiceSpec(handler http.Handler, apiService *apiregistration.APIService) error {
+// AddApiServiceSpec add the api service to OpenAPI controller queue to be loaded.  It is thread safe.
+func (s *openAPIAggregator) AddApiServiceSpec(handler http.Handler, apiService *apiregistration.APIService) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	// Ignore local services
 	if apiService.Spec.Service == nil {
-		return nil
+		return
 	}
 
-	openApiSpec, etag, _, err := s.downloadOpenAPISpec(handler, "")
-	if err != nil {
-		return err
+	if _, existingService := s.openAPISpecs[apiService.Name]; existingService {
+		s.openAPIAggregationController.UpdateAPIService(apiService.Name)
+		return
 	}
-	if openApiSpec == nil {
-		// API service does not provide an OpenAPI spec.
-		s.removeApiServiceSpec(apiService.Name)
-		return nil
-	}
-	aggregator.FilterSpecByPaths(openApiSpec, []string{"/apis/" + apiService.Spec.Group + "/"})
 
-	_, existingService := s.openAPISpecs[apiService.Name]
 	s.openAPISpecs[apiService.Name] = &openAPISpecInfo{
 		apiService: *apiService,
-		spec:       openApiSpec,
+		spec:       nil,
 		handler:    handler,
-		etag:       etag,
+		etag:       "",
 	}
-
-	err = s.updateOpenAPISpec()
-	if err != nil {
-		delete(s.openAPISpecs, apiService.Name)
-		return err
-	}
-	if !existingService {
-		s.openAPIAggregationController.enqueue(apiService.Name)
-	}
-
-	return nil
+	s.openAPIAggregationController.AddAPIService(apiService.Name)
 }
 
 // RemoveApiServiceSpec removes an api service from OpenAPI aggregation. It is thread safe.
@@ -439,6 +425,7 @@ func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string) (shouldB
 	case httpStatus == http.StatusNotModified:
 		return false, false, nil
 	case httpStatus == http.StatusNotFound || spec == nil:
+		glog.Infof("OpenAPI spec not found for APIService %s. Will retry after an exponential delay", apiServiceName)
 		return true, false, nil
 	}
 
@@ -450,7 +437,7 @@ func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string) (shouldB
 		specInfo.spec = oldSpec
 		return true, false, err
 	}
-
+	glog.Infof("OpenAPI spec loaded for APIService %s.", apiServiceName)
 	specInfo.etag = etag
 	return true, false, nil
 }
