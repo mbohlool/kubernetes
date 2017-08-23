@@ -249,7 +249,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		if err := s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService); err != nil {
+		if err := s.openAPIAggregator.LoadApiServiceSpec(proxyHandler, apiService); err != nil {
 			return err
 		}
 	}
@@ -270,7 +270,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 		serviceResolver: s.serviceResolver,
 	}
 	proxyHandler.updateAPIService(apiService)
-	if err := s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService); err != nil {
+	if err := s.openAPIAggregator.LoadApiServiceSpec(proxyHandler, apiService); err != nil {
 		return err
 	}
 	s.proxyHandlers[apiService.Name] = proxyHandler
@@ -315,7 +315,7 @@ func (s *APIAggregator) RemoveAPIService(apiServiceName string) {
 	}
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath + "/")
-	s.openAPIAggregator.removeApiServiceSpec(apiServiceName)
+	s.openAPIAggregator.RemoveApiServiceSpec(apiServiceName)
 	delete(s.proxyHandlers, apiServiceName)
 
 	// TODO unregister group level discovery when there are no more versions for the group

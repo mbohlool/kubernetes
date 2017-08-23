@@ -36,6 +36,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/handler"
 	"strings"
+	"sync"
 )
 
 const (
@@ -48,8 +49,18 @@ const (
 )
 
 type openAPIAggregator struct {
+	// rwMutex protects All members of this struct.
+	mutex sync.Mutex
+
 	// Map of API Services' OpenAPI specs by their name
 	openAPISpecs map[string]*openAPISpecInfo
+
+	// openAPISpecs[baseForMergeSpecName] is the spec that should be used
+	// for the basis of merge. That means we would clone this spec first
+	// and then merge others into it. The spec would have `/api` endpoints
+	// and all other information such as Swagger.Info will be used for final
+	// spec.
+	baseForMergeSpecName string
 
 	// provided for dynamic OpenAPI spec
 	openAPIService *handler.OpenAPIService
@@ -59,6 +70,9 @@ type openAPIAggregator struct {
 	openAPIAggregationController *OpenAPIAggregationController
 }
 
+var _ OpenAPIAggregationManager = openAPIAggregator{}
+
+// This function is not thread safe as it only being called on startup.
 func (s *openAPIAggregator) addLocalSpec(spec *spec.Swagger, localHandler http.Handler, name, etag string) {
 	localApiService := apiregistration.APIService{}
 	localApiService.Name = name
@@ -70,15 +84,27 @@ func (s *openAPIAggregator) addLocalSpec(spec *spec.Swagger, localHandler http.H
 	}
 }
 
+// This function is not thread safe as it only being called on startup.
 func buildAndRegisterOpenAPIAggregator(delegationTarget server.DelegationTarget, webServices []*restful.WebService,
 	config *common.Config, pathHandler common.PathHandler, contextMapper request.RequestContextMapper) (s *openAPIAggregator, err error) {
 	s = &openAPIAggregator{
 		openAPISpecs:  map[string]*openAPISpecInfo{},
 		contextMapper: contextMapper,
+		openAPIAggregationController: NewOpenAPIAggregationController(s),
 	}
-	s.openAPIAggregationController = NewOpenAPIAggregationController(s)
 
 	i := 0
+	// Build Aggregator's spec
+	aggregatorOpenAPISpec, err := builder.BuildOpenAPISpec(
+		webServices, config)
+	if err != nil {
+		return nil, err
+	}
+	aggregator.FilterSpecByPaths(aggregatorOpenAPISpec, []string{"/apis/"})
+
+	// Reserving non-name spec for aggregator's Spec.
+	s.addLocalSpec(aggregatorOpenAPISpec, nil, fmt.Sprintf(localDelegateChainNamePattern, i), "")
+	i++
 	for delegate := delegationTarget; delegate != nil; delegate = delegate.NextDelegate() {
 		handler := delegate.UnprotectedHandler()
 		if handler == nil {
@@ -91,28 +117,27 @@ func buildAndRegisterOpenAPIAggregator(delegationTarget server.DelegationTarget,
 		if delegateSpec == nil {
 			continue
 		}
-		// First spec is the base for all other specs. Keep all of its path
-		// e.g. /api/ from this spec. For any other spec after first one we
-		// should only be interested in things in /apis/ path.
-		if i != 0 {
+		specName := fmt.Sprintf(localDelegateChainNamePattern, i)
+
+		// We would find first spec with "/api/" endpoints and consider it the
+		// base for the merge. Any other spec would be filtered for their "/apis/"
+		// endpoints only.
+		filterPaths := true
+		if len(s.baseForMergeSpecName) == 0 {
+			for path := range delegateSpec.Paths.Paths {
+				if strings.HasPrefix(path,"/api/") {
+					s.baseForMergeSpecName = specName
+					filterPaths = false
+					break
+				}
+			}
+		}
+		if filterPaths {
 			aggregator.FilterSpecByPaths(delegateSpec, []string{"/apis/"})
 		}
-		s.addLocalSpec(delegateSpec, handler, fmt.Sprintf(localDelegateChainNamePattern, i), etag)
+		s.addLocalSpec(delegateSpec, handler, specName, etag)
 		i++
 	}
-
-	// Build Aggregator's spec
-	aggregatorOpenAPISpec, err := builder.BuildOpenAPISpec(
-		webServices, config)
-	if err != nil {
-		return nil, err
-	}
-	// Remove any non-API endpoints from aggregator's spec. first delegate's OpenAPI spec
-	// is the source of truth for all non-api endpoints.
-	aggregator.FilterSpecByPaths(aggregatorOpenAPISpec, []string{"/apis/"})
-
-	// Reserving non-name spec for aggregator's Spec.
-	s.addLocalSpec(aggregatorOpenAPISpec, nil, fmt.Sprintf(localDelegateChainNamePattern, i), "")
 
 	// Build initial spec to serve.
 	specToServe, err := s.buildOpenAPISpec()
@@ -185,12 +210,11 @@ func sortByPriority(specs []openAPISpecInfo) {
 	sort.Sort(b)
 }
 
-// buildOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe.
+// buildOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe. The caller is responsible to hold proper locks.
 func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err error) {
-	firstDelegateName := fmt.Sprintf(localDelegateChainNamePattern, 0)
-	localDelegateSpec, exists := s.openAPISpecs[firstDelegateName]
+	localDelegateSpec, exists := s.openAPISpecs[s.baseForMergeSpecName]
 	if !exists {
-		return nil, fmt.Errorf("localDelegate spec is missing")
+		return nil, fmt.Errorf("Cannot find base spec for merging.")
 	}
 	specToReturn, err = aggregator.CloneSpec(localDelegateSpec.spec)
 	if err != nil {
@@ -198,7 +222,7 @@ func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err 
 	}
 	specs := []openAPISpecInfo{}
 	for serviceName, specInfo := range s.openAPISpecs {
-		if serviceName == firstDelegateName {
+		if serviceName == s.baseForMergeSpecName {
 			continue
 		}
 		specs = append(specs, openAPISpecInfo{specInfo.apiService, specInfo.spec, specInfo.handler, specInfo.etag})
@@ -212,7 +236,7 @@ func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err 
 	return specToReturn, nil
 }
 
-// updateOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe.
+// updateOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe. The caller is responsible to hold proper locks.
 func (s *openAPIAggregator) updateOpenAPISpec() error {
 	if s.openAPIService == nil {
 		return nil
@@ -300,7 +324,7 @@ func (s *openAPIAggregator) downloadOpenAPISpec(handler http.Handler, etag strin
 	switch writer.respCode {
 	case http.StatusNotModified:
 		if len(etag) == 0 {
-			return nil, etag, http.StatusNotModified, fmt.Errorf("http.StatusNotModified is not allowed in absense of etag")
+			return nil, etag, http.StatusNotModified, fmt.Errorf("http.StatusNotModified is not allowed in absence of etag")
 		}
 		return nil, etag, http.StatusNotModified, nil
 	case http.StatusNotFound:
@@ -330,8 +354,10 @@ func (s *openAPIAggregator) downloadOpenAPISpec(handler http.Handler, etag strin
 	}
 }
 
-// loadApiServiceSpec loads OpenAPI spec for the given API Service and then updates aggregator's spec.
-func (s *openAPIAggregator) loadApiServiceSpec(handler http.Handler, apiService *apiregistration.APIService) error {
+// LoadApiServiceSpec loads OpenAPI spec for the given API Service and then updates aggregator's spec.  It is thread safe.
+func (s *openAPIAggregator) LoadApiServiceSpec(handler http.Handler, apiService *apiregistration.APIService) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	if apiService.DisableOpenAPIAggregation != nil && *apiService.DisableOpenAPIAggregation {
 		return nil
@@ -347,7 +373,8 @@ func (s *openAPIAggregator) loadApiServiceSpec(handler http.Handler, apiService 
 		return err
 	}
 	if openApiSpec == nil {
-		// API service does not provide an OpenAPI spec, ignore it.
+		// API service does not provide an OpenAPI spec.
+		s.removeApiServiceSpec(apiService.Name)
 		return nil
 	}
 	aggregator.FilterSpecByPaths(openApiSpec, []string{"/apis/" + apiService.Spec.Group + "/"})
@@ -372,20 +399,35 @@ func (s *openAPIAggregator) loadApiServiceSpec(handler http.Handler, apiService 
 	return nil
 }
 
+// RemoveApiServiceSpec removes an api service from OpenAPI aggregation. It is thread safe.
+func (s *openAPIAggregator) RemoveApiServiceSpec(apiServiceName string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	return s.removeApiServiceSpec(apiServiceName)
+}
+
+// removeApiServiceSpec is the internal version of RemoveApiServiceSpec that does not hold any lock and safe to call
+// from a method that holds the lock.
 func (s *openAPIAggregator) removeApiServiceSpec(apiServiceName string) error {
-	if _, existingService := s.openAPISpecs[apiServiceName]; existingService {
-		oldSpecs := s.openAPISpecs
-		delete(s.openAPISpecs, apiServiceName)
-		err := s.updateOpenAPISpec()
-		if err != nil {
-			s.openAPISpecs = oldSpecs
-			return err
-		}
+	if _, existingService := s.openAPISpecs[apiServiceName]; !existingService {
+		return nil
+	}
+	oldSpecs := s.openAPISpecs
+	delete(s.openAPISpecs, apiServiceName)
+	err := s.updateOpenAPISpec()
+	if err != nil {
+		s.openAPISpecs = oldSpecs
+		return err
 	}
 	return nil
 }
 
+// UpdateApiServiceSpec updates and aggregation OpenAPI spec for given service name. It is thread safe.
 func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string) (shouldBeRateLimited, deleted bool, err error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	specInfo, existingService := s.openAPISpecs[apiServiceName]
 	if !existingService {
 		return false, true, nil
@@ -395,15 +437,15 @@ func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string) (shouldB
 		return false, false, nil
 	}
 	spec, etag, httpStatus, err := s.downloadOpenAPISpec(specInfo.handler, specInfo.etag)
-	if err != nil {
+	switch {
+	case err != nil:
 		return true, false, err
-	}
-	if httpStatus == http.StatusNotModified {
+	case httpStatus == http.StatusNotModified:
 		return false, false, nil
-	}
-	if httpStatus == http.StatusNotFound || spec == nil {
+	case httpStatus == http.StatusNotFound || spec == nil:
 		return true, false, nil
 	}
+
 	oldSpec := specInfo.spec
 	specInfo.spec = spec
 	if err := s.updateOpenAPISpec(); err != nil {

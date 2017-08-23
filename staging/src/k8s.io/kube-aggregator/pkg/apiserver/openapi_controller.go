@@ -27,10 +27,13 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
+// OpenAPIAggregationManager is the interface between this controller and OpenAPI Aggregator service.
 type OpenAPIAggregationManager interface {
 	UpdateApiServiceSpec(apiServiceName string) (changed, deleted bool, err error)
 }
 
+// OpenAPIAggregationController periodically check for changes in OpenAPI specs of APIServices and update/remove
+// them if necessary.
 type OpenAPIAggregationController struct {
 	openAPIAggregationManager OpenAPIAggregationManager
 	queue                     workqueue.RateLimitingInterface
