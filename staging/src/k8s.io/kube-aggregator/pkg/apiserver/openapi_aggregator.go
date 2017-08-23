@@ -70,7 +70,7 @@ type openAPIAggregator struct {
 	openAPIAggregationController *OpenAPIAggregationController
 }
 
-var _ OpenAPIAggregationManager = openAPIAggregator{}
+var _ OpenAPIAggregationManager = &openAPIAggregator{}
 
 // This function is not thread safe as it only being called on startup.
 func (s *openAPIAggregator) addLocalSpec(spec *spec.Swagger, localHandler http.Handler, name, etag string) {
