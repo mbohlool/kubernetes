@@ -145,8 +145,6 @@ func (c *Config) SkipComplete() completedConfig {
 }
 
 // New returns a new instance of APIAggregator from the given config.
-// delegationChain is the list of all delegations. The first one in the list will be used to delegate all unknown traffic
-// and the rest is being used to aggregate OpenAPI spec.
 func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.DelegationTarget) (*APIAggregator, error) {
 	// Prevent generic API server to install OpenAPI handler. Aggregator server
 	// has its own customized OpenAPI handler.
@@ -249,7 +247,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		return s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService)
+		return s.openAPIAggregator.LoadApiServiceSpec(proxyHandler, apiService)
 	}
 
 	proxyPath := "/apis/" + apiService.Spec.Group + "/" + apiService.Spec.Version
@@ -268,7 +266,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 		serviceResolver: s.serviceResolver,
 	}
 	proxyHandler.updateAPIService(apiService)
-	if err := s.openAPIAggregator.loadApiServiceSpec(proxyHandler, apiService); err != nil {
+	if err := s.openAPIAggregator.LoadApiServiceSpec(proxyHandler, apiService); err != nil {
 		utilruntime.HandleError(fmt.Errorf("unable to load OpenAPI spec for API service %s: %v", apiService.Name, err))
 	}
 	s.proxyHandlers[apiService.Name] = proxyHandler
@@ -313,7 +311,7 @@ func (s *APIAggregator) RemoveAPIService(apiServiceName string) {
 	}
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath + "/")
-	s.openAPIAggregator.removeApiServiceSpec(apiServiceName)
+	s.openAPIAggregator.RemoveApiServiceSpec(apiServiceName)
 	delete(s.proxyHandlers, apiServiceName)
 
 	// TODO unregister group level discovery when there are no more versions for the group
