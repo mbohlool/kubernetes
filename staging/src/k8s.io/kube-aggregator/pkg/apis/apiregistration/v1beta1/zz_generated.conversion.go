@@ -58,6 +58,7 @@ func autoConvert_v1beta1_APIService_To_apiregistration_APIService(in *APIService
 	if err := Convert_v1beta1_APIServiceStatus_To_apiregistration_APIServiceStatus(&in.Status, &out.Status, s); err != nil {
 		return err
 	}
+	out.DisableOpenAPIAggregation = (*bool)(unsafe.Pointer(in.DisableOpenAPIAggregation))
 	return nil
 }
 
@@ -74,6 +75,7 @@ func autoConvert_apiregistration_APIService_To_v1beta1_APIService(in *apiregistr
 	if err := Convert_apiregistration_APIServiceStatus_To_v1beta1_APIServiceStatus(&in.Status, &out.Status, s); err != nil {
 		return err
 	}
+	out.DisableOpenAPIAggregation = (*bool)(unsafe.Pointer(in.DisableOpenAPIAggregation))
 	return nil
 }
 

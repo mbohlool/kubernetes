@@ -70,6 +70,15 @@ func (in *APIService) DeepCopyInto(out *APIService) {
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	in.Spec.DeepCopyInto(&out.Spec)
 	in.Status.DeepCopyInto(&out.Status)
+	if in.DisableOpenAPIAggregation != nil {
+		in, out := &in.DisableOpenAPIAggregation, &out.DisableOpenAPIAggregation
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(bool)
+			**out = **in
+		}
+	}
 	return
 }
 
