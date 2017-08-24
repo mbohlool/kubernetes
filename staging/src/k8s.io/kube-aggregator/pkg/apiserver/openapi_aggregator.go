@@ -28,6 +28,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/go-openapi/spec"
+	"github.com/golang/glog"
 
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -37,7 +38,6 @@ import (
 	"k8s.io/kube-openapi/pkg/builder"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/handler"
-	"github.com/golang/glog"
 )
 
 const (
