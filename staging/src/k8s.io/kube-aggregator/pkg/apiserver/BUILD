@@ -16,6 +16,7 @@ go_test(
     library = ":go_default_library",
     deps = [
         "//vendor/github.com/go-openapi/spec:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
         "//vendor/golang.org/x/net/websocket:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/api/equality:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
