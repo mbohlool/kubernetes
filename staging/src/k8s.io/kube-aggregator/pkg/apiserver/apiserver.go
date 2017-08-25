@@ -117,7 +117,7 @@ type APIAggregator struct {
 	// Information needed to determine routing for the aggregator
 	serviceResolver ServiceResolver
 
-	openAPIAggregator *openAPIAggregator
+	openAPIAggregationController *OpenAPIAggregationController
 }
 
 type completedConfig struct {
@@ -220,17 +220,20 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 	})
 
 	if openApiConfig != nil {
-		s.openAPIAggregator, err = buildAndRegisterOpenAPIAggregator(
+		specDownloader := NewOpenAPIDownloader(s.contextMapper)
+		openAPIAggregator, err := buildAndRegisterOpenAPIAggregator(
+			&specDownloader,
 			delegationTarget,
 			s.GenericAPIServer.Handler.GoRestfulContainer.RegisteredWebServices(),
 			openApiConfig,
-			s.GenericAPIServer.Handler.NonGoRestfulMux,
-			s.contextMapper)
+			s.GenericAPIServer.Handler.NonGoRestfulMux)
 		if err != nil {
 			return nil, err
 		}
+		s.openAPIAggregationController = NewOpenAPIAggregationController(&specDownloader, openAPIAggregator)
+
 		s.GenericAPIServer.AddPostStartHook("apiservice-openapi-controller", func(context genericapiserver.PostStartHookContext) error {
-			go s.openAPIAggregator.openAPIAggregationController.Run(context.StopCh)
+			go s.openAPIAggregationController.Run(context.StopCh)
 			return nil
 		})
 	}
@@ -245,7 +248,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 	// since they are wired against listers because they require multiple resources to respond
 	if proxyHandler, exists := s.proxyHandlers[apiService.Name]; exists {
 		proxyHandler.updateAPIService(apiService)
-		s.openAPIAggregator.AddApiServiceSpec(proxyHandler, apiService)
+		s.openAPIAggregationController.UpdateAPIService(proxyHandler, apiService)
 		return nil
 	}
 
@@ -265,7 +268,7 @@ func (s *APIAggregator) AddAPIService(apiService *apiregistration.APIService) er
 		serviceResolver: s.serviceResolver,
 	}
 	proxyHandler.updateAPIService(apiService)
-	s.openAPIAggregator.AddApiServiceSpec(proxyHandler, apiService)
+	s.openAPIAggregationController.AddAPIService(proxyHandler, apiService)
 	s.proxyHandlers[apiService.Name] = proxyHandler
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Handle(proxyPath, proxyHandler)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.UnlistedHandlePrefix(proxyPath+"/", proxyHandler)
@@ -308,7 +311,7 @@ func (s *APIAggregator) RemoveAPIService(apiServiceName string) {
 	}
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath + "/")
-	s.openAPIAggregator.RemoveApiServiceSpec(apiServiceName)
+	s.openAPIAggregationController.RemoveAPIService(apiServiceName)
 	delete(s.proxyHandlers, apiServiceName)
 
 	// TODO unregister group level discovery when there are no more versions for the group
