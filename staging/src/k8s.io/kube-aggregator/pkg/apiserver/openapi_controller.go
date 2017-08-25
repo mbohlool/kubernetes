@@ -18,23 +18,29 @@ package apiserver
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/go-openapi/spec"
 	"github.com/golang/glog"
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
 )
 
 const (
-	successfullUpdateDelay  = time.Minute
+	successfulUpdateDelay   = time.Minute
 	failedUpdateMaxExpDelay = time.Hour
 )
 
 // OpenAPIAggregationManager is the interface between this controller and OpenAPI Aggregator service.
 type OpenAPIAggregationManager interface {
-	UpdateApiServiceSpec(apiServiceName string) (changed, deleted bool, err error)
+	AddUpdateApiService(handler http.Handler, apiService *apiregistration.APIService) error
+	UpdateApiServiceSpec(apiServiceName string, spec *spec.Swagger, etag string) error
+	RemoveApiServiceSpec(apiServiceName string) error
+	GetApiServiceInfo(apiServiceName string) (handler http.Handler, etag string, exists bool)
 }
 
 // OpenAPIAggregationController periodically check for changes in OpenAPI specs of APIServices and update/remove
@@ -42,13 +48,15 @@ type OpenAPIAggregationManager interface {
 type OpenAPIAggregationController struct {
 	openAPIAggregationManager OpenAPIAggregationManager
 	queue                     workqueue.RateLimitingInterface
+	downloader                *openAPIDownloader
 }
 
-func NewOpenAPIAggregationController(openAPIAggregationManager OpenAPIAggregationManager) *OpenAPIAggregationController {
+func NewOpenAPIAggregationController(downloader *openAPIDownloader, openAPIAggregationManager OpenAPIAggregationManager) *OpenAPIAggregationController {
 	c := &OpenAPIAggregationController{
 		openAPIAggregationManager: openAPIAggregationManager,
 		queue: workqueue.NewNamedRateLimitingQueue(
-			workqueue.NewItemExponentialFailureRateLimiter(successfullUpdateDelay, failedUpdateMaxExpDelay), "APIServiceOpenAPIAggregationControllerQueue1"),
+			workqueue.NewItemExponentialFailureRateLimiter(successfulUpdateDelay, failedUpdateMaxExpDelay), "APIServiceOpenAPIAggregationControllerQueue1"),
+		downloader: downloader,
 	}
 
 	return c
@@ -78,34 +86,65 @@ func (c *OpenAPIAggregationController) processNextWorkItem() bool {
 	if quit {
 		return false
 	}
-	shouldBeRateLimited, deleted, err := c.openAPIAggregationManager.UpdateApiServiceSpec(key.(string))
-
-	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("%v failed with : %v", key, err))
+	apiServiceName := key.(string)
+	handler, etag, exists := c.openAPIAggregationManager.GetApiServiceInfo(apiServiceName)
+	if !exists || handler == nil {
+		c.queue.Forget(key)
+		return true
+	}
+	returnSpec, newEtag, httpStatus, err := c.downloader.Download(handler, etag)
+	rateLimit := false
+	switch {
+	case err != nil:
+		utilruntime.HandleError(fmt.Errorf("loading OpenAPI spec for %v failed with : %v", apiServiceName, err))
+		rateLimit = true
+	case httpStatus == http.StatusNotModified:
+		rateLimit = false
+	case httpStatus == http.StatusNotFound || returnSpec == nil:
+		rateLimit = true
+	case httpStatus == http.StatusOK:
+		if err := c.openAPIAggregationManager.UpdateApiServiceSpec(apiServiceName, returnSpec, newEtag); err != nil {
+			utilruntime.HandleError(fmt.Errorf("aggregating OpenAPI spec for %v failed with : %v", apiServiceName, err))
+			rateLimit = true
+		}
 	}
 
-	if !deleted {
-		if shouldBeRateLimited {
-			c.queue.AddRateLimited(key)
-		} else {
-			c.queue.Forget(key)
-			c.queue.AddAfter(key, successfullUpdateDelay)
-		}
+	if rateLimit {
+		c.queue.AddRateLimited(key)
+	} else {
+		c.queue.Forget(key)
+		c.queue.AddAfter(key, successfulUpdateDelay)
 	}
 	return true
 }
 
-func (c *OpenAPIAggregationController) AddAPIService(key string) {
-	c.queue.AddAfter(key, time.Second)
+func (c *OpenAPIAggregationController) AddAPIService(handler http.Handler, apiService *apiregistration.APIService) {
+	if err := c.openAPIAggregationManager.AddUpdateApiService(handler, apiService); err != nil {
+		utilruntime.HandleError(fmt.Errorf("adding %v to OpenAPIAggregationController failed with : %v", apiService.Name, err))
+	}
+	c.queue.AddAfter(apiService.Name, time.Second)
 }
 
-func (c *OpenAPIAggregationController) UpdateAPIService(key string) {
+func (c *OpenAPIAggregationController) UpdateAPIService(handler http.Handler, apiService *apiregistration.APIService) {
+	if err := c.openAPIAggregationManager.AddUpdateApiService(handler, apiService); err != nil {
+		utilruntime.HandleError(fmt.Errorf("updating %v to OpenAPIAggregationController failed with : %v", apiService.Name, err))
+	}
+	key := apiService.Name
 	if c.queue.NumRequeues(key) > 0 {
 		// The item has failed before. Remove it from failure queue and
 		// update it immediately
 		c.queue.Forget(key)
 		c.queue.AddAfter(key, time.Second)
 	}
-	// Else: The item has been succeeded before and it will be updated soon (after successfullUpdateDelay)
+	// Else: The item has been succeeded before and it will be updated soon (after successfulUpdateDelay)
 	// we don't add it again as it will cause a duplication of items.
+}
+
+func (c *OpenAPIAggregationController) RemoveAPIService(apiServiceName string) {
+	if err := c.openAPIAggregationManager.RemoveApiServiceSpec(apiServiceName); err != nil {
+		utilruntime.HandleError(fmt.Errorf("removing %v from OpenAPIAggregationController failed with : %v", apiServiceName, err))
+	}
+	// This will only remove it if it was failing before. If it was successful, processNextWorkItem will figure it out
+	// and will not add it again to the queue.
+	c.queue.Forget(apiServiceName)
 }
