@@ -223,7 +223,7 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 
 	if openApiConfig != nil {
 		s.openAPIAggregator, err = buildAndRegisterOpenAPIAggregator(
-			s.delegateHandler,
+			delegationTarget,
 			s.GenericAPIServer.Handler.GoRestfulContainer.RegisteredWebServices(),
 			openApiConfig,
 			s.GenericAPIServer.Handler.NonGoRestfulMux,
