@@ -29,6 +29,7 @@ import (
 
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
 	"k8s.io/kube-openapi/pkg/aggregator"
 	"k8s.io/kube-openapi/pkg/builder"
@@ -38,9 +39,9 @@ import (
 )
 
 const (
-	aggregatorUser      = "system:aggregator"
-	specDownloadTimeout = 60 * time.Second
-	localDelegateName   = ""
+	aggregatorUser                = "system:aggregator"
+	specDownloadTimeout           = 60 * time.Second
+	localDelegateChainNamePattern = "k8s_internal_local_delegation_chain_%d"
 
 	// A randomly generated UUID to differentiate local and remote eTags.
 	locallyGeneratedEtagPrefix = "\"6E8F849B434D4B98A569B9D7718876E9-"
@@ -61,7 +62,6 @@ type openAPIAggregator struct {
 func (s *openAPIAggregator) addLocalSpec(spec *spec.Swagger, localHandler http.Handler, name, etag string) {
 	localApiService := apiregistration.APIService{}
 	localApiService.Name = name
-	localApiService.Spec.Service = nil
 	s.openAPISpecs[name] = &openAPISpecInfo{
 		etag:       etag,
 		apiService: localApiService,
@@ -70,18 +70,36 @@ func (s *openAPIAggregator) addLocalSpec(spec *spec.Swagger, localHandler http.H
 	}
 }
 
-func buildAndRegisterOpenAPIAggregator(delegateHandler http.Handler, webServices []*restful.WebService, config *common.Config, pathHandler common.PathHandler, contextMapper request.RequestContextMapper) (s *openAPIAggregator, err error) {
+func buildAndRegisterOpenAPIAggregator(delegationTarget server.DelegationTarget, webServices []*restful.WebService,
+	config *common.Config, pathHandler common.PathHandler, contextMapper request.RequestContextMapper) (s *openAPIAggregator, err error) {
 	s = &openAPIAggregator{
 		openAPISpecs:  map[string]*openAPISpecInfo{},
 		contextMapper: contextMapper,
 	}
 	s.openAPIAggregationController = NewOpenAPIAggregationController(s)
 
-	delegateSpec, etag, _, err := s.downloadOpenAPISpec(delegateHandler, "")
-	if err != nil {
-		return nil, err
+	i := 0
+	for delegate := delegationTarget; delegate != nil; delegate = delegate.NextDelegate() {
+		handler := delegate.UnprotectedHandler()
+		if handler == nil {
+			continue
+		}
+		delegateSpec, etag, _, err := s.downloadOpenAPISpec(handler, "")
+		if err != nil {
+			return nil, err
+		}
+		if delegateSpec == nil {
+			continue
+		}
+		// First spec is the base for all other specs. Keep all of its path
+		// e.g. /api/ from this spec. For any other spec after first one we
+		// should only be interested in things in /apis/ path.
+		if i != 0 {
+			aggregator.FilterSpecByPaths(delegateSpec, []string{"/apis/"})
+		}
+		s.addLocalSpec(delegateSpec, handler, fmt.Sprintf(localDelegateChainNamePattern, i), etag)
+		i++
 	}
-	s.addLocalSpec(delegateSpec, delegateHandler, localDelegateName, etag)
 
 	// Build Aggregator's spec
 	aggregatorOpenAPISpec, err := builder.BuildOpenAPISpec(
@@ -89,11 +107,12 @@ func buildAndRegisterOpenAPIAggregator(delegateHandler http.Handler, webServices
 	if err != nil {
 		return nil, err
 	}
-	// Remove any non-API endpoints from aggregator's spec. aggregatorOpenAPISpec
+	// Remove any non-API endpoints from aggregator's spec. first delegate's OpenAPI spec
 	// is the source of truth for all non-api endpoints.
 	aggregator.FilterSpecByPaths(aggregatorOpenAPISpec, []string{"/apis/"})
 
-	s.addLocalSpec(aggregatorOpenAPISpec, nil, "", "")
+	// Reserving non-name spec for aggregator's Spec.
+	s.addLocalSpec(aggregatorOpenAPISpec, nil, fmt.Sprintf(localDelegateChainNamePattern, i), "")
 
 	// Build initial spec to serve.
 	specToServe, err := s.buildOpenAPISpec()
@@ -130,6 +149,7 @@ func (a byPriority) Len() int      { return len(a.specs) }
 func (a byPriority) Swap(i, j int) { a.specs[i], a.specs[j] = a.specs[j], a.specs[i] }
 func (a byPriority) Less(i, j int) bool {
 	// All local specs will come first
+	// WARNING: This will result in not following priorities for local APIServices.
 	if a.specs[i].apiService.Spec.Service == nil {
 		return true
 	}
@@ -167,7 +187,8 @@ func sortByPriority(specs []openAPISpecInfo) {
 
 // buildOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe.
 func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err error) {
-	localDelegateSpec, exists := s.openAPISpecs[localDelegateName]
+	firstDelegateName := fmt.Sprintf(localDelegateChainNamePattern, 0)
+	localDelegateSpec, exists := s.openAPISpecs[firstDelegateName]
 	if !exists {
 		return nil, fmt.Errorf("localDelegate spec is missing")
 	}
@@ -177,7 +198,7 @@ func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err 
 	}
 	specs := []openAPISpecInfo{}
 	for serviceName, specInfo := range s.openAPISpecs {
-		if serviceName == localDelegateName {
+		if serviceName == firstDelegateName {
 			continue
 		}
 		specs = append(specs, openAPISpecInfo{specInfo.apiService, specInfo.spec, specInfo.handler, specInfo.etag})
@@ -360,7 +381,7 @@ func (s *openAPIAggregator) RemoveApiServiceSpec(apiServiceName string) error {
 	return nil
 }
 
-func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string) (changed, deleted bool, err error) {
+func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string) (shouldBeRateLimited, deleted bool, err error) {
 	specInfo, existingService := s.openAPISpecs[apiServiceName]
 	if !existingService {
 		return false, true, nil
@@ -369,18 +390,21 @@ func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string) (changed
 	if specInfo.handler == nil {
 		return false, false, nil
 	}
-	spec, etag, err := s.downloadOpenAPISpec(specInfo.handler, specInfo.etag)
+	spec, etag, httpStatus, err := s.downloadOpenAPISpec(specInfo.handler, specInfo.etag)
 	if err != nil {
-		return false, false, err
+		return true, false, err
 	}
-	if spec == nil {
+	if httpStatus == http.StatusNotModified {
 		return false, false, nil
+	}
+	if httpStatus == http.StatusNotFound || spec == nil {
+		return true, false, nil
 	}
 	oldSpec := specInfo.spec
 	specInfo.spec = spec
 	if err := s.updateOpenAPISpec(); err != nil {
 		specInfo.spec = oldSpec
-		return false, false, err
+		return true, false, err
 	}
 	specInfo.etag = etag
 	return true, false, nil
