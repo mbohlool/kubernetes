@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -50,13 +49,6 @@ type openAPIAggregator struct {
 
 	// Map of API Services' OpenAPI specs by their name
 	openAPISpecs map[string]*openAPISpecInfo
-
-	// openAPISpecs[baseForMergeSpecName] is the spec that should be used
-	// for the basis of merge. That means we would clone this spec first
-	// and then merge others into it. The spec would have `/api` endpoints
-	// and all other information such as Swagger.Info will be used for final
-	// spec.
-	baseForMergeSpecName string
 
 	// provided for dynamic OpenAPI spec
 	openAPIService *handler.OpenAPIService
@@ -109,30 +101,9 @@ func buildAndRegisterOpenAPIAggregator(downloader *openAPIDownloader, delegation
 		}
 		specName := fmt.Sprintf(localDelegateChainNamePattern, i)
 
-		// We would find first spec with "/api/" endpoints and consider it the
-		// base for the merge. Any other spec would be filtered for their "/apis/"
-		// endpoints only.
-		filterPaths := true
-		if len(s.baseForMergeSpecName) == 0 {
-			for path := range delegateSpec.Paths.Paths {
-				if strings.HasPrefix(path, "/api/") {
-					s.baseForMergeSpecName = specName
-					filterPaths = false
-					break
-				}
-			}
-		}
-		if filterPaths {
-			aggregator.FilterSpecByPaths(delegateSpec, []string{"/apis/"})
-		}
+		aggregator.FilterSpecByPaths(delegateSpec, []string{"/apis/"})
 		s.addLocalSpec(delegateSpec, handler, specName, etag)
 		i++
-	}
-
-	if len(s.baseForMergeSpecName) == 0 {
-		// We still didn't find a server with /api/ endpoints, we will chose a default
-		// one. This should not happen in kubernetes unless we remove core api group.
-		s.baseForMergeSpecName = fmt.Sprintf(localDelegateChainNamePattern, 0)
 	}
 
 	// Build initial spec to serve.
@@ -210,7 +181,8 @@ func sortByPriority(specs []openAPISpecInfo) {
 
 // buildOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe. The caller is responsible to hold proper locks.
 func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err error) {
-	localDelegateSpec, exists := s.openAPISpecs[s.baseForMergeSpecName]
+	baseForMergeSpecName := fmt.Sprintf(localDelegateChainNamePattern, 0)
+	localDelegateSpec, exists := s.openAPISpecs[baseForMergeSpecName]
 	if !exists {
 		return nil, fmt.Errorf("Cannot find base spec for merging.")
 	}
@@ -220,7 +192,7 @@ func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err 
 	}
 	specs := []openAPISpecInfo{}
 	for serviceName, specInfo := range s.openAPISpecs {
-		if serviceName == s.baseForMergeSpecName || specInfo.spec == nil {
+		if serviceName == baseForMergeSpecName || specInfo.spec == nil {
 			continue
 		}
 		specs = append(specs, openAPISpecInfo{specInfo.apiService, specInfo.spec, specInfo.handler, specInfo.etag})
