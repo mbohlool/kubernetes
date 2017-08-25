@@ -101,7 +101,7 @@ func buildAndRegisterOpenAPIAggregator(downloader *openAPIDownloader, delegation
 		}
 		specName := fmt.Sprintf(localDelegateChainNamePattern, i)
 
-		aggregator.FilterSpecByPaths(delegateSpec, []string{"/apis/"})
+		aggregator.FilterSpecByPaths(delegateSpec, []string{"/apis/", "/api/", "/logs/", "/version/"})
 		s.addLocalSpec(delegateSpec, handler, specName, etag)
 		i++
 	}
