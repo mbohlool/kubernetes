@@ -46,7 +46,7 @@ const (
 
 type openAPIAggregator struct {
 	// mutex protects All members of this struct.
-	mutex sync.Mutex
+	rwMutex sync.RWMutex
 
 	// Map of API Services' OpenAPI specs by their name
 	openAPISpecs map[string]*openAPISpecInfo
@@ -127,6 +127,12 @@ func buildAndRegisterOpenAPIAggregator(downloader *openAPIDownloader, delegation
 		}
 		s.addLocalSpec(delegateSpec, handler, specName, etag)
 		i++
+	}
+
+	if len(s.baseForMergeSpecName) == 0 {
+		// We still didn't find a server with /api/ endpoints, we will chose a default
+		// one. This should not happen in kubernetes unless we remove core api group.
+		s.baseForMergeSpecName = fmt.Sprintf(localDelegateChainNamePattern, 0)
 	}
 
 	// Build initial spec to serve.
@@ -240,13 +246,32 @@ func (s *openAPIAggregator) updateOpenAPISpec() error {
 	return s.openAPIService.UpdateSpec(specToServe)
 }
 
-// tryUpdatingServiceSpecs tries updating openAPISpecs map, and keep the map intact if the update fails.
-// note that map's elements are pointers, so the update method should not change them.
-func (s *openAPIAggregator) tryUpdatingServiceSpecs(updateFunc func() error) error {
-	// Keep a backup value and restore it if aggregation failed.
-	backupMap := s.openAPISpecs
-	if err := updateFunc(); err != nil {
-		s.openAPISpecs = backupMap
+// tryUpdatingServiceSpecs tries updating openAPISpecs map with specified specInfo, and keeps the map intact
+// if the update fails.
+func (s *openAPIAggregator) tryUpdatingServiceSpecs(specInfo *openAPISpecInfo) error {
+	orgSpecInfo, exists := s.openAPISpecs[specInfo.apiService.Name]
+	s.openAPISpecs[specInfo.apiService.Name] = specInfo
+	if err := s.updateOpenAPISpec(); err != nil {
+		if exists {
+			s.openAPISpecs[specInfo.apiService.Name] = orgSpecInfo
+		} else {
+			delete(s.openAPISpecs, specInfo.apiService.Name)
+		}
+		return err
+	}
+	return nil
+}
+
+// tryDeleteServiceSpecs tries delete specified specInfo from openAPISpecs map, and keeps the map intact
+// if the update fails.
+func (s *openAPIAggregator) tryDeleteServiceSpecs(apiServiceName string) error {
+	orgSpecInfo, exists := s.openAPISpecs[apiServiceName]
+	if !exists {
+		return nil
+	}
+	delete(s.openAPISpecs, apiServiceName)
+	if err := s.updateOpenAPISpec(); err != nil {
+		s.openAPISpecs[apiServiceName] = orgSpecInfo
 		return err
 	}
 	return nil
@@ -254,63 +279,55 @@ func (s *openAPIAggregator) tryUpdatingServiceSpecs(updateFunc func() error) err
 
 // UpdateApiServiceSpec updates the api service's OpenAPI spec. It is thread safe.
 func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string, spec *spec.Swagger, etag string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.rwMutex.Lock()
+	defer s.rwMutex.Unlock()
 
 	specInfo, existingService := s.openAPISpecs[apiServiceName]
 	if !existingService {
-		return fmt.Errorf("APIService %s does not exists", apiServiceName)
+		return fmt.Errorf("APIService %q does not exists", apiServiceName)
 	}
 
-	return s.tryUpdatingServiceSpecs(func() error {
-		s.openAPISpecs[apiServiceName] = &openAPISpecInfo{
-			apiService: specInfo.apiService,
-			spec:       spec,
-			handler:    specInfo.handler,
-			etag:       etag,
-		}
-		return s.updateOpenAPISpec()
+	return s.tryUpdatingServiceSpecs(&openAPISpecInfo{
+		apiService: specInfo.apiService,
+		spec:       spec,
+		handler:    specInfo.handler,
+		etag:       etag,
 	})
 }
 
 // AddUpdateApiService adds or updates the api service. It is thread safe.
 func (s *openAPIAggregator) AddUpdateApiService(handler http.Handler, apiService *apiregistration.APIService) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.rwMutex.Lock()
+	defer s.rwMutex.Unlock()
 
-	return s.tryUpdatingServiceSpecs(func() error {
-		if specInfo, existingService := s.openAPISpecs[apiService.Name]; existingService {
-			specInfo.handler = handler
-			specInfo.apiService = *apiService
-		} else {
-			s.openAPISpecs[apiService.Name] = &openAPISpecInfo{
-				apiService: *apiService,
-				handler:    handler,
-			}
-		}
-		return s.updateOpenAPISpec()
-	})
+	newSpec := &openAPISpecInfo{
+		apiService: *apiService,
+		handler:    handler,
+	}
+	if specInfo, existingService := s.openAPISpecs[apiService.Name]; existingService {
+		newSpec.etag = specInfo.etag
+		newSpec.spec = specInfo.spec
+	}
+	return s.tryUpdatingServiceSpecs(newSpec)
 }
 
-// RemoveApiServiceSpec removes an api service from OpenAPI aggregation. It is thread safe.
+// RemoveApiServiceSpec removes an api service from OpenAPI aggregation. If it does not exist, no error is returned.
+// It is thread safe.
 func (s *openAPIAggregator) RemoveApiServiceSpec(apiServiceName string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.rwMutex.Lock()
+	defer s.rwMutex.Unlock()
 
 	if _, existingService := s.openAPISpecs[apiServiceName]; !existingService {
 		return nil
 	}
 
-	return s.tryUpdatingServiceSpecs(func() error {
-		delete(s.openAPISpecs, apiServiceName)
-		return s.updateOpenAPISpec()
-	})
+	return s.tryDeleteServiceSpecs(apiServiceName)
 }
 
 // GetApiServiceSpec returns api service spec info
 func (s *openAPIAggregator) GetApiServiceInfo(apiServiceName string) (handler http.Handler, etag string, exists bool) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.rwMutex.RLock()
+	defer s.rwMutex.RUnlock()
 
 	if info, existingService := s.openAPISpecs[apiServiceName]; existingService {
 		return info.handler, info.etag, true
