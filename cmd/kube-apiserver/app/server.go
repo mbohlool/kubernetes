@@ -165,7 +165,7 @@ func CreateServerChain(runOptions *options.ServerRunOptions, stopCh <-chan struc
 	// this wires up openapi
 	kubeAPIServer.GenericAPIServer.PrepareRun()
 
-	// This will wires up openapi for extension api server too.
+	// This will wire up openapi for extension api server too.
 	apiExtensionsServer.GenericAPIServer.PrepareRun()
 
 	// aggregator comes last in the chain
