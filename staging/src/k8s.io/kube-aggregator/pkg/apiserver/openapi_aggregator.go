@@ -37,7 +37,7 @@ import (
 const (
 	aggregatorUser                = "system:aggregator"
 	specDownloadTimeout           = 60 * time.Second
-	localDelegateChainNamePattern = "k8s_internal_local_delegation_chain_%d"
+	localDelegateChainNamePattern = "k8s_internal_local_delegation_chain_%010d"
 
 	// A randomly generated UUID to differentiate local and remote eTags.
 	locallyGeneratedEtagPrefix = "\"6E8F849B434D4B98A569B9D7718876E9-"
@@ -82,7 +82,6 @@ func buildAndRegisterOpenAPIAggregator(downloader *openAPIDownloader, delegation
 	if err != nil {
 		return nil, err
 	}
-	aggregator.FilterSpecByPaths(aggregatorOpenAPISpec, []string{"/apis/"})
 
 	// Reserving non-name spec for aggregator's Spec.
 	s.addLocalSpec(aggregatorOpenAPISpec, nil, fmt.Sprintf(localDelegateChainNamePattern, i), "")
@@ -99,10 +98,7 @@ func buildAndRegisterOpenAPIAggregator(downloader *openAPIDownloader, delegation
 		if delegateSpec == nil {
 			continue
 		}
-		specName := fmt.Sprintf(localDelegateChainNamePattern, i)
-
-		aggregator.FilterSpecByPaths(delegateSpec, []string{"/apis/", "/api/", "/logs/", "/version/"})
-		s.addLocalSpec(delegateSpec, handler, specName, etag)
+		s.addLocalSpec(delegateSpec, handler, fmt.Sprintf(localDelegateChainNamePattern, i), etag)
 		i++
 	}
 
@@ -145,7 +141,8 @@ func (a byPriority) Less(i, j int) bool {
 	// All local specs will come first
 	// WARNING: This will result in not following priorities for local APIServices.
 	if a.specs[i].apiService.Spec.Service == nil {
-		return true
+		// Sort local specs with their name
+		return a.specs[i].apiService.Name < a.specs[j].apiService.Name
 	}
 	var iPriority, jPriority int32
 	if a.specs[i].apiService.Spec.Group == a.specs[j].apiService.Spec.Group {
@@ -181,25 +178,27 @@ func sortByPriority(specs []openAPISpecInfo) {
 
 // buildOpenAPISpec aggregates all OpenAPI specs.  It is not thread-safe. The caller is responsible to hold proper locks.
 func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err error) {
-	baseForMergeSpecName := fmt.Sprintf(localDelegateChainNamePattern, 0)
-	localDelegateSpec, exists := s.openAPISpecs[baseForMergeSpecName]
-	if !exists {
-		return nil, fmt.Errorf("Cannot find base spec for merging.")
-	}
-	specToReturn, err = aggregator.CloneSpec(localDelegateSpec.spec)
-	if err != nil {
-		return nil, err
-	}
 	specs := []openAPISpecInfo{}
-	for serviceName, specInfo := range s.openAPISpecs {
-		if serviceName == baseForMergeSpecName || specInfo.spec == nil {
+	for _, specInfo := range s.openAPISpecs {
+		if specInfo.spec == nil {
 			continue
 		}
 		specs = append(specs, openAPISpecInfo{specInfo.apiService, specInfo.spec, specInfo.handler, specInfo.etag})
 	}
+	if len(specs) == 0 {
+		return &spec.Swagger{}, nil
+	}
 	sortByPriority(specs)
 	for _, specInfo := range specs {
-		if err := aggregator.MergeSpecs(specToReturn, specInfo.spec); err != nil {
+		// TODO: Make kube-openapi.MergeSpec(s) accept nil or empty spec as destination and just clone the spec in that case.
+		if specToReturn == nil {
+			specToReturn, err = aggregator.CloneSpec(specInfo.spec)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+		if err := aggregator.MergeSpecsIgnorePathConflict(specToReturn, specInfo.spec); err != nil {
 			return nil, err
 		}
 	}
@@ -257,6 +256,12 @@ func (s *openAPIAggregator) UpdateApiServiceSpec(apiServiceName string, spec *sp
 	specInfo, existingService := s.openAPISpecs[apiServiceName]
 	if !existingService {
 		return fmt.Errorf("APIService %q does not exists", apiServiceName)
+	}
+
+	// For APIServices (non-local) specs, only merge their /apis/ prefixed endpoint as it is the only paths
+	// proxy handler delegates.
+	if specInfo.apiService.Spec.Service != nil {
+		aggregator.FilterSpecByPaths(spec, []string{"/apis/"})
 	}
 
 	return s.tryUpdatingServiceSpecs(&openAPISpecInfo{
