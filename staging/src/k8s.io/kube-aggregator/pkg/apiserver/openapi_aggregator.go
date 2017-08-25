@@ -44,7 +44,7 @@ const (
 )
 
 type openAPIAggregator struct {
-	// mutex protects All members of this struct.
+	// mutex protects all members of this struct.
 	rwMutex sync.RWMutex
 
 	// Map of API Services' OpenAPI specs by their name
@@ -141,7 +141,7 @@ func (a byPriority) Less(i, j int) bool {
 	// All local specs will come first
 	// WARNING: This will result in not following priorities for local APIServices.
 	if a.specs[i].apiService.Spec.Service == nil {
-		// Sort local specs with their name
+		// Sort local specs with their name. This is the order in the delegation chain (aggregator first).
 		return a.specs[i].apiService.Name < a.specs[j].apiService.Name
 	}
 	var iPriority, jPriority int32
@@ -183,7 +183,7 @@ func (s *openAPIAggregator) buildOpenAPISpec() (specToReturn *spec.Swagger, err 
 		if specInfo.spec == nil {
 			continue
 		}
-		specs = append(specs, openAPISpecInfo{specInfo.apiService, specInfo.spec, specInfo.handler, specInfo.etag})
+		specs = append(specs, *specInfo)
 	}
 	if len(specs) == 0 {
 		return &spec.Swagger{}, nil
