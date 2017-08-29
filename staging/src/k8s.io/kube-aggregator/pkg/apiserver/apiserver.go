@@ -39,6 +39,7 @@ import (
 	"k8s.io/kube-aggregator/pkg/client/clientset_generated/internalclientset"
 	informers "k8s.io/kube-aggregator/pkg/client/informers/internalversion"
 	listers "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/internalversion"
+	openapicontroller "k8s.io/kube-aggregator/pkg/controllers/openapi"
 	statuscontrollers "k8s.io/kube-aggregator/pkg/controllers/status"
 	apiservicestorage "k8s.io/kube-aggregator/pkg/registry/apiservice/etcd"
 )
@@ -117,7 +118,7 @@ type APIAggregator struct {
 	// Information needed to determine routing for the aggregator
 	serviceResolver ServiceResolver
 
-	openAPIAggregationController *OpenAPIAggregationController
+	openAPIAggregationController *openapicontroller.OpenAPIAggregationController
 }
 
 type completedConfig struct {
@@ -220,8 +221,8 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 	})
 
 	if openApiConfig != nil {
-		specDownloader := NewOpenAPIDownloader(s.contextMapper)
-		openAPIAggregator, err := buildAndRegisterOpenAPIAggregator(
+		specDownloader := openapicontroller.NewOpenAPIDownloader(s.contextMapper)
+		openAPIAggregator, err := openapicontroller.BuildAndRegisterOpenAPIAggregator(
 			&specDownloader,
 			delegationTarget,
 			s.GenericAPIServer.Handler.GoRestfulContainer.RegisteredWebServices(),
@@ -230,7 +231,7 @@ func (c completedConfig) NewWithDelegate(delegationTarget genericapiserver.Deleg
 		if err != nil {
 			return nil, err
 		}
-		s.openAPIAggregationController = NewOpenAPIAggregationController(&specDownloader, openAPIAggregator)
+		s.openAPIAggregationController = openapicontroller.NewOpenAPIAggregationController(&specDownloader, openAPIAggregator)
 
 		s.GenericAPIServer.AddPostStartHook("apiservice-openapi-controller", func(context genericapiserver.PostStartHookContext) error {
 			go s.openAPIAggregationController.Run(context.StopCh)
