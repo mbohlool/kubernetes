@@ -386,10 +386,11 @@ func crdExistsInDiscovery(client apiextensionsclientset.Interface, crd *apiexten
 	return false, nil
 }
 
-// TestOpenAPIExtensionsPresence validates that the path
-// '/apis/apiextensions.k8s.io' is both enabled and discovered in the
-// servers delegation chain.
-func TestOpenAPIExtensionsPresence(t *testing.T) {
+// TestOpenAPIPresence validates that various paths exist in the
+// complete delegation chain of the server. If the chain is not wired
+// up correctly this test should fail; this is largely a smoke test to
+// ensure that the complete delegation chain is complete.
+func TestOpenAPIPresence(t *testing.T) {
 	config, tearDown := StartTestServerOrDie(t)
 	defer tearDown()
 
@@ -416,20 +417,36 @@ func TestOpenAPIExtensionsPresence(t *testing.T) {
 		Paths map[string]interface{} `json:"paths"`
 	}
 
-	var x openAPISchema
+	var doc openAPISchema
 
-	err = json.Unmarshal(raw, &x)
+	err = json.Unmarshal(raw, &doc)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal: %v", err)
 	}
 
-	apiextensionPathPrefix := "/apis/apiextensions.k8s.io"
+	matchedExtension := false
+	extensionsPrefix := "/apis/apiextensions.k8s.io"
 
-	for path := range x.Paths {
-		if strings.HasPrefix(path, apiextensionPathPrefix) {
+	matchedRegistration := false
+	registrationPrefix := "/apis/apiregistration.k8s.io"
+
+	for path := range doc.Paths {
+		if strings.HasPrefix(path, extensionsPrefix) {
+			matchedExtension = true
+		}
+		if strings.HasPrefix(path, registrationPrefix) {
+			matchedRegistration = true
+		}
+		if matchedExtension && matchedRegistration {
 			return
 		}
 	}
 
-	t.Fatalf("missing path %q", apiextensionPathPrefix)
+	if !matchedExtension {
+		t.Fatalf("missing path: %q", extensionsPrefix)
+	}
+
+	if !matchedRegistration {
+		t.Fatalf("missing path: %q", registrationPrefix)
+	}
 }
