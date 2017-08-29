@@ -19,6 +19,7 @@ package testing
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -383,4 +384,52 @@ func crdExistsInDiscovery(client apiextensionsclientset.Interface, crd *apiexten
 		}
 	}
 	return false, nil
+}
+
+// TestOpenAPIExtensionsPresence validates that the path
+// '/apis/apiextensions.k8s.io' is both enabled and discovered in the
+// servers delegation chain.
+func TestOpenAPIExtensionsPresence(t *testing.T) {
+	config, tearDown := StartTestServerOrDie(t)
+	defer tearDown()
+
+	kubeclient, err := kubernetes.NewForConfig(config)
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	result := kubeclient.RESTClient().Get().AbsPath("/swagger.json").Do()
+	status := 0
+	result.StatusCode(&status)
+
+	if status != 200 {
+		t.Fatalf("GET /swagger.json failed: expected status=%d, got=%d", 200, status)
+	}
+
+	raw, err := result.Raw()
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	type openAPISchema struct {
+		Paths map[string]interface{} `json:"paths"`
+	}
+
+	var x openAPISchema
+
+	err = json.Unmarshal(raw, &x)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal: %v", err)
+	}
+
+	apiextensionPathPrefix := "/apis/apiextensions.k8s.io"
+
+	for path := range x.Paths {
+		if strings.HasPrefix(path, apiextensionPathPrefix) {
+			return
+		}
+	}
+
+	t.Fatalf("missing path %q", apiextensionPathPrefix)
 }
