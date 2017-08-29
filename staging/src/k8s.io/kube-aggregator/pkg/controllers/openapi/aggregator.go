@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package apiserver
+package openapi
 
 import (
 	"fmt"
@@ -69,7 +69,7 @@ func (s *openAPIAggregator) addLocalSpec(spec *spec.Swagger, localHandler http.H
 }
 
 // This function is not thread safe as it only being called on startup.
-func buildAndRegisterOpenAPIAggregator(downloader *openAPIDownloader, delegationTarget server.DelegationTarget, webServices []*restful.WebService,
+func BuildAndRegisterOpenAPIAggregator(downloader *openAPIDownloader, delegationTarget server.DelegationTarget, webServices []*restful.WebService,
 	config *common.Config, pathHandler common.PathHandler) (s *openAPIAggregator, err error) {
 	s = &openAPIAggregator{
 		openAPISpecs: map[string]*openAPISpecInfo{},
