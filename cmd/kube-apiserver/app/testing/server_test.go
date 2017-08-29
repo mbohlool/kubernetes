@@ -395,7 +395,6 @@ func TestOpenAPIPresence(t *testing.T) {
 	defer tearDown()
 
 	kubeclient, err := kubernetes.NewForConfig(config)
-
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -403,7 +402,6 @@ func TestOpenAPIPresence(t *testing.T) {
 	result := kubeclient.RESTClient().Get().AbsPath("/swagger.json").Do()
 	status := 0
 	result.StatusCode(&status)
-
 	if status != 200 {
 		t.Fatalf("GET /swagger.json failed: expected status=%d, got=%d", 200, status)
 	}
@@ -418,7 +416,6 @@ func TestOpenAPIPresence(t *testing.T) {
 	}
 
 	var doc openAPISchema
-
 	err = json.Unmarshal(raw, &doc)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal: %v", err)
@@ -443,10 +440,10 @@ func TestOpenAPIPresence(t *testing.T) {
 	}
 
 	if !matchedExtension {
-		t.Fatalf("missing path: %q", extensionsPrefix)
+		t.Errorf("missing path: %q", extensionsPrefix)
 	}
 
 	if !matchedRegistration {
-		t.Fatalf("missing path: %q", registrationPrefix)
+		t.Errorf("missing path: %q", registrationPrefix)
 	}
 }
