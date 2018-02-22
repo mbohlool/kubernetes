@@ -277,8 +277,8 @@ func Convert_apiextensions_CustomResourceDefinitionStatus_To_v1beta1_CustomResou
 
 func autoConvert_v1beta1_CustomResourceDefinitionVersion_To_apiextensions_CustomResourceDefinitionVersion(in *CustomResourceDefinitionVersion, out *apiextensions.CustomResourceDefinitionVersion, s conversion.Scope) error {
 	out.Name = in.Name
-	out.Served = in.Served
-	out.Storage = in.Storage
+	out.Served = (*bool)(unsafe.Pointer(in.Served))
+	out.Storage = (*bool)(unsafe.Pointer(in.Storage))
 	return nil
 }
 
@@ -289,8 +289,8 @@ func Convert_v1beta1_CustomResourceDefinitionVersion_To_apiextensions_CustomReso
 
 func autoConvert_apiextensions_CustomResourceDefinitionVersion_To_v1beta1_CustomResourceDefinitionVersion(in *apiextensions.CustomResourceDefinitionVersion, out *CustomResourceDefinitionVersion, s conversion.Scope) error {
 	out.Name = in.Name
-	out.Served = in.Served
-	out.Storage = in.Storage
+	out.Served = (*bool)(unsafe.Pointer(in.Served))
+	out.Storage = (*bool)(unsafe.Pointer(in.Storage))
 	return nil
 }
 

@@ -24,6 +24,7 @@ type CustomResourceDefinitionSpec struct {
 	Group string
 	// Version is the version this resource belongs in
 	// Should be always first item in Versions field if provided.
+	// If Versions field is provided, this field is optional.
 	Version string
 	// Names are the names used to describe this custom resource
 	Names CustomResourceDefinitionNames
@@ -32,6 +33,7 @@ type CustomResourceDefinitionSpec struct {
 	// Validation describes the validation methods for CustomResources
 	Validation *CustomResourceValidation
 	// Versions is the list of all supported versions for this resource.
+	// If Version field is provided, this field is optional.
 	// Validation: All versions must use the same validation schema for now. i.e., top
 	// level Validation field is applied to all of these versions.
 	// Order: The order of these versions is used to determine the order in discovery API
@@ -43,10 +45,14 @@ type CustomResourceDefinitionVersion struct {
 	// Name is the version name, e.g. “v1”, “v2beta1”, etc.
 	Name string
 	// Served is a flag enabling/disabling this version from being served via REST APIs
-	Served bool
-	// Storage flags the release as a storage version. There can be only one version
-	// flagged as Storage.
-	Storage bool
+	// Default is True.
+	// +optional
+	Served *bool
+	// Storage flags the version as a storage version. There must be exactly one flagged
+	// as storage version.
+	// Default is False.
+	// +optional
+	Storage *bool
 }
 
 // CustomResourceDefinitionNames indicates the names to serve this CustomResourceDefinition
@@ -127,7 +133,7 @@ type CustomResourceDefinitionStatus struct {
 	AcceptedNames CustomResourceDefinitionNames
 
 	// StoredVersions are all versions ever marked as storage in spec. Tracking these
-	// versions allow a migration path for stored version in etcd. The field is mutable
+	// versions allows a migration path for stored version in etcd. The field is mutable
 	// so the migration controller can first make sure a version is certified (i.e. all
 	// stored objects is that version) then remove the rest of the versions from this list.
 	// None of the versions in this list can be removed from the spec.Versions field.

@@ -128,7 +128,7 @@ func HasCRDVersion(crd *CustomResourceDefinition, version string) bool {
 
 func GetCRDStorageVersion(crd *CustomResourceDefinition) string {
 	for _, v := range crd.Spec.Versions {
-		if v.Storage {
+		if IsCRDStorageVersion(&v) {
 			return v.Name
 		}
 	}
@@ -136,8 +136,10 @@ func GetCRDStorageVersion(crd *CustomResourceDefinition) string {
 	return ""
 }
 
-func ConvertCRDVersion(crd *CustomResourceDefinition, newVersion string) *CustomResourceDefinition {
-	newCrd := crd.DeepCopy()
-	crd.TypeMeta.APIVersion = crd.GroupVersionKind().Group + "/" + newVersion
-	return newCrd
+func IsCRDVersionServed(version *CustomResourceDefinitionVersion) bool {
+	return version.Served == nil || *version.Served
+}
+
+func IsCRDStorageVersion(version *CustomResourceDefinitionVersion) bool {
+	return version.Storage != nil && *version.Storage
 }

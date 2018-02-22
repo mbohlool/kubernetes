@@ -96,7 +96,7 @@ func (c *DiscoveryController) sync(version schema.GroupVersion) error {
 
 		foundThisVersion := false
 		for _, v := range crd.Spec.Versions {
-			if !v.Served {
+			if !*v.Served {
 				continue
 			}
 			apiVersionsForDiscovery = append(apiVersionsForDiscovery, metav1.GroupVersionForDiscovery{

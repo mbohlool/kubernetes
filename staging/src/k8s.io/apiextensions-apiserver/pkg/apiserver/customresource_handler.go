@@ -88,7 +88,9 @@ type crdInfo struct {
 	spec          *apiextensions.CustomResourceDefinitionSpec
 	acceptedNames *apiextensions.CustomResourceDefinitionNames
 
-	storage        *customresource.REST
+	// Storage per version
+	storages map[string]*customresource.REST
+	// Request scope per version
 	requestScopes  map[string]handlers.RequestScope
 	storageVersion string
 }
@@ -187,7 +189,7 @@ func (r *crdHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	storage := crdInfo.storage
+	storage := crdInfo.storages[requestInfo.APIVersion]
 	requestScope := crdInfo.requestScopes[requestInfo.APIVersion]
 	minRequestTimeout := 1 * time.Minute
 
@@ -212,13 +214,13 @@ func (r *crdHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, fmt.Sprintf("%v not allowed while CustomResourceDefinition is terminating", requestInfo.Verb), http.StatusMethodNotAllowed)
 			return
 		}
-		handler = handlers.CreateResource(storage, crdInfo.requestScopes[crdInfo.storageVersion], discovery.NewUnstructuredObjectTyper(nil), r.admission)
+		handler = handlers.CreateResource(storage, requestScope, discovery.NewUnstructuredObjectTyper(nil), r.admission)
 	case "update":
 		if terminating {
 			http.Error(w, fmt.Sprintf("%v not allowed while CustomResourceDefinition is terminating", requestInfo.Verb), http.StatusMethodNotAllowed)
 			return
 		}
-		handler = handlers.UpdateResource(storage, crdInfo.requestScopes[crdInfo.storageVersion], discovery.NewUnstructuredObjectTyper(nil), r.admission)
+		handler = handlers.UpdateResource(storage, requestScope, discovery.NewUnstructuredObjectTyper(nil), r.admission)
 	case "patch":
 		if terminating {
 			http.Error(w, fmt.Sprintf("%v not allowed while CustomResourceDefinition is terminating", requestInfo.Verb), http.StatusMethodNotAllowed)
@@ -267,7 +269,9 @@ func (r *crdHandler) updateCustomResourceDefinition(oldObj, newObj interface{}) 
 	// as it is used without locking elsewhere.
 	storageMap2 := storageMap.clone()
 	if oldInfo, ok := storageMap2[types.UID(oldCRD.UID)]; ok {
-		oldInfo.storage.DestroyFunc()
+		for _, storage := range oldInfo.storages {
+			storage.DestroyFunc()
+		}
 		delete(storageMap2, types.UID(oldCRD.UID))
 	}
 
@@ -299,7 +303,9 @@ func (r *crdHandler) removeDeadStorage() {
 		}
 		if !found {
 			glog.V(4).Infof("Removing dead CRD storage")
-			s.storage.DestroyFunc()
+			for _, storage := range s.storages {
+				storage.DestroyFunc()
+			}
 			delete(storageMap2, uid)
 		}
 	}
@@ -313,7 +319,7 @@ func (r *crdHandler) GetCustomResourceListerCollectionDeleter(crd *apiextensions
 	if err != nil {
 		return nil, err
 	}
-	return info.storage, nil
+	return info.storages[info.storageVersion], nil
 }
 
 func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResourceDefinition) (*crdInfo, error) {
@@ -332,53 +338,55 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 
 	storageVersion := apiextensions.GetCRDStorageVersion(crd)
 
-	// In addition to Unstructured objects (Custom Resources), we also may sometimes need to
-	// decode unversioned Options objects, so we delegate to parameterScheme for such types.
-	parameterScheme := runtime.NewScheme()
-	parameterScheme.AddUnversionedTypes(schema.GroupVersion{Group: crd.Spec.Group, Version: storageVersion},
-		&metav1.ListOptions{},
-		&metav1.ExportOptions{},
-		&metav1.GetOptions{},
-		&metav1.DeleteOptions{},
-	)
-	parameterCodec := runtime.NewParameterCodec(parameterScheme)
-
-	kind := schema.GroupVersionKind{Group: crd.Spec.Group, Version: storageVersion, Kind: crd.Status.AcceptedNames.Kind}
-	typer := unstructuredObjectTyper{
-		delegate:          parameterScheme,
-		unstructuredTyper: discovery.NewUnstructuredObjectTyper(nil),
-	}
-	creator := unstructuredCreator{}
-
-	validator, err := apiservervalidation.NewSchemaValidator(crd.Spec.Validation)
-	if err != nil {
-		return nil, err
-	}
-
-	storage := customresource.NewREST(
-		schema.GroupResource{Group: crd.Spec.Group, Resource: crd.Status.AcceptedNames.Plural},
-		schema.GroupVersionKind{Group: crd.Spec.Group, Version: storageVersion, Kind: crd.Status.AcceptedNames.ListKind},
-		customresource.NewStrategy(
-			typer,
-			crd.Spec.Scope == apiextensions.NamespaceScoped,
-			kind,
-			validator,
-		),
-		r.restOptionsGetter,
-	)
-
-	selfLinkPrefix := ""
-	switch crd.Spec.Scope {
-	case apiextensions.ClusterScoped:
-		selfLinkPrefix = "/" + path.Join("apis", crd.Spec.Group, storageVersion) + "/" + crd.Status.AcceptedNames.Plural + "/"
-	case apiextensions.NamespaceScoped:
-		selfLinkPrefix = "/" + path.Join("apis", crd.Spec.Group, storageVersion, "namespaces") + "/"
-	}
-
-	clusterScoped := crd.Spec.Scope == apiextensions.ClusterScoped
 	requestScopes := map[string]handlers.RequestScope{}
-	converter := crconversion.NewNoConversionConverter(clusterScoped)
+	storages := map[string]*customresource.REST{}
 	for _, v := range crd.Spec.Versions {
+		converter := crconversion.NewNoConversionConverter(crd.Spec.Scope == apiextensions.ClusterScoped)
+		// In addition to Unstructured objects (Custom Resources), we also may sometimes need to
+		// decode unversioned Options objects, so we delegate to parameterScheme for such types.
+		parameterScheme := runtime.NewScheme()
+		parameterScheme.AddUnversionedTypes(schema.GroupVersion{Group: crd.Spec.Group, Version: storageVersion},
+			&metav1.ListOptions{},
+			&metav1.ExportOptions{},
+			&metav1.GetOptions{},
+			&metav1.DeleteOptions{},
+		)
+		parameterCodec := runtime.NewParameterCodec(parameterScheme)
+
+		typer := unstructuredObjectTyper{
+			delegate:          parameterScheme,
+			unstructuredTyper: discovery.NewUnstructuredObjectTyper(nil),
+		}
+		creator := unstructuredCreator{}
+
+		validator, err := apiservervalidation.NewSchemaValidator(crd.Spec.Validation)
+		if err != nil {
+			return nil, err
+		}
+
+		storages[v.Name] = customresource.NewREST(
+			schema.GroupResource{Group: crd.Spec.Group, Resource: crd.Status.AcceptedNames.Plural},
+			schema.GroupVersionKind{Group: crd.Spec.Group, Version: v.Name, Kind: crd.Status.AcceptedNames.ListKind},
+			customresource.NewStrategy(
+				typer,
+				crd.Spec.Scope == apiextensions.NamespaceScoped,
+				schema.GroupVersionKind{Group: crd.Spec.Group, Version: storageVersion, Kind: crd.Status.AcceptedNames.Kind},
+				validator,
+				converter,
+				storageVersion,
+			),
+			r.restOptionsGetter,
+		)
+
+		selfLinkPrefix := ""
+		switch crd.Spec.Scope {
+		case apiextensions.ClusterScoped:
+			selfLinkPrefix = "/" + path.Join("apis", crd.Spec.Group, v.Name) + "/" + crd.Status.AcceptedNames.Plural + "/"
+		case apiextensions.NamespaceScoped:
+			selfLinkPrefix = "/" + path.Join("apis", crd.Spec.Group, v.Name, "namespaces") + "/"
+		}
+
+		clusterScoped := crd.Spec.Scope == apiextensions.ClusterScoped
 		requestScopes[v.Name] = handlers.RequestScope{
 			Namer: handlers.ContextBasedNaming{
 				GetContext: func(req *http.Request) apirequest.Context {
@@ -415,7 +423,7 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 		spec:          &crd.Spec,
 		acceptedNames: &crd.Status.AcceptedNames,
 
-		storage:        storage,
+		storages:       storages,
 		requestScopes:  requestScopes,
 		storageVersion: storageVersion,
 	}

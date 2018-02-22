@@ -88,36 +88,23 @@ func ValidateCustomResourceDefinitionSpec(spec *apiextensions.CustomResourceDefi
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("scope"), spec.Scope, []string{string(apiextensions.ClusterScoped), string(apiextensions.NamespaceScoped)}))
 	}
 
-	if len(spec.Versions) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("versions"), ""))
-	} else {
-		storageFlagCount := 0
-		servedFlagCount := 0
-		servedVersions := map[string]bool{}
-		for _, version := range spec.Versions {
-			if version.Storage {
-				storageFlagCount++
-			}
-			if version.Served {
-				servedFlagCount++
-			}
-			if version.Served {
-				if servedVersions[version.Name] {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("versions"), spec.Versions, "duplicate version name "+version.Name))
-				} else {
-					servedVersions[version.Name] = true
-				}
-			}
+	storageFlagCount := 0
+	versionsMap := map[string]bool{}
+	for _, version := range spec.Versions {
+		if apiextensions.IsCRDStorageVersion(&version) {
+			storageFlagCount++
 		}
-		if storageFlagCount != 1 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("versions"), spec.Versions, "one and only one version should be marked as storage version"))
+		if versionsMap[version.Name] {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("versions"), spec.Versions, "duplicate version name "+version.Name))
+		} else {
+			versionsMap[version.Name] = true
 		}
-		if servedFlagCount == 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("versions"), spec.Versions, "at least one version should be served"))
-		}
-		if !servedVersions[spec.Version] {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("version"), spec.Version, "spec.version should be one of the items in spec.Versions"))
-		}
+	}
+	if storageFlagCount != 1 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("versions"), spec.Versions, "one and only one version should be marked as storage version"))
+	}
+	if !versionsMap[spec.Version] {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("version"), spec.Version, "spec.version should be one of the items in spec.Versions"))
 	}
 
 	// in addition to the basic name restrictions, some names are required for spec, but not for status

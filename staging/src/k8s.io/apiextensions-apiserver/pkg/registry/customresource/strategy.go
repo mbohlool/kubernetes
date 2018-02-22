@@ -40,12 +40,14 @@ import (
 type customResourceDefinitionStorageStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
+	storageVersion string
 
 	namespaceScoped bool
 	validator       customResourceValidator
+	converter       runtime.ObjectConvertor
 }
 
-func NewStrategy(typer runtime.ObjectTyper, namespaceScoped bool, kind schema.GroupVersionKind, validator *validate.SchemaValidator) customResourceDefinitionStorageStrategy {
+func NewStrategy(typer runtime.ObjectTyper, namespaceScoped bool, kind schema.GroupVersionKind, validator *validate.SchemaValidator, converter runtime.ObjectConvertor, storageVersion string) customResourceDefinitionStorageStrategy {
 	return customResourceDefinitionStorageStrategy{
 		ObjectTyper:     typer,
 		NameGenerator:   names.SimpleNameGenerator,
@@ -55,6 +57,8 @@ func NewStrategy(typer runtime.ObjectTyper, namespaceScoped bool, kind schema.Gr
 			kind:            kind,
 			validator:       validator,
 		},
+		converter:      converter,
+		storageVersion: storageVersion,
 	}
 }
 
@@ -62,10 +66,12 @@ func (a customResourceDefinitionStorageStrategy) NamespaceScoped() bool {
 	return a.namespaceScoped
 }
 
-func (customResourceDefinitionStorageStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
+func (a customResourceDefinitionStorageStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
+	a.converter.ConvertToVersion(obj, schema.GroupVersion{Group: obj.GetObjectKind().GroupVersionKind().Group, Version: a.storageVersion})
 }
 
-func (customResourceDefinitionStorageStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+func (a customResourceDefinitionStorageStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+	a.converter.ConvertToVersion(obj, schema.GroupVersion{Group: obj.GetObjectKind().GroupVersionKind().Group, Version: a.storageVersion})
 }
 
 func (a customResourceDefinitionStorageStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {

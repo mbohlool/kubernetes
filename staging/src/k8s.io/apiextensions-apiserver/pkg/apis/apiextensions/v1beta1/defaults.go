@@ -45,22 +45,14 @@ func SetDefaults_CustomResourceDefinitionSpec(obj *CustomResourceDefinitionSpec)
 	}
 	// If there is no list of versions, create on using deprecated Version field.
 	if len(obj.Versions) == 0 && len(obj.Version) != 0 {
-		obj.Versions = []CustomResourceDefinitionVersion{
-			{
-				Name:    obj.Version,
-				Served:  true,
-				Storage: true,
-			},
-		}
+		obj.Versions = []CustomResourceDefinitionVersion{{Name: obj.Version}}
+		obj.Versions[0].Storage = new(bool)
+		obj.Versions[0].Served = new(bool)
+		*obj.Versions[0].Storage = true
+		*obj.Versions[0].Served = true
 	}
-	// For backward compatibility set the version field to the storage version
-	// if it does not exists.
+	// For backward compatibility set the version field to the first item in versions list.
 	if len(obj.Version) == 0 && len(obj.Versions) != 0 {
-		for _, version := range obj.Versions {
-			if version.Storage {
-				obj.Version = version.Name
-				break
-			}
-		}
+		obj.Version = obj.Versions[0].Name
 	}
 }

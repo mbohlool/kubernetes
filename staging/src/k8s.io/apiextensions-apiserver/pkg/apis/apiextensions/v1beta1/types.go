@@ -24,7 +24,8 @@ type CustomResourceDefinitionSpec struct {
 	Group string `json:"group" protobuf:"bytes,1,opt,name=group"`
 	// Version is the version this resource belongs in
 	// Should be always first item in Versions field if provided.
-	Version string `json:"version" protobuf:"bytes,2,opt,name=version"`
+	// If Versions field is provided, this field is optional.
+	Version string `json:"version,omitempty" protobuf:"bytes,2,opt,name=version"`
 	// Names are the names used to describe this custom resource
 	Names CustomResourceDefinitionNames `json:"names" protobuf:"bytes,3,opt,name=names"`
 	// Scope indicates whether this resource is cluster or namespace scoped.  Default is namespaced
@@ -33,21 +34,26 @@ type CustomResourceDefinitionSpec struct {
 	// +optional
 	Validation *CustomResourceValidation `json:"validation,omitempty" protobuf:"bytes,5,opt,name=validation"`
 	// Versions is the list of all supported versions for this resource.
+	// If Version field is provided, this field is optional.
 	// Validation: All versions must use the same validation schema for now. i.e., top
 	// level Validation field is applied to all of these versions.
 	// Order: The order of these versions is used to determine the order in discovery API
 	// (preferred version first).
-	Versions []CustomResourceDefinitionVersion `protobuf:"bytes,6,rep,name=versions"`
+	Versions []CustomResourceDefinitionVersion `json:"versions,omitempty" protobuf:"bytes,6,rep,name=versions"`
 }
 
 type CustomResourceDefinitionVersion struct {
 	// Name is the version name, e.g. “v1”, “v2beta1”, etc.
-	Name string `protobuf:"bytes,1,opt,name=name"`
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
 	// Served is a flag enabling/disabling this version from being served via REST APIs
-	Served bool `protobuf:"varint,2,opt,name=served"`
-	// Storage flags the release as a storage version. There can be only one version
-	// flagged as Storage.
-	Storage bool `protobuf:"varint,3,opt,name=storage"`
+	// Default is True.
+	// +optional
+	Served *bool `json:"served,omitempty" protobuf:"varint,2,opt,name=served"`
+	// Storage flags the version as a storage version. There must be exactly one
+	// flagged as storage version.
+	// Default is False.
+	// +optional
+	Storage *bool `json:"storage,omitempty" protobuf:"varint,3,opt,name=storage"`
 }
 
 // CustomResourceDefinitionNames indicates the names to serve this CustomResourceDefinition

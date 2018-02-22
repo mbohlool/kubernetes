@@ -202,7 +202,7 @@ func (c *crdRegistrationController) handleVersionUpdate(groupVersion schema.Grou
 			continue
 		}
 		for _, version := range crd.Spec.Versions {
-			if version.Name == groupVersion.Version {
+			if version.Name == groupVersion.Version && apiextensions.IsCRDVersionServed(&version) {
 				c.apiServiceRegistration.AddAPIServiceToSync(&apiregistration.APIService{
 					ObjectMeta: metav1.ObjectMeta{Name: apiServiceName},
 					Spec: apiregistration.APIServiceSpec{
@@ -220,4 +220,3 @@ func (c *crdRegistrationController) handleVersionUpdate(groupVersion schema.Grou
 	c.apiServiceRegistration.RemoveAPIServiceToSync(apiServiceName)
 	return nil
 }
-
