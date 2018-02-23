@@ -17,7 +17,6 @@ limitations under the License.
 package conversion
 
 import (
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -30,7 +29,6 @@ type NoConversionConverter struct {
 func NewNoConversionConverter(clusterScoped bool) NoConversionConverter {
 	return NoConversionConverter{
 		crConverter: crConverter{
-			UnstructuredObjectConverter: unstructured.UnstructuredObjectConverter{},
 			clusterScoped:               clusterScoped,
 		},
 	}

@@ -321,5 +321,5 @@ func parseTimeout(str string) time.Duration {
 		}
 		glog.Errorf("Failed to parse %q: %v", str, err)
 	}
-	return 30 * time.Second
+	return 600 * time.Second
 }

@@ -260,7 +260,7 @@ func NewConfig(codecs serializer.CodecFactory) *Config {
 		EnableProfiling:              true,
 		MaxRequestsInFlight:          400,
 		MaxMutatingRequestsInFlight:  200,
-		RequestTimeout:               time.Duration(60) * time.Second,
+		RequestTimeout:               time.Duration(600) * time.Second,
 		MinRequestTimeout:            1800,
 		EnableAPIResponseCompression: utilfeature.DefaultFeatureGate.Enabled(features.APIResponseCompression),
 

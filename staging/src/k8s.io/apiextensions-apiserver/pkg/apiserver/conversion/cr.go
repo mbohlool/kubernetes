@@ -19,16 +19,19 @@ package conversion
 import (
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
+	"github.com/golang/glog"
 )
 
 // crConverter is a converter that supports field selectors for CRDs.
 type crConverter struct {
-	unstructured.UnstructuredObjectConverter
 	clusterScoped bool
 }
 
 func (c crConverter) ConvertFieldLabel(version, kind, label, value string) (string, string, error) {
+	glog.Infof("ZZZ: CP3")
 	// We currently only support metadata.namespace and metadata.name.
 	switch {
 	case label == "metadata.name":
@@ -39,3 +42,37 @@ func (c crConverter) ConvertFieldLabel(version, kind, label, value string) (stri
 		return "", "", fmt.Errorf("field label not supported: %s", label)
 	}
 }
+
+func (crConverter) Convert(in, out, context interface{}) error {
+	glog.Infof("ZZZ: CP1: %v", in)
+	unstructIn, ok := in.(*cr.CustomResource)
+	if !ok {
+		return fmt.Errorf("input type %T in not valid for unstructured conversion", in)
+	}
+
+	unstructOut, ok := out.(*cr.CustomResource)
+	if !ok {
+		return fmt.Errorf("output type %T in not valid for unstructured conversion", out)
+	}
+
+	// maybe deep copy the map? It is documented in the
+	// ObjectConverter interface that this function is not
+	// guaranteed to not mutate the input. Or maybe set the input
+	// object to nil.
+	unstructOut.Obj.Object = unstructIn.Obj.Object
+	return nil
+}
+
+func (crConverter) ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error) {
+	glog.Infof("ZZZ: CP2: %v", in)
+	if kind := in.GetObjectKind().GroupVersionKind(); !kind.Empty() {
+		gvk, ok := target.KindForGroupVersionKinds([]schema.GroupVersionKind{kind})
+		if !ok {
+			// TODO: should this be a typed error?
+			return nil, fmt.Errorf("%v is unstructured and is not suitable for converting to %q", kind, target)
+		}
+		in.GetObjectKind().SetGroupVersionKind(gvk)
+	}
+	return in, nil
+}
+
