@@ -34,6 +34,8 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/kube-aggregator/pkg/apis/apiregistration"
 	"k8s.io/kubernetes/pkg/controller"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kubernetes/staging/src/k8s.io/apiextensions-apiserver/pkg/apiserver"
 )
 
 // AutoAPIServiceRegistration is an interface which callers can re-declare locally and properly cast to for
@@ -58,6 +60,9 @@ type crdRegistrationController struct {
 	// queue is where incoming work is placed to de-dup and to allow "easy" rate limited requeues on errors
 	// this is actually keyed by a groupVersion
 	queue workqueue.RateLimitingInterface
+
+	scheme *runtime.Scheme
+	customresourceObject *apiserver.CustomResource
 }
 
 // NewAutoRegistrationController returns a controller which will register CRD GroupVersions with the auto APIService registration
@@ -69,6 +74,7 @@ func NewAutoRegistrationController(crdinformer crdinformers.CustomResourceDefini
 		apiServiceRegistration: apiServiceRegistration,
 		syncedInitialSet:       make(chan struct{}),
 		queue:                  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "crd-autoregister"),
+		customresourceObject:   &apiserver.CustomResource{},
 	}
 	c.syncHandler = c.handleVersionUpdate
 
@@ -189,8 +195,14 @@ func (c *crdRegistrationController) enqueueCRD(crd *apiextensions.CustomResource
 	}
 }
 
+func (c *crdRegistrationController) addKnownTypes(scheme *runtime.Scheme) error  {
+	c.scheme = scheme
+	return nil
+}
+
 func (c *crdRegistrationController) handleVersionUpdate(groupVersion schema.GroupVersion) error {
 	apiServiceName := groupVersion.Version + "." + groupVersion.Group
+
 
 	// check all CRDs.  There shouldn't that many, but if we have problems later we can index them
 	crds, err := c.crdLister.List(labels.Everything())
@@ -212,10 +224,17 @@ func (c *crdRegistrationController) handleVersionUpdate(groupVersion schema.Grou
 						VersionPriority:      100,  // CRDs should have relatively low priority
 					},
 				})
+
+				if c.scheme != nil {
+					c.scheme.AddKnownTypes(groupVersion, c.customresourceObject)
+				}
+
 				return nil
 			}
 		}
 	}
+
+	// TODO: should we remove custom resource object from known types here?
 
 	c.apiServiceRegistration.RemoveAPIServiceToSync(apiServiceName)
 	return nil

@@ -48,7 +48,7 @@ type RequestScope struct {
 	runtime.ParameterCodec
 
 	Creater         runtime.ObjectCreater
-	Convertor       runtime.ObjectConvertor
+	//Convertor       runtime.ObjectConvertor
 	Defaulter       runtime.ObjectDefaulter
 	Typer           runtime.ObjectTyper
 	UnsafeConvertor runtime.ObjectConvertor

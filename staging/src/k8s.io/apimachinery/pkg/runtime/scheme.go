@@ -21,6 +21,8 @@ import (
 	"net/url"
 	"reflect"
 
+	"github.com/golang/glog"
+
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -404,11 +406,15 @@ func (s *Scheme) Default(src Object) {
 func (s *Scheme) Convert(in, out interface{}, context interface{}) error {
 	unstructuredIn, okIn := in.(Unstructured)
 	unstructuredOut, okOut := out.(Unstructured)
+	if okIn {
+		glog.Infof("ZZZ: CP3: %v", in)
+	}
 	switch {
 	case okIn && okOut:
 		// converting unstructured input to an unstructured output is a straight copy - unstructured
 		// is a "smart holder" and the contents are passed by reference between the two objects
 		unstructuredOut.SetUnstructuredContent(unstructuredIn.UnstructuredContent())
+		glog.Infof("ZZZ: CP2: %v", unstructuredIn)
 		return nil
 
 	case okOut:
@@ -488,6 +494,7 @@ func (s *Scheme) ConvertFieldLabel(version, kind, label, value string) (string, 
 // return an error if the conversion does not result in a valid Object being
 // returned. Passes target down to the conversion methods as the Context on the scope.
 func (s *Scheme) ConvertToVersion(in Object, target GroupVersioner) (Object, error) {
+	glog.Infof("ZZZ: CP4: %v", in)
 	return s.convertToVersion(true, in, target)
 }
 
@@ -495,6 +502,7 @@ func (s *Scheme) ConvertToVersion(in Object, target GroupVersioner) (Object, err
 // but does not guarantee the output object does not share fields with the input object. It attempts to be as
 // efficient as possible when doing conversion.
 func (s *Scheme) UnsafeConvertToVersion(in Object, target GroupVersioner) (Object, error) {
+	glog.Infof("ZZZ: CP5: %v", in)
 	return s.convertToVersion(false, in, target)
 }
 
