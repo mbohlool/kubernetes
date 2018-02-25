@@ -67,11 +67,11 @@ func (a customResourceDefinitionStorageStrategy) NamespaceScoped() bool {
 }
 
 func (a customResourceDefinitionStorageStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
-	a.converter.ConvertToVersion(obj, schema.GroupVersion{Group: obj.GetObjectKind().GroupVersionKind().Group, Version: a.storageVersion})
+//	a.converter.ConvertToVersion(obj, schema.GroupVersion{Group: obj.GetObjectKind().GroupVersionKind().Group, Version: a.storageVersion})
 }
 
 func (a customResourceDefinitionStorageStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
-	a.converter.ConvertToVersion(obj, schema.GroupVersion{Group: obj.GetObjectKind().GroupVersionKind().Group, Version: a.storageVersion})
+//	a.converter.ConvertToVersion(obj, schema.GroupVersion{Group: obj.GetObjectKind().GroupVersionKind().Group, Version: a.storageVersion})
 }
 
 func (a customResourceDefinitionStorageStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {

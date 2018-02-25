@@ -374,7 +374,13 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 				converter,
 				storageVersion,
 			),
-			r.restOptionsGetter,
+			//r.restOptionsGetter,
+			CRDRESTOptionsGetterWrapper{
+				RESTOptionsGetter: r.restOptionsGetter,
+				//converter: storageConverter,
+				decoderVersion: schema.GroupVersion{Group: crd.Spec.Group, Version: v.Name},
+				encoderVersion: schema.GroupVersion{Group: crd.Spec.Group, Version: storageVersion},
+			},
 		)
 
 		selfLinkPrefix := ""
@@ -438,9 +444,9 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 }
 
 type crdNegotiatedSerializer struct {
-	typer      runtime.ObjectTyper
-	creator    runtime.ObjectCreater
-	converter  runtime.ObjectConvertor
+	typer     runtime.ObjectTyper
+	creator   runtime.ObjectCreater
+	converter runtime.ObjectConvertor
 }
 
 func (s crdNegotiatedSerializer) SupportedMediaTypes() []runtime.SerializerInfo {
@@ -559,4 +565,21 @@ func (in crdStorageMap) clone() crdStorageMap {
 		out[key] = value
 	}
 	return out
+}
+
+type CRDRESTOptionsGetterWrapper struct {
+	generic.RESTOptionsGetter
+	customCodec runtime.Codec
+	//converter runtime.ObjectConvertor
+	encoderVersion schema.GroupVersion
+	decoderVersion schema.GroupVersion
+}
+
+func (t CRDRESTOptionsGetterWrapper) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+	glog.Infof("ZZZ wrapper %v", resource)
+	ret, err := t.RESTOptionsGetter.GetRESTOptions(resource)
+	if err != nil {
+		ret.StorageConfig.Codec = versioning.NewCodec(ret.StorageConfig.Codec, ret.StorageConfig.Codec, nil, &crdCreator{}, newCRDObjectTyper(nil), &crdDefaulter{delegate: Scheme}, t.encoderVersion, t.decoderVersion)
+	}
+	return ret, err
 }

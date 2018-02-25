@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
-	"github.com/golang/glog"
 )
 
 // crConverter is a converter that supports field selectors for CRDs.
