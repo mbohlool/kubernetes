@@ -18,6 +18,7 @@ package apiserver
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"path"
 	"strings"
@@ -575,11 +576,25 @@ type CRDRESTOptionsGetterWrapper struct {
 	decoderVersion schema.GroupVersion
 }
 
+type DebugCodec struct {
+	delegate runtime.Codec
+}
+
+func (d DebugCodec) Decode(data []byte, defaults *schema.GroupVersionKind, into runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
+	glog.Infof("ZZZ wrapper decode %v", defaults)
+	return d.delegate.Decode(data, defaults, into)
+}
+
+func (d DebugCodec) Encode(obj runtime.Object, w io.Writer) error {
+	glog.Infof("ZZZ wrapper encode %v", obj)
+	return d.delegate.Encode(obj, w)
+}
+
 func (t CRDRESTOptionsGetterWrapper) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	glog.Infof("ZZZ wrapper %v", resource)
 	ret, err := t.RESTOptionsGetter.GetRESTOptions(resource)
 	if err != nil {
-		ret.StorageConfig.Codec = versioning.NewCodec(ret.StorageConfig.Codec, ret.StorageConfig.Codec, nil, &crdCreator{}, newCRDObjectTyper(nil), &crdDefaulter{delegate: Scheme}, t.encoderVersion, t.decoderVersion)
+		ret.StorageConfig.Codec = DebugCodec{versioning.NewCodec(ret.StorageConfig.Codec, ret.StorageConfig.Codec, crconversion.NewNoConversionConverter(true), &crdCreator{}, newCRDObjectTyper(nil), &crdDefaulter{delegate: Scheme}, t.encoderVersion, t.decoderVersion)}
 	}
 	return ret, err
 }
