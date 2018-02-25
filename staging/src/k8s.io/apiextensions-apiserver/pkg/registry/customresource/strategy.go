@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,6 +34,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 
 	apiservervalidation "k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 )
 
 type customResourceDefinitionStorageStrategy struct {
@@ -144,13 +144,12 @@ func (a customResourceValidator) Validate(ctx genericapirequest.Context, obj run
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), typeAccessor.GetAPIVersion(), fmt.Sprintf("must be %v", a.kind.Group+"/"+a.kind.Version))}
 	}
 
-	customResourceObject, ok := obj.(*unstructured.Unstructured)
-	// this will never happen.
+	customResourceObject, ok := obj.(*cr.CustomResource)
 	if !ok {
-		return field.ErrorList{field.Invalid(field.NewPath(""), customResourceObject, fmt.Sprintf("has type %T. Must be a pointer to an Unstructured type", customResourceObject))}
+		return field.ErrorList{field.Invalid(field.NewPath(""), customResourceObject, fmt.Sprintf("has type %T. Must be a CustomResource type", customResourceObject))}
 	}
 
-	customResource := customResourceObject.UnstructuredContent()
+	customResource := customResourceObject.Obj.UnstructuredContent()
 	if err = apiservervalidation.ValidateCustomResource(customResource, a.validator); err != nil {
 		return field.ErrorList{field.Invalid(field.NewPath(""), customResource, err.Error())}
 	}
@@ -178,13 +177,13 @@ func (a customResourceValidator) ValidateUpdate(ctx genericapirequest.Context, o
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), typeAccessor.GetAPIVersion(), fmt.Sprintf("must be %v", a.kind.Group+"/"+a.kind.Version))}
 	}
 
-	customResourceObject, ok := obj.(*unstructured.Unstructured)
+	customResourceObject, ok := obj.(*cr.CustomResource)
 	// this will never happen.
 	if !ok {
-		return field.ErrorList{field.Invalid(field.NewPath(""), customResourceObject, fmt.Sprintf("has type %T. Must be a pointer to an Unstructured type", customResourceObject))}
+		return field.ErrorList{field.Invalid(field.NewPath(""), customResourceObject, fmt.Sprintf("has type %T. Must be a pointer to a CustomResource type", customResourceObject))}
 	}
 
-	customResource := customResourceObject.UnstructuredContent()
+	customResource := customResourceObject.Obj.UnstructuredContent()
 	if err = apiservervalidation.ValidateCustomResource(customResource, a.validator); err != nil {
 		return field.ErrorList{field.Invalid(field.NewPath(""), customResource, err.Error())}
 	}
