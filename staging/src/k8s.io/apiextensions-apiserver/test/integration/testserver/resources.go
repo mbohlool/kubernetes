@@ -63,6 +63,18 @@ func NewNoxuCustomResourceDefinition(scope apiextensionsv1beta1.ResourceScope) *
 		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
 			Group:   "mygroup.example.com",
 			Version: "v1beta1",
+			Versions: []apiextensionsv1beta1.CustomResourceDefinitionVersion{
+				{
+					Name: "v1beta1",
+					Served: &[]bool{true}[0],
+					Storage: &[]bool{false}[0],
+				},
+				{
+					Name: "v1",
+					Served: &[]bool{true}[0],
+					Storage: &[]bool{true}[0],
+				},
+			},
 			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
 				Plural:     "noxus",
 				Singular:   "nonenglishnoxu",

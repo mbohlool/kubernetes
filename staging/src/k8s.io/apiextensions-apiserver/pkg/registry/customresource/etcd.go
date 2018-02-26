@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 )
 
 // REST implements a RESTStorage for API services against etcd
@@ -30,9 +31,14 @@ type REST struct {
 }
 
 // NewREST returns a RESTStorage object that will work against API services.
-func NewREST(resource schema.GroupResource, listKind schema.GroupVersionKind, strategy customResourceDefinitionStorageStrategy, optsGetter generic.RESTOptionsGetter) *REST {
+func NewREST(resource schema.GroupResource, kind schema.GroupVersionKind, listKind schema.GroupVersionKind, strategy customResourceDefinitionStorageStrategy, optsGetter generic.RESTOptionsGetter) *REST {
 	store := &genericregistry.Store{
-		NewFunc: func() runtime.Object { return &unstructured.Unstructured{} },
+		NewFunc: func() runtime.Object {
+			ret := &cr.CustomResource{Obj:&unstructured.Unstructured{}}
+			ret.Obj.Object= map[string]interface{}{}
+			ret.Obj.SetGroupVersionKind(kind)
+			return ret
+		},
 		NewListFunc: func() runtime.Object {
 			// lists are never stored, only manufactured, so stomp in the right kind
 			ret := &unstructured.UnstructuredList{}

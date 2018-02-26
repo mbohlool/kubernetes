@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,17 +34,20 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 
 	apiservervalidation "k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 )
 
 type customResourceDefinitionStorageStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
+	storageVersion string
 
 	namespaceScoped bool
 	validator       customResourceValidator
+	converter       runtime.ObjectConvertor
 }
 
-func NewStrategy(typer runtime.ObjectTyper, namespaceScoped bool, kind schema.GroupVersionKind, validator *validate.SchemaValidator) customResourceDefinitionStorageStrategy {
+func NewStrategy(typer runtime.ObjectTyper, namespaceScoped bool, kind schema.GroupVersionKind, validator *validate.SchemaValidator, converter runtime.ObjectConvertor, storageVersion string) customResourceDefinitionStorageStrategy {
 	return customResourceDefinitionStorageStrategy{
 		ObjectTyper:     typer,
 		NameGenerator:   names.SimpleNameGenerator,
@@ -55,6 +57,8 @@ func NewStrategy(typer runtime.ObjectTyper, namespaceScoped bool, kind schema.Gr
 			kind:            kind,
 			validator:       validator,
 		},
+		converter:      converter,
+		storageVersion: storageVersion,
 	}
 }
 
@@ -62,10 +66,12 @@ func (a customResourceDefinitionStorageStrategy) NamespaceScoped() bool {
 	return a.namespaceScoped
 }
 
-func (customResourceDefinitionStorageStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
+func (a customResourceDefinitionStorageStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
+//	a.converter.ConvertToVersion(obj, schema.GroupVersion{Group: obj.GetObjectKind().GroupVersionKind().Group, Version: a.storageVersion})
 }
 
-func (customResourceDefinitionStorageStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+func (a customResourceDefinitionStorageStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+//	a.converter.ConvertToVersion(obj, schema.GroupVersion{Group: obj.GetObjectKind().GroupVersionKind().Group, Version: a.storageVersion})
 }
 
 func (a customResourceDefinitionStorageStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {
@@ -138,13 +144,12 @@ func (a customResourceValidator) Validate(ctx genericapirequest.Context, obj run
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), typeAccessor.GetAPIVersion(), fmt.Sprintf("must be %v", a.kind.Group+"/"+a.kind.Version))}
 	}
 
-	customResourceObject, ok := obj.(*unstructured.Unstructured)
-	// this will never happen.
+	customResourceObject, ok := obj.(*cr.CustomResource)
 	if !ok {
-		return field.ErrorList{field.Invalid(field.NewPath(""), customResourceObject, fmt.Sprintf("has type %T. Must be a pointer to an Unstructured type", customResourceObject))}
+		return field.ErrorList{field.Invalid(field.NewPath(""), customResourceObject, fmt.Sprintf("has type %T. Must be a CustomResource type", customResourceObject))}
 	}
 
-	customResource := customResourceObject.UnstructuredContent()
+	customResource := customResourceObject.Obj.UnstructuredContent()
 	if err = apiservervalidation.ValidateCustomResource(customResource, a.validator); err != nil {
 		return field.ErrorList{field.Invalid(field.NewPath(""), customResource, err.Error())}
 	}
@@ -172,13 +177,13 @@ func (a customResourceValidator) ValidateUpdate(ctx genericapirequest.Context, o
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), typeAccessor.GetAPIVersion(), fmt.Sprintf("must be %v", a.kind.Group+"/"+a.kind.Version))}
 	}
 
-	customResourceObject, ok := obj.(*unstructured.Unstructured)
+	customResourceObject, ok := obj.(*cr.CustomResource)
 	// this will never happen.
 	if !ok {
-		return field.ErrorList{field.Invalid(field.NewPath(""), customResourceObject, fmt.Sprintf("has type %T. Must be a pointer to an Unstructured type", customResourceObject))}
+		return field.ErrorList{field.Invalid(field.NewPath(""), customResourceObject, fmt.Sprintf("has type %T. Must be a pointer to a CustomResource type", customResourceObject))}
 	}
 
-	customResource := customResourceObject.UnstructuredContent()
+	customResource := customResourceObject.Obj.UnstructuredContent()
 	if err = apiservervalidation.ValidateCustomResource(customResource, a.validator); err != nil {
 		return field.ErrorList{field.Invalid(field.NewPath(""), customResource, err.Error())}
 	}

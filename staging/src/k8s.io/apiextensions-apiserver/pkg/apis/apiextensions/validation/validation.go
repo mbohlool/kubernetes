@@ -88,6 +88,25 @@ func ValidateCustomResourceDefinitionSpec(spec *apiextensions.CustomResourceDefi
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("scope"), spec.Scope, []string{string(apiextensions.ClusterScoped), string(apiextensions.NamespaceScoped)}))
 	}
 
+	storageFlagCount := 0
+	versionsMap := map[string]bool{}
+	for _, version := range spec.Versions {
+		if apiextensions.IsCRDStorageVersion(&version) {
+			storageFlagCount++
+		}
+		if versionsMap[version.Name] {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("versions"), spec.Versions, "duplicate version name "+version.Name))
+		} else {
+			versionsMap[version.Name] = true
+		}
+	}
+	if storageFlagCount != 1 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("versions"), spec.Versions, "one and only one version should be marked as storage version"))
+	}
+	if !versionsMap[spec.Version] {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("version"), spec.Version, "spec.version should be one of the items in spec.Versions"))
+	}
+
 	// in addition to the basic name restrictions, some names are required for spec, but not for status
 	if len(spec.Names.Plural) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("names", "plural"), ""))
@@ -119,7 +138,6 @@ func ValidateCustomResourceDefinitionSpecUpdate(spec, oldSpec *apiextensions.Cus
 
 	if established {
 		// these effect the storage and cannot be changed therefore
-		allErrs = append(allErrs, genericvalidation.ValidateImmutableField(spec.Version, oldSpec.Version, fldPath.Child("version"))...)
 		allErrs = append(allErrs, genericvalidation.ValidateImmutableField(spec.Scope, oldSpec.Scope, fldPath.Child("scope"))...)
 		allErrs = append(allErrs, genericvalidation.ValidateImmutableField(spec.Names.Kind, oldSpec.Names.Kind, fldPath.Child("names", "kind"))...)
 	}
