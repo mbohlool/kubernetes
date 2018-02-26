@@ -36,6 +36,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apiextensions-apiserver/pkg/features"
 	"k8s.io/apiextensions-apiserver/test/integration/testserver"
@@ -69,21 +70,23 @@ func NewNoxuSubresourcesCRD(scope apiextensionsv1beta1.ResourceScope) *apiextens
 	}
 }
 
-func NewNoxuSubresourceInstance(namespace, name string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "mygroup.example.com/v1beta1",
-			"kind":       "WishIHadChosenNoxu",
-			"metadata": map[string]interface{}{
-				"namespace": namespace,
-				"name":      name,
-			},
-			"spec": map[string]interface{}{
-				"num":      int64(10),
-				"replicas": int64(3),
-			},
-			"status": map[string]interface{}{
-				"replicas": int64(7),
+func NewNoxuSubresourceInstance(namespace, name string) *cr.CustomResource {
+	return &cr.CustomResource{
+		Obj: &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "mygroup.example.com/v1beta1",
+				"kind":       "WishIHadChosenNoxu",
+				"metadata": map[string]interface{}{
+					"namespace": namespace,
+					"name":      name,
+				},
+				"spec": map[string]interface{}{
+					"num":      int64(10),
+					"replicas": int64(3),
+				},
+				"status": map[string]interface{}{
+					"replicas": int64(7),
+				},
 			},
 		},
 	}
@@ -427,7 +430,7 @@ func TestValidateOnlyStatus(t *testing.T) {
 
 	// set .spec.num = 10 and .status.num = 10
 	noxuInstance := NewNoxuSubresourceInstance(ns, "foo")
-	err = unstructured.SetNestedField(noxuInstance.Object, int64(10), "status", "num")
+	err = unstructured.SetNestedField(noxuInstance.Obj.Object, int64(10), "status", "num")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -469,14 +472,14 @@ func TestValidateOnlyStatus(t *testing.T) {
 	}
 
 	// update the status with .status.num = 5
-	err = unstructured.SetNestedField(createdNoxuInstance.Object, int64(5), "status", "num")
+	err = unstructured.SetNestedField(createdNoxuInstance.Obj.Object, int64(5), "status", "num")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	// cr is updated even though spec is invalid
 	err = wait.Poll(500*time.Millisecond, wait.ForeverTestTimeout, func() (bool, error) {
-		_, err := noxuStatusResourceClient.Update(createdNoxuInstance)
+		_, err := noxuStatusResourceClient.Update(createdNoxuInstance.Obj)
 		if statusError, isStatus := err.(*apierrors.StatusError); isStatus {
 			if strings.Contains(statusError.Error(), "is invalid") {
 				return false, nil

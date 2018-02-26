@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 	"k8s.io/apiextensions-apiserver/test/integration/testserver"
 )
 
@@ -48,23 +49,23 @@ func TestForProperValidationErrors(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		instanceFn    func() *unstructured.Unstructured
+		instanceFn    func() *cr.CustomResource
 		expectedError string
 	}{
 		{
 			name: "bad version",
-			instanceFn: func() *unstructured.Unstructured {
+			instanceFn: func() *cr.CustomResource {
 				instance := testserver.NewNoxuInstance(ns, "foo")
-				instance.Object["apiVersion"] = "mygroup.example.com/v2"
+				instance.Obj.Object["apiVersion"] = "mygroup.example.com/v2"
 				return instance
 			},
 			expectedError: "the API version in the data (mygroup.example.com/v2) does not match the expected API version (mygroup.example.com/v1beta1)",
 		},
 		{
 			name: "bad kind",
-			instanceFn: func() *unstructured.Unstructured {
+			instanceFn: func() *cr.CustomResource {
 				instance := testserver.NewNoxuInstance(ns, "foo")
-				instance.Object["kind"] = "SomethingElse"
+				instance.Obj.Object["kind"] = "SomethingElse"
 				return instance
 			},
 			expectedError: `SomethingElse.mygroup.example.com "foo" is invalid: kind: Invalid value: "SomethingElse": must be WishIHadChosenNoxu`,
@@ -72,7 +73,7 @@ func TestForProperValidationErrors(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		_, err := noxuResourceClient.Create(tc.instanceFn())
+		_, err := noxuResourceClient.Create(tc.instanceFn().Obj)
 		if err == nil {
 			t.Errorf("%v: expected %v", tc.name, tc.expectedError)
 			continue
@@ -151,19 +152,21 @@ func newNoxuValidationCRD(scope apiextensionsv1beta1.ResourceScope) *apiextensio
 	}
 }
 
-func newNoxuValidationInstance(namespace, name string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "mygroup.example.com/v1beta1",
-			"kind":       "WishIHadChosenNoxu",
-			"metadata": map[string]interface{}{
-				"namespace": namespace,
-				"name":      name,
+func newNoxuValidationInstance(namespace, name string) *cr.CustomResource {
+	return &cr.CustomResource{
+		Obj: &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "mygroup.example.com/v1beta1",
+				"kind":       "WishIHadChosenNoxu",
+				"metadata": map[string]interface{}{
+					"namespace": namespace,
+					"name":      name,
+				},
+				"alpha": "foo_123",
+				"beta":  10,
+				"gamma": "bar",
+				"delta": "hello",
 			},
-			"alpha": "foo_123",
-			"beta":  10,
-			"gamma": "bar",
-			"delta": "hello",
 		},
 	}
 }
@@ -250,50 +253,50 @@ func TestCustomResourceValidationErrors(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		instanceFn    func() *unstructured.Unstructured
+		instanceFn    func() *cr.CustomResource
 		expectedError string
 	}{
 		{
 			name: "bad alpha",
-			instanceFn: func() *unstructured.Unstructured {
+			instanceFn: func() *cr.CustomResource {
 				instance := newNoxuValidationInstance(ns, "foo")
-				instance.Object["alpha"] = "foo_123!"
+				instance.Obj.Object["alpha"] = "foo_123!"
 				return instance
 			},
 			expectedError: "alpha in body should match '^[a-zA-Z0-9_]*$'",
 		},
 		{
 			name: "bad beta",
-			instanceFn: func() *unstructured.Unstructured {
+			instanceFn: func() *cr.CustomResource {
 				instance := newNoxuValidationInstance(ns, "foo")
-				instance.Object["beta"] = 5
+				instance.Obj.Object["beta"] = 5
 				return instance
 			},
 			expectedError: "beta in body should be greater than or equal to 10",
 		},
 		{
 			name: "bad gamma",
-			instanceFn: func() *unstructured.Unstructured {
+			instanceFn: func() *cr.CustomResource {
 				instance := newNoxuValidationInstance(ns, "foo")
-				instance.Object["gamma"] = "qux"
+				instance.Obj.Object["gamma"] = "qux"
 				return instance
 			},
 			expectedError: "gamma in body should be one of [foo bar baz]",
 		},
 		{
 			name: "bad delta",
-			instanceFn: func() *unstructured.Unstructured {
+			instanceFn: func() *cr.CustomResource {
 				instance := newNoxuValidationInstance(ns, "foo")
-				instance.Object["delta"] = "foobarbaz"
+				instance.Obj.Object["delta"] = "foobarbaz"
 				return instance
 			},
 			expectedError: "must validate at least one schema (anyOf)\ndelta in body should be at most 5 chars long",
 		},
 		{
 			name: "absent alpha and beta",
-			instanceFn: func() *unstructured.Unstructured {
+			instanceFn: func() *cr.CustomResource {
 				instance := newNoxuValidationInstance(ns, "foo")
-				instance.Object = map[string]interface{}{
+				instance.Obj.Object = map[string]interface{}{
 					"apiVersion": "mygroup.example.com/v1beta1",
 					"kind":       "WishIHadChosenNoxu",
 					"metadata": map[string]interface{}{
@@ -310,7 +313,7 @@ func TestCustomResourceValidationErrors(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		_, err := noxuResourceClient.Create(tc.instanceFn())
+		_, err := noxuResourceClient.Create(tc.instanceFn().Obj)
 		if err == nil {
 			t.Errorf("%v: expected %v", tc.name, tc.expectedError)
 			continue
@@ -361,7 +364,7 @@ func TestCRValidationOnCRDUpdate(t *testing.T) {
 
 	// CR is now accepted
 	err = wait.Poll(500*time.Millisecond, wait.ForeverTestTimeout, func() (bool, error) {
-		_, err := noxuResourceClient.Create(newNoxuValidationInstance(ns, "foo"))
+		_, err := noxuResourceClient.Create(newNoxuValidationInstance(ns, "foo").Obj)
 		if statusError, isStatus := err.(*apierrors.StatusError); isStatus {
 			if strings.Contains(statusError.Error(), "is invalid") {
 				return false, nil

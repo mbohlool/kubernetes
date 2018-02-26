@@ -23,6 +23,7 @@ import (
 	"time"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 	"k8s.io/apiextensions-apiserver/test/integration/testserver"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -474,7 +475,7 @@ func TestSelfLink(t *testing.T) {
 	}, ns)
 
 	noxuInstanceToCreate := testserver.NewNoxuInstance(ns, "foo")
-	createdNoxuInstance, err := noxuNamespacedResourceClient.Create(noxuInstanceToCreate)
+	createdNoxuInstance, err := noxuNamespacedResourceClient.Create(noxuInstanceToCreate.Obj)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -496,7 +497,7 @@ func TestSelfLink(t *testing.T) {
 	}, ns)
 
 	curletInstanceToCreate := testserver.NewCurletInstance(ns, "foo")
-	createdCurletInstance, err := curletResourceClient.Create(curletInstanceToCreate)
+	createdCurletInstance, err := curletResourceClient.Create(curletInstanceToCreate.Obj)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -526,7 +527,7 @@ func TestPreserveInt(t *testing.T) {
 	}, ns)
 
 	noxuInstanceToCreate := testserver.NewNoxuInstance(ns, "foo")
-	createdNoxuInstance, err := noxuNamespacedResourceClient.Create(noxuInstanceToCreate)
+	createdNoxuInstance, err := noxuNamespacedResourceClient.Create(noxuInstanceToCreate.Obj)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -542,7 +543,7 @@ func TestPreserveInt(t *testing.T) {
 	}
 
 	// Check if int is preserved.
-	unstructuredObj := gottenNoxuInstance.(*unstructured.Unstructured).Object
+	unstructuredObj := gottenNoxuInstance.(*cr.CustomResource).Obj.Object
 	num := unstructuredObj["num"].(map[string]interface{})
 	num1 := num["num1"].(int64)
 	num2 := num["num2"].(int64)
@@ -571,7 +572,7 @@ func TestPatch(t *testing.T) {
 	}, ns)
 
 	noxuInstanceToCreate := testserver.NewNoxuInstance(ns, "foo")
-	createdNoxuInstance, err := noxuNamespacedResourceClient.Create(noxuInstanceToCreate)
+	createdNoxuInstance, err := noxuNamespacedResourceClient.Create(noxuInstanceToCreate.Obj)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -616,7 +617,7 @@ func TestPatch(t *testing.T) {
 	}
 
 	// Check if int is preserved.
-	unstructuredObj := gottenNoxuInstance.(*unstructured.Unstructured).Object
+	unstructuredObj := gottenNoxuInstance.(*cr.CustomResource).Obj.Object
 	num := unstructuredObj["num"].(map[string]interface{})
 	num1 := num["num1"].(int64)
 	num2 := num["num2"].(int64)
@@ -659,7 +660,7 @@ func TestCrossNamespaceListWatch(t *testing.T) {
 	}
 	defer noxuWatch.Stop()
 
-	instances := make(map[string]*unstructured.Unstructured)
+	instances := make(map[string]*cr.CustomResource)
 	ns1 := "namespace-1"
 	noxuNamespacedResourceClient1 := NewNamespacedCustomResourceClient(ns1, noxuVersionClient, noxuDefinition)
 	instances[ns1] = createInstanceWithNamespaceHelper(t, ns1, "foo1", noxuNamespacedResourceClient1, noxuDefinition)
@@ -725,7 +726,7 @@ func TestCrossNamespaceListWatch(t *testing.T) {
 	checkNamespacesWatchHelper(t, ns2, noxuNamespacesWatch2)
 }
 
-func createInstanceWithNamespaceHelper(t *testing.T, ns string, name string, noxuNamespacedResourceClient dynamic.ResourceInterface, noxuDefinition *apiextensionsv1beta1.CustomResourceDefinition) *unstructured.Unstructured {
+func createInstanceWithNamespaceHelper(t *testing.T, ns string, name string, noxuNamespacedResourceClient dynamic.ResourceInterface, noxuDefinition *apiextensionsv1beta1.CustomResourceDefinition) *cr.CustomResource {
 	createdInstance, err := instantiateCustomResource(t, testserver.NewNoxuInstance(ns, name), noxuNamespacedResourceClient, noxuDefinition)
 	if err != nil {
 		t.Fatalf("unable to create noxu Instance:%v", err)

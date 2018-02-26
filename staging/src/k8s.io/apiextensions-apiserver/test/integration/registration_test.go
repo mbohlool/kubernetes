@@ -30,6 +30,7 @@ import (
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	extensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apiextensions-apiserver/test/integration/testserver"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -40,8 +41,8 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-func instantiateCustomResource(t *testing.T, instanceToCreate *unstructured.Unstructured, client dynamic.ResourceInterface, definition *apiextensionsv1beta1.CustomResourceDefinition) (*unstructured.Unstructured, error) {
-	createdInstance, err := client.Create(instanceToCreate)
+func instantiateCustomResource(t *testing.T, instanceToCreate *cr.CustomResource, client dynamic.ResourceInterface, definition *apiextensionsv1beta1.CustomResourceDefinition) (*cr.CustomResource, error) {
+	createdInstance, err := client.Create(instanceToCreate.Obj)
 	if err != nil {
 		t.Logf("%#v", createdInstance)
 		return nil, err
@@ -64,7 +65,7 @@ func instantiateCustomResource(t *testing.T, instanceToCreate *unstructured.Unst
 	if e, a := definition.Spec.Names.Kind, createdTypeMeta.GetKind(); e != a {
 		t.Errorf("expected %v, got %v", e, a)
 	}
-	return createdInstance, nil
+	return &cr.CustomResource{Obj: createdInstance}, nil
 }
 
 func NewNamespacedCustomResourceClient(ns string, client dynamic.Interface, definition *apiextensionsv1beta1.CustomResourceDefinition) dynamic.ResourceInterface {
@@ -121,7 +122,7 @@ func TestMultipleResourceInstances(t *testing.T) {
 	instances := map[string]*struct {
 		Added    bool
 		Deleted  bool
-		Instance *unstructured.Unstructured
+		Instance *cr.CustomResource
 	}{
 		"foo": {},
 		"bar": {},

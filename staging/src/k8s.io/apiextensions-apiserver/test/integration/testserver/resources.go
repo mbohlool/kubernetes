@@ -21,6 +21,7 @@ import (
 	"time"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -79,21 +80,23 @@ func NewNoxuCustomResourceDefinition(scope apiextensionsv1beta1.ResourceScope) *
 	}
 }
 
-func NewNoxuInstance(namespace, name string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "mygroup.example.com/v1beta1",
-			"kind":       "WishIHadChosenNoxu",
-			"metadata": map[string]interface{}{
-				"namespace": namespace,
-				"name":      name,
-			},
-			"content": map[string]interface{}{
-				"key": "value",
-			},
-			"num": map[string]interface{}{
-				"num1": noxuInstanceNum,
-				"num2": 1000000,
+func NewNoxuInstance(namespace, name string) *cr.CustomResource {
+	return &cr.CustomResource{
+		Obj: &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "mygroup.example.com/v1beta1",
+				"kind":       "WishIHadChosenNoxu",
+				"metadata": map[string]interface{}{
+					"namespace": namespace,
+					"name":      name,
+				},
+				"content": map[string]interface{}{
+					"key": "value",
+				},
+				"num": map[string]interface{}{
+					"num1": noxuInstanceNum,
+					"num2": 1000000,
+				},
 			},
 		},
 	}
@@ -134,17 +137,19 @@ func NewCurletCustomResourceDefinition(scope apiextensionsv1beta1.ResourceScope)
 	}
 }
 
-func NewCurletInstance(namespace, name string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "mygroup.example.com/v1beta1",
-			"kind":       "Curlet",
-			"metadata": map[string]interface{}{
-				"namespace": namespace,
-				"name":      name,
-			},
-			"content": map[string]interface{}{
-				"key": "value",
+func NewCurletInstance(namespace, name string) *cr.CustomResource {
+	return &cr.CustomResource{
+		Obj: &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "mygroup.example.com/v1beta1",
+				"kind":       "Curlet",
+				"metadata": map[string]interface{}{
+					"namespace": namespace,
+					"name":      name,
+				},
+				"content": map[string]interface{}{
+					"key": "value",
+				},
 			},
 		},
 	}
@@ -230,22 +235,24 @@ func checkForWatchCachePrimed(crd *apiextensionsv1beta1.CustomResourceDefinition
 	}
 
 	instanceName := "setup-instance"
-	instance := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": crd.Spec.Group + "/" + crd.Spec.Version,
-			"kind":       crd.Spec.Names.Kind,
-			"metadata": map[string]interface{}{
-				"namespace": ns,
-				"name":      instanceName,
+	instance := &cr.CustomResource{
+		Obj: &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": crd.Spec.Group + "/" + crd.Spec.Version,
+				"kind":       crd.Spec.Names.Kind,
+				"metadata": map[string]interface{}{
+					"namespace": ns,
+					"name":      instanceName,
+				},
+				"alpha":   "foo_123",
+				"beta":    10,
+				"gamma":   "bar",
+				"delta":   "hello",
+				"epsilon": "foobar",
 			},
-			"alpha":   "foo_123",
-			"beta":    10,
-			"gamma":   "bar",
-			"delta":   "hello",
-			"epsilon": "foobar",
 		},
 	}
-	if _, err := resourceClient.Create(instance); err != nil {
+	if _, err := resourceClient.Create(instance.Obj); err != nil {
 		return err
 	}
 	// we created something, clean it up

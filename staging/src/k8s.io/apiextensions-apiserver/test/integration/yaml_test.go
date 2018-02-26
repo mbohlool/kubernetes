@@ -32,6 +32,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apiextensions-apiserver/pkg/features"
 	"k8s.io/apiextensions-apiserver/test/integration/testserver"
@@ -210,23 +211,23 @@ values:
 		if !ok || err != nil || len(items) != 1 {
 			t.Fatalf("expected one item, got %v %v %v", items, ok, err)
 		}
-		obj := unstructured.Unstructured{Object: items[0].(map[string]interface{})}
+		obj := cr.CustomResource{Obj: &unstructured.Unstructured{Object: items[0].(map[string]interface{})}}
 		if obj.GetName() != "mytest" {
 			t.Fatalf("expected mytest, got %s", obj.GetName())
 		}
-		if obj.GetAPIVersion() != apiVersion {
-			t.Fatalf("expected %s, got %s", apiVersion, obj.GetAPIVersion())
+		if obj.Obj.GetAPIVersion() != apiVersion {
+			t.Fatalf("expected %s, got %s", apiVersion, obj.Obj.GetAPIVersion())
 		}
-		if obj.GetKind() != kind {
-			t.Fatalf("expected %s, got %s", kind, obj.GetKind())
+		if obj.Obj.GetKind() != kind {
+			t.Fatalf("expected %s, got %s", kind, obj.Obj.GetKind())
 		}
-		if v, ok, err := unstructured.NestedFloat64(obj.Object, "values", "numVal"); v != 1 || !ok || err != nil {
+		if v, ok, err := unstructured.NestedFloat64(obj.Obj.Object, "values", "numVal"); v != 1 || !ok || err != nil {
 			t.Fatal(v, ok, err, string(result))
 		}
-		if v, ok, err := unstructured.NestedBool(obj.Object, "values", "boolVal"); v != true || !ok || err != nil {
+		if v, ok, err := unstructured.NestedBool(obj.Obj.Object, "values", "boolVal"); v != true || !ok || err != nil {
 			t.Fatal(v, ok, err, string(result))
 		}
-		if v, ok, err := unstructured.NestedString(obj.Object, "values", "stringVal"); v != "1" || !ok || err != nil {
+		if v, ok, err := unstructured.NestedString(obj.Obj.Object, "values", "stringVal"); v != "1" || !ok || err != nil {
 			t.Fatal(v, ok, err, string(result))
 		}
 	}
