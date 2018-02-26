@@ -18,7 +18,6 @@ package apiserver
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"path"
 	"strings"
@@ -370,7 +369,7 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 			customresource.NewStrategy(
 				typer,
 				crd.Spec.Scope == apiextensions.NamespaceScoped,
-				schema.GroupVersionKind{Group: crd.Spec.Group, Version: storageVersion, Kind: crd.Status.AcceptedNames.Kind},
+				schema.GroupVersionKind{Group: crd.Spec.Group, Version: v.Name, Kind: crd.Status.AcceptedNames.Kind},
 				validator,
 				converter,
 				storageVersion,
@@ -526,9 +525,9 @@ type crdDefaulter struct {
 }
 
 func (d crdDefaulter) Default(in runtime.Object) {
-	// Delegate for things other than Unstructured.
-	if crd, ok := in.(*cr.CustomResource); !ok {
-		d.delegate.Default(crd.Obj)
+	// Delegate for things other than CustomResource.
+	if _, ok := in.(*cr.CustomResource); !ok {
+		d.delegate.Default(in)
 	}
 }
 
@@ -580,21 +579,10 @@ type DebugCodec struct {
 	delegate runtime.Codec
 }
 
-func (d DebugCodec) Decode(data []byte, defaults *schema.GroupVersionKind, into runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
-	glog.Infof("ZZZ wrapper decode %v", defaults)
-	return d.delegate.Decode(data, defaults, into)
-}
-
-func (d DebugCodec) Encode(obj runtime.Object, w io.Writer) error {
-	glog.Infof("ZZZ wrapper encode %v", obj)
-	return d.delegate.Encode(obj, w)
-}
-
 func (t CRDRESTOptionsGetterWrapper) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
-	glog.Infof("ZZZ wrapper %v", resource)
 	ret, err := t.RESTOptionsGetter.GetRESTOptions(resource)
-	if err != nil {
-		ret.StorageConfig.Codec = DebugCodec{versioning.NewCodec(ret.StorageConfig.Codec, ret.StorageConfig.Codec, crconversion.NewNoConversionConverter(true), &crdCreator{}, newCRDObjectTyper(nil), &crdDefaulter{delegate: Scheme}, t.encoderVersion, t.decoderVersion)}
+	if err == nil {
+		ret.StorageConfig.Codec = versioning.NewCodec(ret.StorageConfig.Codec, ret.StorageConfig.Codec, crconversion.NewNoConversionConverter(true), &crdCreator{}, newCRDObjectTyper(nil), &crdDefaulter{delegate: Scheme}, t.encoderVersion, t.decoderVersion)
 	}
 	return ret, err
 }
