@@ -41,7 +41,7 @@ func NewREST(resource schema.GroupResource, kind schema.GroupVersionKind, listKi
 		},
 		NewListFunc: func() runtime.Object {
 			// lists are never stored, only manufactured, so stomp in the right kind
-			ret := &unstructured.UnstructuredList{}
+			ret := &cr.CustomResourceList{}
 			ret.SetGroupVersionKind(listKind)
 			return ret
 		},

@@ -42,6 +42,30 @@ func TestServerUp(t *testing.T) {
 	defer close(stopCh)
 }
 
+func TestCRDVersioning(t *testing.T) {
+	stopCh, apiExtensionClient, clientPool, err := testserver.StartDefaultServer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer close(stopCh)
+
+	noxuDefinition := testserver.NewNoxuCustomResourceDefinition(apiextensionsv1beta1.NamespaceScoped)
+	noxuVersionClient, err := testserver.CreateNewCustomResourceDefinition(noxuDefinition, apiExtensionClient, clientPool)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ns := "not-the-default"
+	noxuResourceClient := NewNamespacedCustomResourceClient(ns, noxuVersionClient, noxuDefinition)
+	createdNoxuInstance, err := instantiateCustomResource(t, testserver.NewNoxuInstance(ns, "foo"), noxuResourceClient, noxuDefinition)
+	if err != nil {
+		t.Fatalf("unable to create noxu Instance:%v", err)
+	}
+
+	noxuResourceClient.Get(createdNoxuInstance.GetName(), metav1.GetOptions{})
+
+}
+
 func TestNamespaceScopedCRUD(t *testing.T) {
 	stopCh, apiExtensionClient, clientPool, err := testserver.StartDefaultServer()
 	if err != nil {

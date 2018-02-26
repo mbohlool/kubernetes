@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/cr"
 )
 
 const (
@@ -87,8 +88,8 @@ func NewNoxuCustomResourceDefinition(scope apiextensionsv1beta1.ResourceScope) *
 	}
 }
 
-func NewNoxuInstance(namespace, name string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
+func NewNoxuInstance(namespace, name string) *cr.CustomResource {
+	return &cr.CustomResource{Obj: &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "mygroup.example.com/v1beta1",
 			"kind":       "WishIHadChosenNoxu",
@@ -104,6 +105,7 @@ func NewNoxuInstance(namespace, name string) *unstructured.Unstructured {
 				"num2": 1000000,
 			},
 		},
+	},
 	}
 }
 

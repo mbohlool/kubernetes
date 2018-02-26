@@ -351,6 +351,7 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 			&metav1.ExportOptions{},
 			&metav1.GetOptions{},
 			&metav1.DeleteOptions{},
+			&cr.CustomResourceList{},
 		)
 		parameterCodec := runtime.NewParameterCodec(parameterScheme)
 

@@ -22,6 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CustomResource struct {
@@ -31,9 +33,14 @@ type CustomResource struct {
 var _ v1.Object = &CustomResource{}
 var _ runtime.Object = &CustomResource{}
 
-func (c *CustomResource) DeepCopyObject() runtime.Object {
+func (c *CustomResource) DeepCopy() *CustomResource {
 	return &CustomResource{Obj: c.Obj.DeepCopy()}
 }
+
+func (c *CustomResource) DeepCopyObject() runtime.Object {
+	return c.DeepCopy()
+}
+
 func (c *CustomResource) GetObjectKind() schema.ObjectKind { return c.Obj }
 
 // MarshalJSON ensures that the unstructured object produces proper
@@ -45,6 +52,9 @@ func (c *CustomResource) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON ensures that the unstructured object properly decodes
 // JSON when passed to Go's standard JSON library.
 func (c *CustomResource) UnmarshalJSON(b []byte) error {
+	if c.Obj == nil {
+		c.Obj = &unstructured.Unstructured{}
+	}
 	return c.Obj.UnmarshalJSON(b)
 }
 
@@ -94,3 +104,39 @@ func (c *CustomResource) GetOwnerReferences() []v1.OwnerReference {
 func (c *CustomResource) SetOwnerReferences(p []v1.OwnerReference) { c.Obj.SetOwnerReferences(p) }
 func (c *CustomResource) GetClusterName() string                       { return c.Obj.GetClusterName() }
 func (c *CustomResource) SetClusterName(clusterName string)            { c.Obj.SetClusterName(clusterName) }
+
+type CustomResourceList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// Items is a list of CustomResource objects.
+	Items []CustomResource `json:"items"`
+}
+
+func (u *CustomResourceList) GetObjectKind() schema.ObjectKind { return u }
+
+func (u *CustomResourceList) IsList() bool { return true }
+
+func (u *CustomResourceList) EachListItem(fn func(runtime.Object) error) error {
+	for i := range u.Items {
+		if err := fn(&u.Items[i]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (u *CustomResourceList) DeepCopyObject() runtime.Object {
+	if u == nil {
+		return nil
+	}
+	out := new(CustomResourceList)
+	out.TypeMeta = u.TypeMeta
+	out.ListMeta = u.ListMeta
+	out.Items = make([]CustomResource, len(u.Items))
+	for i := range u.Items {
+		out.Items[i] = *u.Items[i].DeepCopy()
+	}
+	return out
+}
