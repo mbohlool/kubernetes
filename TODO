@@ -1,0 +1,2 @@
+remove github.com/emicklei/go-restful/*
+github.com/elazarl/go-bindata-assetfs?
