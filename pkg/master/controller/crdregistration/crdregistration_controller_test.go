@@ -64,7 +64,7 @@ func TestHandleVersionUpdate(t *testing.T) {
 						Group:                "group.com",
 						Version:              "v1",
 						GroupPriorityMinimum: 1000,
-						VersionPriority:      101,
+						VersionPriority:      100,
 					},
 				},
 			},
@@ -124,4 +124,89 @@ func (a *fakeAPIServiceRegistration) AddAPIServiceToSync(in *apiregistration.API
 }
 func (a *fakeAPIServiceRegistration) RemoveAPIServiceToSync(name string) {
 	a.removed = append(a.removed, name)
+}
+
+
+func testCrdFor(name string, versions ...string) *apiextensions.CustomResourceDefinition {
+	ret := apiextensions.CustomResourceDefinition{
+		Spec: apiextensions.CustomResourceDefinitionSpec{
+			Group: "test",
+		},
+	}
+	ret.Name = name
+	for _, v := range versions {
+		ret.Spec.Versions = append(ret.Spec.Versions, apiextensions.CustomResourceDefinitionVersion{Name: v})
+	}
+	return &ret
+}
+
+func TestComputeDeterministicVersionPriorities(t *testing.T) {
+	tests := []struct {
+		// List of CRD cases, first item is the name of the CRD, and the rest is versions
+		crdNameAndVersions [][]string
+		finalList []string
+	}{
+		{
+			crdNameAndVersions: [][]string{
+				{"A", "v1", "v2"},
+				{"B", "v3", "v1"},
+				{"C", "v1", "v4", "v1"},
+			},
+			finalList: []string{
+				// v4 can be technically at the beginning or end as C cannot be satisfied.
+				"v3", "v1", "v2", "v4",
+			},
+		},
+		{
+			crdNameAndVersions: [][]string{
+				{"A", "v1", "v2"},
+				{"B", "v2", "v1"},
+			},
+			finalList: []string{
+				// any order is acceptable as long as it is consistent
+				"v1", "v2",
+			},
+		},
+		{
+			crdNameAndVersions: [][]string{
+				{"D", "v4", "v5"},
+				{"A", "v1", "v5"},
+				{"C", "v3", "v5"},
+				{"B", "v2", "v5"},
+			},
+			finalList: []string{
+				// Any order of v4 to v1 is acceptable
+				"v4", "v3", "v2", "v1", "v5",
+			},
+		},
+		{
+			crdNameAndVersions: [][]string{
+				{"A", "v2"},
+				{"B", "v1", "v2"},
+			},
+			finalList: []string{
+				"v1", "v2",
+			},
+		},
+		{
+			crdNameAndVersions: [][]string{
+				{"A", "v1", "v2"},
+				{"B", "v2", "v3"},
+				{"C", "v3", "v4"},
+			},
+			finalList: []string{
+				"v1", "v2", "v3", "v4",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		var crd []*apiextensions.CustomResourceDefinition
+		for _, crdCase := range test.crdNameAndVersions {
+			crd = append(crd, testCrdFor(crdCase[0], crdCase[1:]...))
+		}
+		if e, a := test.finalList, computeDeterministicVersionPriorities(crd, "test"); !reflect.DeepEqual(e, a) {
+			t.Errorf("expected %v, got %v", e, a)
+		}
+	}
 }

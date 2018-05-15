@@ -17,7 +17,10 @@ limitations under the License.
 package crdregistration
 
 import (
+	"container/list"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -78,6 +81,8 @@ func NewAutoRegistrationController(crdinformer crdinformers.CustomResourceDefini
 			c.enqueueCRD(cast)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
+			// Enqueue both old and new object to make sure we remove and add appropriate API services.
+			// The working queue will resolve any duplicates and only changes will stay in the queue.
 			c.enqueueCRD(oldObj.(*apiextensions.CustomResourceDefinition))
 			c.enqueueCRD(newObj.(*apiextensions.CustomResourceDefinition))
 		},
@@ -189,6 +194,98 @@ func (c *crdRegistrationController) enqueueCRD(crd *apiextensions.CustomResource
 	}
 }
 
+func computeDeterministicVersionPriorities(crds []*apiextensions.CustomResourceDefinition, group string) (ret []string) {
+	type crdVersionInfo struct {
+		Name     string
+		versions []apiextensions.CustomResourceDefinitionVersion
+	}
+	var crdInfos []*crdVersionInfo
+	for _, crd := range crds {
+		if crd.Spec.Group != group {
+			continue
+		}
+		crdInfos = append(crdInfos, &crdVersionInfo{crd.Name, crd.Spec.Versions})
+	}
+	sort.SliceStable(crdInfos, func(i, j int) bool {
+		return strings.Compare(crdInfos[i].Name, crdInfos[j].Name) < 0
+	})
+	orderedVersions := list.New()
+	versionsMap := map[string]bool{}
+	for _, info := range crdInfos {
+		for i, v := range info.versions {
+			if !versionsMap[v.Name] {
+				versionsMap[v.Name] = true
+				if orderedVersions.Len() == 0 {
+					orderedVersions.PushBack(v.Name)
+					continue
+				}
+
+				// Try to insert version in the final list where with best effort these two constrains met:
+				// (1) All versions come before this version in this CRD also come before it in the final list
+				// (2) All versions come after this version in this CRD also come after it in the final list
+
+				beforePointer := orderedVersions.Front()
+				count := 0
+				for beforePointer != nil && count < i {
+					for j := 0; j < i; j++ {
+						if beforePointer.Value == info.versions[j].Name {
+							count++
+							break
+						}
+					}
+					beforePointer = beforePointer.Next()
+				}
+
+				if count < i {
+					// We could not satisfy (1)
+					orderedVersions.PushFront(v.Name)
+					continue
+				}
+
+				afterPointer := beforePointer
+				count = i + 1
+				for afterPointer != nil && count < len(info.versions) {
+					for j := i+1; j < len(info.versions); j++ {
+						if afterPointer.Value == info.versions[j].Name {
+							count++
+							break
+						}
+					}
+					afterPointer = afterPointer.Next()
+				}
+
+				if count < len(info.versions) {
+					// we couldn't satisfy (2), just add it to the back
+					orderedVersions.PushBack(v.Name)
+					continue
+				}
+
+				// We satisfy both before and after constraints
+				if beforePointer == nil {
+					orderedVersions.PushBack(v.Name)
+				} else {
+					orderedVersions.InsertBefore(v.Name, beforePointer)
+				}
+			}
+		}
+	}
+
+	for el := orderedVersions.Front(); el != nil; el = el.Next() {
+		ret = append(ret, el.Value.(string))
+	}
+
+	return ret
+}
+
+func findIndexInStringSlice(slice []string, value string) int {
+	for i, v := range slice {
+		if value == v {
+			return i
+		}
+	}
+	return -1
+}
+
 func (c *crdRegistrationController) handleVersionUpdate(groupVersion schema.GroupVersion) error {
 	apiServiceName := groupVersion.Version + "." + groupVersion.Group
 
@@ -201,17 +298,23 @@ func (c *crdRegistrationController) handleVersionUpdate(groupVersion schema.Grou
 		if crd.Spec.Group != groupVersion.Group {
 			continue
 		}
-		for index, version := range crd.Spec.Versions {
+		for _, version := range crd.Spec.Versions {
 			if version.Name != groupVersion.Version || !version.Served {
 				continue
 			}
+
+			// Compute this versions' priority. This can be improved by caching the ordered list
+			orderedVersionList := computeDeterministicVersionPriorities(crds, groupVersion.Group)
+			versionIndex := findIndexInStringSlice(orderedVersionList, version.Name)
+			priority := 100 + int32(len(orderedVersionList)) - int32(versionIndex) - 1
+
 			c.apiServiceRegistration.AddAPIServiceToSync(&apiregistration.APIService{
 				ObjectMeta: metav1.ObjectMeta{Name: apiServiceName},
 				Spec: apiregistration.APIServiceSpec{
 					Group:                groupVersion.Group,
 					Version:              groupVersion.Version,
-					GroupPriorityMinimum: 1000,                                        // CRDs should have relatively low priority
-					VersionPriority:      int32(100 + len(crd.Spec.Versions) - index), // CRDs should have relatively low priority
+					GroupPriorityMinimum: 1000, // CRDs should have relatively low priority
+					VersionPriority:      priority,
 				},
 			})
 			return nil
