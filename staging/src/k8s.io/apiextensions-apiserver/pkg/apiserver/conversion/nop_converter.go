@@ -19,8 +19,6 @@ package conversion
 import (
 	"fmt"
 
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -29,7 +27,7 @@ import (
 // nopConverter is a converter that only sets the apiVersion fields, but does not real conversion. It supports fields selectors.
 type nopConverter struct {
 	clusterScoped bool
-	crd           *apiextensions.CustomResourceDefinition
+	validVersions map[schema.GroupVersion]bool
 }
 
 var _ runtime.ObjectConvertor = &nopConverter{}
@@ -67,17 +65,16 @@ func (c *nopConverter) Convert(in, out, context interface{}) error {
 }
 
 func (c *nopConverter) convertToVersion(in runtime.Object, target runtime.GroupVersioner) error {
-	if kind := in.GetObjectKind().GroupVersionKind(); !kind.Empty() {
-		gvk, ok := target.KindForGroupVersionKinds([]schema.GroupVersionKind{kind})
-		if !ok {
-			// TODO: should this be a typed error?
-			return fmt.Errorf("%v is unstructured and is not suitable for converting to %q", kind, target)
-		}
-		if !apiextensions.HasCRDVersion(c.crd, gvk.Version) {
-			return fmt.Errorf("request to convert CRD to an invalid version: %s", gvk.String())
-		}
-		in.GetObjectKind().SetGroupVersionKind(gvk)
+	kind := in.GetObjectKind().GroupVersionKind()
+	gvk, ok := target.KindForGroupVersionKinds([]schema.GroupVersionKind{kind})
+	if !ok {
+		// TODO: should this be a typed error?
+		return fmt.Errorf("%v is unstructured and is not suitable for converting to %q", kind, target)
 	}
+	if !c.validVersions[gvk.GroupVersion()] {
+		return fmt.Errorf("request to convert CRD to an invalid group/version: %s", gvk.String())
+	}
+	in.GetObjectKind().SetGroupVersionKind(gvk)
 	return nil
 }
 
@@ -85,8 +82,8 @@ func (c *nopConverter) convertToVersion(in runtime.Object, target runtime.GroupV
 func (c *nopConverter) ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error) {
 	var err error
 	// Run the converter on the list items instead of list itself
-	if meta.IsListType(in) {
-		err = meta.EachListItem(in, func(item runtime.Object) error {
+	if list, ok := in.(*unstructured.UnstructuredList); ok {
+		err = list.EachListItem(func(item runtime.Object) error {
 			return c.convertToVersion(item, target)
 		})
 	} else {

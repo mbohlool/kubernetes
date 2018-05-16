@@ -19,14 +19,20 @@ package conversion
 import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // NewCRDConverter returns a new CRD converter based on the conversion settings in crd object.
 func NewCRDConverter(crd *apiextensions.CustomResourceDefinition) runtime.ObjectConvertor {
+	validVersions := map[schema.GroupVersion]bool{}
+	for _, version := range crd.Spec.Versions {
+		validVersions[schema.GroupVersion{Group: crd.Spec.Group, Version: version.Name}] = true
+	}
+
 	// The only converter right now is nopConverter. More converters will be returned based on the
 	// CRD object when they introduced.
 	return &nopConverter{
 		clusterScoped: crd.Spec.Scope == apiextensions.ClusterScoped,
-		crd:           crd,
+		validVersions: validVersions,
 	}
 }

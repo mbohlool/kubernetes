@@ -115,19 +115,19 @@ func TestVersionedClusterScopedCRD(t *testing.T) {
 	testSimpleVersionedCRUD(t, ns, noxuDefinition, dynamicClient)
 }
 
-func TestStoragedVersionInNamespacedCRDStatus(t *testing.T) {
+func TestStoredVersionInNamespacedCRDStatus(t *testing.T) {
 	noxuDefinition := testserver.NewMultipleVersionNoxuCRD(apiextensionsv1beta1.NamespaceScoped)
 	ns := "not-the-default"
-	testStoragedVersionInCRDStatus(t, ns, noxuDefinition)
+	testStoredVersionInCRDStatus(t, ns, noxuDefinition)
 }
 
-func TestStoragedVersionInClusterScopedCRDStatus(t *testing.T) {
+func TestStoredVersionInClusterScopedCRDStatus(t *testing.T) {
 	noxuDefinition := testserver.NewMultipleVersionNoxuCRD(apiextensionsv1beta1.ClusterScoped)
 	ns := ""
-	testStoragedVersionInCRDStatus(t, ns, noxuDefinition)
+	testStoredVersionInCRDStatus(t, ns, noxuDefinition)
 }
 
-func testStoragedVersionInCRDStatus(t *testing.T, ns string, noxuDefinition *apiextensionsv1beta1.CustomResourceDefinition) {
+func testStoredVersionInCRDStatus(t *testing.T, ns string, noxuDefinition *apiextensionsv1beta1.CustomResourceDefinition) {
 	versionsV1Beta1Storage := []apiextensionsv1beta1.CustomResourceDefinitionVersion{
 		{
 			Name:    "v1beta1",

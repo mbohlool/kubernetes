@@ -30,7 +30,16 @@ import (
 	"github.com/go-openapi/validate"
 	"github.com/golang/glog"
 
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/conversion"
+	apiservervalidation "k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
+	apiextensionsinternalversion "k8s.io/apiextensions-apiserver/pkg/client/clientset/internalclientset/typed/apiextensions/internalversion"
+	informers "k8s.io/apiextensions-apiserver/pkg/client/informers/internalversion/apiextensions/internalversion"
+	listers "k8s.io/apiextensions-apiserver/pkg/client/listers/apiextensions/internalversion"
+	"k8s.io/apiextensions-apiserver/pkg/controller/finalizer"
+	apiextensionsfeatures "k8s.io/apiextensions-apiserver/pkg/features"
+	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
+	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -57,16 +66,6 @@ import (
 	"k8s.io/client-go/scale"
 	"k8s.io/client-go/scale/scheme/autoscalingv1"
 	"k8s.io/client-go/tools/cache"
-
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	apiservervalidation "k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
-	apiextensionsinternalversion "k8s.io/apiextensions-apiserver/pkg/client/clientset/internalclientset/typed/apiextensions/internalversion"
-	informers "k8s.io/apiextensions-apiserver/pkg/client/informers/internalversion/apiextensions/internalversion"
-	listers "k8s.io/apiextensions-apiserver/pkg/client/listers/apiextensions/internalversion"
-	"k8s.io/apiextensions-apiserver/pkg/controller/finalizer"
-	apiextensionsfeatures "k8s.io/apiextensions-apiserver/pkg/features"
-	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
-	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
 )
 
 // crdHandler serves the `/apis` endpoint.
@@ -479,7 +478,7 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 				statusSpec,
 				scaleSpec,
 			),
-			CrdConversionRESTOptionGetter{
+			crdConversionRESTOptionsGetter{
 				RESTOptionsGetter: r.restOptionsGetter,
 				converter:         converter,
 				decoderVersion:    schema.GroupVersion{Group: crd.Spec.Group, Version: v.Name},
@@ -684,14 +683,16 @@ func (in crdStorageMap) clone() crdStorageMap {
 	return out
 }
 
-type CrdConversionRESTOptionGetter struct {
+// crdConversionRESTOptionsGetter overrides the codec with one using the
+// provided custom converter and custom encoder and decoder version.
+type crdConversionRESTOptionsGetter struct {
 	generic.RESTOptionsGetter
 	converter      runtime.ObjectConvertor
 	encoderVersion schema.GroupVersion
 	decoderVersion schema.GroupVersion
 }
 
-func (t CrdConversionRESTOptionGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+func (t crdConversionRESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	ret, err := t.RESTOptionsGetter.GetRESTOptions(resource)
 	if err == nil {
 		ret.StorageConfig.Codec = versioning.NewCodec(ret.StorageConfig.Codec, ret.StorageConfig.Codec, t.converter, &unstructuredCreator{}, discovery.NewUnstructuredObjectTyper(nil), &unstructuredDefaulter{delegate: Scheme}, t.encoderVersion, t.decoderVersion)
