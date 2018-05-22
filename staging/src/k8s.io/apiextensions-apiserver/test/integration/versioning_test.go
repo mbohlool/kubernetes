@@ -154,7 +154,7 @@ func testSimpleVersionedCRUD(t *testing.T, ns string, noxuDefinition *apiextensi
 		noxuWatch, err := noxuResourceClients[v.Name].Watch(metav1.ListOptions{})
 		if disbaledVersions[v.Name] {
 			if err == nil {
-				t.Errorf("expected the watch creation fail for disabled version %s", v)
+				t.Errorf("expected the watch creation fail for disabled version %s", v.Name)
 			}
 		} else {
 			if err != nil {
