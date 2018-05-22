@@ -149,7 +149,7 @@ type CustomResourceDefinitionStatus struct {
 	// that no old objects are left in the storage), and then remove the rest of the
 	// versions from this list.
 	// None of the versions in this list can be removed from the spec.Versions field.
-	StoredVersions []string `protobuf:"bytes,3,rep,name=storedVersions"`
+	StoredVersions []string `json:"storedVersions" protobuf:"bytes,3,rep,name=storedVersions"`
 }
 
 // CustomResourceCleanupFinalizer is the name of the finalizer which will delete instances of
