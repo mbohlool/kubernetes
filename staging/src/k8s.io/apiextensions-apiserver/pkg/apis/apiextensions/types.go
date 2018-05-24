@@ -58,6 +58,27 @@ type CustomResourceDefinitionVersion struct {
 	// Storage flags the version as storage version. There must be exactly one flagged
 	// as storage version.
 	Storage bool
+	// TODO(mehdy): Doc this and all of the following
+	Conversion *CustomResourceConversion
+}
+
+type CustomResourceConversion struct {
+	Declarative []CustomResourceDeclarativeConversion
+}
+
+type CustomResourceDeclarativeConversion struct {
+	ToVersion string
+	Rename []RenameConversion
+}
+
+type JsonPath string
+
+type RenameConversion struct {
+	Object JsonPath
+	FieldName string
+	NewFieldName string
+	// TODO(mehdy): better name, this was not in the design
+	FailOnMissing bool
 }
 
 // CustomResourceDefinitionNames indicates the names to serve this CustomResourceDefinition
