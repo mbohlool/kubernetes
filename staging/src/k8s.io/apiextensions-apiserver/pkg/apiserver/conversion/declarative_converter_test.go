@@ -20,11 +20,11 @@ import (
 	"testing"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/json"
+	"k8s.io/client-go/util/jsonpath"
 )
 
 func TestRename(t *testing.T) {
-	json.Unmarshal("{\"list\": { \"")
+//	json.Unmarshal("{\"list\": { \"")
 	cr := unstructured.Unstructured{}
 	cr.Object = map[string]interface{}{}
 	cr.Object["list"] = []map[string]interface{} {
@@ -40,4 +40,36 @@ func TestRename(t *testing.T) {
 	rename(&cr, "{.list[*]}", "id", "identifier", true)
 
 	fmt.Print(cr)
+}
+
+func dumpTree(node jsonpath.Node, indent string) {
+	switch (node.Type()) {
+	case jsonpath.NodeArray:
+		arrayNode := node.(*jsonpath.ArrayNode)
+		fmt.Printf("%s%s: start=(known: %v, value: %v), end=(known: %v, value: %v), step=(known: %v, value: %v)\n",
+			indent, node.Type(),
+			arrayNode.Params[0].Known, arrayNode.Params[0].Value,
+			arrayNode.Params[1].Known, arrayNode.Params[1].Value,
+			arrayNode.Params[2].Known, arrayNode.Params[2].Value)
+	case jsonpath.NodeList:
+		fmt.Printf("%s%s ->\n", indent, node.String())
+		for _, n := range node.(*jsonpath.ListNode).Nodes {
+			dumpTree(n, indent + "  ")
+		}
+	case jsonpath.NodeUnion:
+		fmt.Printf("%s%s ->\n", indent, node.String())
+		for _, n := range node.(*jsonpath.UnionNode).Nodes {
+			dumpTree(n, indent + "  ")
+		}
+	default:
+		fmt.Printf("%s%s\n", indent, node.String())
+	}
+}
+
+func TestParser(t *testing.T) {
+	parser, err := jsonpath.Parse("test", "{.list[1,2,3]}{.list.*}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dumpTree(parser.Root, "")
 }

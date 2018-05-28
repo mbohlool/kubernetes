@@ -21,26 +21,48 @@ import (
 	"k8s.io/client-go/util/jsonpath"
 	"fmt"
 	"reflect"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 )
 
+// nopConverter is a converter that only sets the apiVersion fields, but does not real conversion. It supports fields selectors.
+type declarativeConverter struct {
+	declarativeConversions []apiextensions.CustomResourceDeclarativeConversion
+}
+
+var _ crdConverterInterface = &declarativeConverter{}
+
+func (c *declarativeConverter) ConvertCustomResource(obj runtime.Unstructured, target runtime.GroupVersioner) (bool, error) {
+	for _, d := range c.declarativeConversions {
+		switch {
+		case len(d.Rename) > 0:
+			for _, r := range d.Rename {
+				err := rename(obj, string(r.Object), r.FieldName, r.NewFieldName, r.FailOnMissing)
+				if err != nil {
+					return false, err
+				}
+			}
+		default:
+			return false, fmt.Errorf("declaraitve conversion is invalid")
+		}
+	}
+	return false, nil
+}
+
 func rename(obj runtime.Unstructured, jsonPath, from, to string, ignoreMissing bool) error {
-	jpath := jsonpath.New("crd")
-	jpath = jpath.AllowMissingKeys(true)
-	if err := jpath.Parse(jsonPath); err != nil {
+	path := jsonpath.New("crd").AllowMissingKeys(true)
+	if err := path.Parse(jsonPath); err != nil {
 		return err
 	}
-	values, err := jpath.FindResults(obj.UnstructuredContent())
+	values, err := path.FindResults(obj.UnstructuredContent())
 	if err != nil {
 		return err
 	}
-	for _, v := range values {
-		for _, v2 := range v {
+	for _, v1 := range values {
+		for _, v2 := range v1 {
 			t := v2.Type()
-			if t.Kind() != reflect.Map || t.Key().Kind() != reflect.String {
+			if t.Kind() != reflect.Map || t.Key().Kind() != reflect.String || t.Elem().Kind() != reflect.Interface {
 				return fmt.Errorf("jsonpath in rename conversion should point to a map of string")
 			}
-
-			fmt.Printf("%s, %s, %s : %s\n", t.Kind(), t.Key(), t.Elem(), v2)
 			baseMap := v2.Interface().(map[string]interface{})
 			if value, ok := baseMap[from]; ok {
 				baseMap[to] = value

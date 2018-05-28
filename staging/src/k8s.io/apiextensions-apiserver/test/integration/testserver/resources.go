@@ -217,11 +217,16 @@ func CreateNewCustomResourceDefinitionWatchUnsafe(crd *apiextensionsv1beta1.Cust
 		return err
 	}
 
+<<<<<<< Updated upstream
 	// wait until the resource appears in discovery
+=======
+	// wait until all the resource versions appear in discovery
+>>>>>>> Stashed changes
 	err = wait.PollImmediate(500*time.Millisecond, 30*time.Second, func() (bool, error) {
 		resourceList, err := apiExtensionsClient.Discovery().ServerResourcesForGroupVersion(crd.Spec.Group + "/" + crd.Spec.Version)
 		if err != nil {
 			return false, nil
+<<<<<<< Updated upstream
 		}
 		for _, resource := range resourceList.APIResources {
 			if resource.Name == crd.Spec.Names.Plural {
@@ -231,6 +236,16 @@ func CreateNewCustomResourceDefinitionWatchUnsafe(crd *apiextensionsv1beta1.Cust
 		return false, nil
 	})
 
+=======
+		}
+		for _, resource := range resourceList.APIResources {
+			if resource.Name == crd.Spec.Names.Plural {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+>>>>>>> Stashed changes
 	return err
 }
 

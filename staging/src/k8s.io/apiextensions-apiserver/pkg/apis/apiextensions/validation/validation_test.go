@@ -68,7 +68,11 @@ func TestValidateCustomResourceDefinition(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "plural.group.com"},
 				Spec: apiextensions.CustomResourceDefinitionSpec{
 					Group: "group.com",
+<<<<<<< Updated upstream
 					Scope: apiextensions.ResourceScope("Cluster"),
+=======
+					Scope:  apiextensions.ResourceScope("Cluster"),
+>>>>>>> Stashed changes
 					Names: apiextensions.CustomResourceDefinitionNames{
 						Plural:   "plural",
 						Singular: "singular",
@@ -102,7 +106,11 @@ func TestValidateCustomResourceDefinition(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "plural.group.com"},
 				Spec: apiextensions.CustomResourceDefinitionSpec{
 					Group: "group.com",
+<<<<<<< Updated upstream
 					Scope: apiextensions.ResourceScope("Cluster"),
+=======
+					Scope:  apiextensions.ResourceScope("Cluster"),
+>>>>>>> Stashed changes
 					Names: apiextensions.CustomResourceDefinitionNames{
 						Plural:   "plural",
 						Singular: "singular",
@@ -128,6 +136,7 @@ func TestValidateCustomResourceDefinition(t *testing.T) {
 			},
 			errors: []validationMatch{
 				invalid("spec", "versions"),
+<<<<<<< Updated upstream
 				invalid("status", "storedVersions"),
 			},
 		},
@@ -163,6 +172,8 @@ func TestValidateCustomResourceDefinition(t *testing.T) {
 			},
 			errors: []validationMatch{
 				invalid("status", "storedVersions"),
+=======
+>>>>>>> Stashed changes
 			},
 		},
 		{
@@ -171,7 +182,11 @@ func TestValidateCustomResourceDefinition(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "plural.group.com"},
 				Spec: apiextensions.CustomResourceDefinitionSpec{
 					Group: "group.com",
+<<<<<<< Updated upstream
 					Scope: apiextensions.ResourceScope("Cluster"),
+=======
+					Scope:  apiextensions.ResourceScope("Cluster"),
+>>>>>>> Stashed changes
 					Names: apiextensions.CustomResourceDefinitionNames{
 						Plural:   "plural",
 						Singular: "singular",
@@ -280,8 +295,13 @@ func TestValidateCustomResourceDefinition(t *testing.T) {
 			resource: &apiextensions.CustomResourceDefinition{
 				ObjectMeta: metav1.ObjectMeta{Name: "plural.group"},
 				Spec: apiextensions.CustomResourceDefinitionSpec{
+<<<<<<< Updated upstream
 					Group:    "group.c(*&om",
 					Version:  "version",
+=======
+					Group:   "group.c(*&om",
+					Version: "version",
+>>>>>>> Stashed changes
 					Versions: singleVersionList,
 					Names: apiextensions.CustomResourceDefinitionNames{
 						Plural:   "plural",

@@ -29,6 +29,17 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+/*
+TODO(mehdy):
+definitely need a test that goes through a version lifecycle to flush out serving/storage issues, something like:
+
+create with v1, ensure v1 appears in discovery, is usable, and persists an object as v1
+add v2 with served=true, ensure v1 and v2 appear in discovery, are usable, and still persist as v1
+set v2 stored=true, ensure new object persists as v2, update all existing objects and ensure they persist as v2
+set v1 served=false, ensure v1 disappears from discovery and the api is no longer callable
+remove v1 from status.storedVersions
+remove v1 from versions
+ */
 func TestVersionedNamspacedScopedCRD(t *testing.T) {
 	stopCh, apiExtensionClient, dynamicClient, err := testserver.StartDefaultServerWithClients()
 	if err != nil {
@@ -220,6 +231,16 @@ func testSimpleVersionedCRUD(t *testing.T, ns string, noxuDefinition *apiextensi
 		for version2, noxuResourceClient2 := range noxuResourceClients {
 			// Get test
 			gottenNoxuInstance, err := noxuResourceClient2.Get("foo", metav1.GetOptions{})
+<<<<<<< Updated upstream
+=======
+			if err != nil {
+				t.Fatal(err)
+			}
+			if e, a := version2, gottenNoxuInstance.GroupVersionKind().Version; !reflect.DeepEqual(e, a) {
+				t.Errorf("expected %v, got %v", e, a)
+			}
+		}
+>>>>>>> Stashed changes
 
 			if disbaledVersions[version2] {
 				if err == nil {
