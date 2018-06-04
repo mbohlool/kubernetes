@@ -70,17 +70,24 @@ func TestClusterScopedCRUD(t *testing.T) {
 	defer close(stopCh)
 
 	noxuDefinition := testserver.NewNoxuCustomResourceDefinition(apiextensionsv1beta1.ClusterScoped)
-	noxuDefinition, err = testserver.CreateNewCustomResourceDefinition(noxuDefinition, apiExtensionClient, dynamicClient)
+	noxuDefinition, deleteFunc, err := testserver.CreateNewCustomResourceDefinition2(noxuDefinition, apiExtensionClient, dynamicClient)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	ns := ""
-	testSimpleCRUD(t, ns, noxuDefinition, dynamicClient)
+	testSimpleCRUDInternal(t, ns, noxuDefinition, dynamicClient, deleteFunc)
 	testFieldSelector(t, ns, noxuDefinition, dynamicClient)
 }
 
 func testSimpleCRUD(t *testing.T, ns string, noxuDefinition *apiextensionsv1beta1.CustomResourceDefinition, dynamicClient dynamic.Interface) {
+	testSimpleCRUDInternal(t, ns, noxuDefinition, dynamicClient, nil)
+}
+
+func testSimpleCRUDInternal(t *testing.T, ns string, noxuDefinition *apiextensionsv1beta1.CustomResourceDefinition, dynamicClient dynamic.Interface, deleteFunc func()) {
+	if deleteFunc != nil {
+		//deleteFunc()
+	}
 	noxuResourceClients := map[string]dynamic.ResourceInterface{}
 	noxuWatchs := map[string]watch.Interface{}
 	disabledVersions := map[string]bool{}
@@ -155,6 +162,10 @@ func testSimpleCRUD(t *testing.T, ns string, noxuDefinition *apiextensionsv1beta
 			}
 		}
 
+		if deleteFunc != nil {
+			deleteFunc()
+		}
+
 		// Check get for all versions
 		for version2, noxuResourceClient2 := range noxuResourceClients {
 			// Get test
@@ -212,6 +223,7 @@ func testSimpleCRUD(t *testing.T, ns string, noxuDefinition *apiextensionsv1beta
 		for _, noxuWatch := range noxuWatchs {
 			select {
 			case watchEvent := <-noxuWatch.ResultChan():
+				t.Log(watchEvent.Object)
 				if e, a := watch.Deleted, watchEvent.Type; e != a {
 					t.Errorf("expected %v, got %v", e, a)
 					break

@@ -249,6 +249,40 @@ func CreateNewCustomResourceDefinition(crd *apiextensionsv1beta1.CustomResourceD
 	return crd, nil
 }
 
+func CreateNewCustomResourceDefinition2(crd *apiextensionsv1beta1.CustomResourceDefinition, apiExtensionsClient clientset.Interface, dynamicClientSet dynamic.Interface) (*apiextensionsv1beta1.CustomResourceDefinition, func(), error) {
+	crd, err := CreateNewCustomResourceDefinitionWatchUnsafe(crd, apiExtensionsClient)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// This is only for a test.  We need the watch cache to have a resource version that works for the test.
+	// When new REST storage is created, the storage cacher for the CR starts asynchronously.
+	// REST API operations return like list use the RV of etcd, but the storage cacher's reflector's list
+	// can get a different RV because etcd can be touched in between the initial list operation (if that's what you're doing first)
+	// and the storage cache reflector starting.
+	// Later, you can issue a watch with the REST apis list.RV and end up earlier than the storage cacher.
+	// The general working model is that if you get a "resourceVersion too old" message, you re-list and rewatch.
+	// For this test, we'll actually cycle, "list/watch/create/delete" until we get an RV from list that observes the create and not an error.
+	// This way all the tests that are checking for watches don't have to worry about RV too old problems because crazy things *could* happen
+	// before like the created RV could be too old to watch.
+	var primingErr error
+	var deleteFunc func()
+	wait.PollImmediate(500*time.Millisecond, 30*time.Second, func() (bool, error) {
+		primingErr, deleteFunc = checkForWatchCachePrimed2(crd, dynamicClientSet)
+		if primingErr == nil {
+			return true, nil
+		}
+		deleteFunc()
+		return false, nil
+	})
+	if primingErr != nil {
+		return nil, nil, primingErr
+	}
+
+	return crd, deleteFunc, nil
+}
+
+
 func checkForWatchCachePrimed(crd *apiextensionsv1beta1.CustomResourceDefinition, dynamicClientSet dynamic.Interface) error {
 	ns := ""
 	if crd.Spec.Scope != apiextensionsv1beta1.ClusterScoped {
@@ -312,6 +346,72 @@ func checkForWatchCachePrimed(crd *apiextensionsv1beta1.CustomResourceDefinition
 
 	case <-time.After(5 * time.Second):
 		return fmt.Errorf("gave up waiting for watch event")
+	}
+}
+
+func checkForWatchCachePrimed2(crd *apiextensionsv1beta1.CustomResourceDefinition, dynamicClientSet dynamic.Interface) (error, func()) {
+	ns := ""
+	if crd.Spec.Scope != apiextensionsv1beta1.ClusterScoped {
+		ns = "aval"
+	}
+
+	gvr := schema.GroupVersionResource{Group: crd.Spec.Group, Version: crd.Spec.Version, Resource: crd.Spec.Names.Plural}
+	var resourceClient dynamic.ResourceInterface
+	if crd.Spec.Scope != apiextensionsv1beta1.ClusterScoped {
+		resourceClient = dynamicClientSet.Resource(gvr).Namespace(ns)
+	} else {
+		resourceClient = dynamicClientSet.Resource(gvr)
+	}
+
+	initialList, err := resourceClient.List(metav1.ListOptions{})
+	if err != nil {
+		return err, nil
+	}
+	initialListListMeta, err := meta.ListAccessor(initialList)
+	if err != nil {
+		return err, nil
+	}
+
+	instanceName := "setup-instance"
+	instance := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": crd.Spec.Group + "/" + crd.Spec.Version,
+			"kind":       crd.Spec.Names.Kind,
+			"metadata": map[string]interface{}{
+				"namespace": ns,
+				"name":      instanceName,
+			},
+			"alpha":   "foo_123",
+			"beta":    10,
+			"gamma":   "bar",
+			"delta":   "hello",
+			"epsilon": "foobar",
+			"spec":    map[string]interface{}{},
+		},
+	}
+	if _, err := resourceClient.Create(instance); err != nil {
+		return err, nil
+	}
+
+	deleteFunc := func() {
+		resourceClient.Delete(instanceName, nil)
+	}
+
+	noxuWatch, err := resourceClient.Watch(metav1.ListOptions{ResourceVersion: initialListListMeta.GetResourceVersion()})
+	if err != nil {
+		return err, deleteFunc
+	}
+	defer noxuWatch.Stop()
+
+	select {
+	case watchEvent := <-noxuWatch.ResultChan():
+		if watch.Added == watchEvent.Type {
+			return nil, deleteFunc
+		}
+		return fmt.Errorf("expected add, but got %#v", watchEvent), nil
+
+	case <-time.After(5 * time.Second):
+		return fmt.Errorf("gave up waiting for watch event"), nil
 	}
 }
 
