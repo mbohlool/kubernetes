@@ -90,7 +90,17 @@ func testSimpleCRUD(t *testing.T, ns string, noxuDefinition *apiextensionsv1beta
 	for _, v := range noxuDefinition.Spec.Versions {
 		noxuResourceClients[v.Name] = newNamespacedCustomResourceVersionedClient(ns, dynamicClient, noxuDefinition, v.Name)
 
-		noxuWatch, err := noxuResourceClients[v.Name].Watch(metav1.ListOptions{})
+		resourceVersion := ""
+		listWithNoItems, err := noxuResourceClients[v.Name].List(metav1.ListOptions{})
+		if disabledVersions[v.Name] {
+			if err == nil {
+				t.Errorf("expected the list creation fail for disabled version %s", v.Name)
+			}
+		} else {
+			resourceVersion = listWithNoItems.GetResourceVersion()
+		}
+
+		noxuWatch, err := noxuResourceClients[v.Name].Watch(metav1.ListOptions{ResourceVersion: resourceVersion})
 		if disabledVersions[v.Name] {
 			if err == nil {
 				t.Errorf("expected the watch creation fail for disabled version %s", v.Name)
