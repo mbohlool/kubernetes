@@ -55,6 +55,12 @@ message CustomResourceColumnDefinition {
   optional string JSONPath = 6;
 }
 
+message CustomResourceConversion {
+  // Strategy specifies the conversion strategy. Allowed values are:
+  // - `no-op`: The converter only change the apiVersion and would not touch any other field in the CR.
+  optional string strategy = 1;
+}
+
 // CustomResourceDefinition represents a resource that should be exposed on the API server.  Its name MUST be in the format
 // <.spec.name>.<.spec.group>.
 message CustomResourceDefinition {
@@ -161,6 +167,10 @@ message CustomResourceDefinitionSpec {
 
   // AdditionalPrinterColumns are additional columns shown e.g. in kubectl next to the name. Defaults to a created-at column.
   repeated CustomResourceColumnDefinition additionalPrinterColumns = 8;
+
+  // conversion defines conversion settings for the CRD.
+  // +optional
+  optional CustomResourceConversion conversion = 9;
 }
 
 // CustomResourceDefinitionStatus indicates the state of the CustomResourceDefinition

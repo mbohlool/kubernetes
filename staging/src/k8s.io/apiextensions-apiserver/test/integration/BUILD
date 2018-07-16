@@ -61,6 +61,8 @@ filegroup(
     srcs = [
         ":package-srcs",
         "//staging/src/k8s.io/apiextensions-apiserver/test/integration/fixtures:all-srcs",
+        "//staging/src/k8s.io/apiextensions-apiserver/test/integration/testserver:all-srcs",
+        "//staging/src/k8s.io/apiextensions-apiserver/test/integration/utils:all-srcs",
     ],
     tags = ["automanaged"],
 )
