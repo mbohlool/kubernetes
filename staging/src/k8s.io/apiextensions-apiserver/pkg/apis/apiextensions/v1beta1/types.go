@@ -17,7 +17,18 @@ limitations under the License.
 package v1beta1
 
 import (
+	"k8s.io/api/admissionregistration/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+)
+
+type ConversionStrategyType string
+
+const (
+	// NopConverter is a converter that only sets apiversion of the CR and leave everything else unchanged.
+	NopConverter     ConversionStrategyType = "None"
+	WebhookConverter ConversionStrategyType = "Webhook"
 )
 
 // CustomResourceDefinitionSpec describes how a user wants their resource to appear
@@ -35,9 +46,11 @@ type CustomResourceDefinitionSpec struct {
 	// Scope indicates whether this resource is cluster or namespace scoped.  Default is namespaced
 	Scope ResourceScope `json:"scope" protobuf:"bytes,4,opt,name=scope,casttype=ResourceScope"`
 	// Validation describes the validation methods for CustomResources
+	// Optional, and correspond to the first version in the versions list
 	// +optional
 	Validation *CustomResourceValidation `json:"validation,omitempty" protobuf:"bytes,5,opt,name=validation"`
 	// Subresources describes the subresources for CustomResources
+	// Optional, and correspond to the first version in the versions list
 	// +optional
 	Subresources *CustomResourceSubresources `json:"subresources,omitempty" protobuf:"bytes,6,opt,name=subresources"`
 	// Versions is the list of all supported versions for this resource.
@@ -53,7 +66,28 @@ type CustomResourceDefinitionSpec struct {
 	// v10, v2, v1, v11beta2, v10beta3, v3beta1, v12alpha1, v11alpha2, foo1, foo10.
 	Versions []CustomResourceDefinitionVersion `json:"versions,omitempty" protobuf:"bytes,7,rep,name=versions"`
 	// AdditionalPrinterColumns are additional columns shown e.g. in kubectl next to the name. Defaults to a created-at column.
+	// Optional, and correspond to the first version in the versions list
 	AdditionalPrinterColumns []CustomResourceColumnDefinition `json:"additionalPrinterColumns,omitempty" protobuf:"bytes,8,rep,name=additionalPrinterColumns"`
+
+	// conversion defines conversion settings for the CRD.
+	// +optional
+	Conversion *CustomResourceConversion `json:"conversion,omitempty" protobuf:"bytes,9,opt,name=conversion"`
+}
+
+type CustomResourceConversion struct {
+	// Strategy specifies the conversion strategy. Allowed values are:
+	// - `None`: The converter only change the apiVersion and would not touch any other field in the CR.
+	// - `Webhook`: API Server will call to an external webhook to do the conversion. Additional information is needed for this option.
+	Strategy ConversionStrategyType `json:"strategy" protobuf:"bytes,1,name=strategy"`
+
+	// Additional information for external conversion if strategy is set to external
+	// +optional
+	Webhook *CustomResourceConversionWebhook `json:"webhook,omitempty" protobuf:"bytes,2,name=webhook"`
+}
+
+type CustomResourceConversionWebhook struct {
+	// ClientConfig defines how to communicate with the webhook. This is the same config used for validating/mutating webhooks.
+	ClientConfig v1beta1.WebhookClientConfig `json:"clientConfig" protobuf:"bytes,1,name=clientConfig"`
 }
 
 type CustomResourceDefinitionVersion struct {
@@ -64,6 +98,15 @@ type CustomResourceDefinitionVersion struct {
 	// Storage flags the version as storage version. There must be exactly one
 	// flagged as storage version.
 	Storage bool `json:"storage" protobuf:"varint,3,opt,name=storage"`
+	// Schema describes the schema for CustomResource used in validation, pruning, and defaulting.
+	// Should not be set for first item in Versions list. The top level field is being used for first version.
+	Schema *JSONSchemaProps `json:"schema,omitempty" protobuf:"bytes,4,opt,name=schema"`
+	// Subresources describes the subresources for CustomResources
+	// Should not be set for first item in Versions list. The top level field is being used for first version.
+	Subresources *CustomResourceSubresources `json:"subresources,omitempty" protobuf:"bytes,5,opt,name=subresources"`
+	// AdditionalPrinterColumns are additional columns shown e.g. in kubectl next to the name. Defaults to a created-at column.
+	// Should not be set for first item in Versions list. The top level field is being used for first version.
+	AdditionalPrinterColumns []CustomResourceColumnDefinition `json:"additionalPrinterColumns,omitempty" protobuf:"bytes,6,rep,name=additionalPrinterColumns"`
 }
 
 // CustomResourceColumnDefinition specifies a column for server side printing.
@@ -250,4 +293,46 @@ type CustomResourceSubresourceScale struct {
 	// subresource will default to the empty string.
 	// +optional
 	LabelSelectorPath *string `json:"labelSelectorPath,omitempty" protobuf:"bytes,3,opt,name=labelSelectorPath"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ConversionReview describes a conversion request/response.
+type ConversionReview struct {
+	metav1.TypeMeta `json:",inline"`
+	// Request describes the attributes for the conversion request.
+	// +optional
+	Request *ConversionRequest `json:"request,omitempty" protobuf:"bytes,1,opt,name=request"`
+	// Response describes the attributes for the conversion response.
+	// +optional
+	Response *ConversionResponse `json:"response,omitempty" protobuf:"bytes,2,opt,name=response"`
+}
+
+// ConversionRequest describes a conversion request parameters.
+type ConversionRequest struct {
+	// UID is an identifier for the individual request/response. It allows us to distinguish instances of requests which are
+	// otherwise identical (parallel requests, requests when earlier requests did not modify etc)
+	// The UID is meant to track the round trip (request/response) between the KAS and the WebHook, not the user request.
+	// It is suitable for correlating log entries between the webhook and apiserver, for either auditing or debugging.
+	// +optional
+	UID types.UID `json:"uid,omitempty" protobuf:"bytes,1,opt,name=uid"`
+	// The version to convert given object to. E.g. "stable.example.com/v1"
+	APIVersion string `json:"apiVersion" protobuf:"bytes,2,name=apiVersion"`
+	// Object is the CRD object to be converted.
+	Object runtime.RawExtension `json:"object" protobuf:"bytes,3,name=object"`
+	// IsList indicates that this is a List operation and Object contains a list of items.
+	IsList bool `json:"isList" protobuf:"varint,4,name=isList"`
+}
+
+// ConversionResponse describes a conversion response.
+type ConversionResponse struct {
+	// UID is an identifier for the individual request/response.
+	// This should be copied over from the corresponding AdmissionRequest.
+	// +optional
+	UID types.UID `json:"uid,omitempty" protobuf:"bytes,1,opt,name=uid"`
+	// ConvertedObject is the converted version of request.Object.
+	ConvertedObject runtime.RawExtension `json:"convertedObject" protobuf:"bytes,2,name=convertedObject"`
+	// Result contains extra details into why a conversion request was failed.
+	// +optional
+	Result *metav1.Status `json:"result" protobuf:"bytes,3,name=result"`
 }

@@ -18,6 +18,17 @@ package apiextensions
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/kubernetes/pkg/apis/admissionregistration"
+)
+
+type ConversionStrategyType string
+
+const (
+	// NopConverter is a converter that only sets apiversion of the CR and leave everything else unchanged.
+	NopConverter     ConversionStrategyType = "None"
+	WebhookConverter ConversionStrategyType = "Webhook"
 )
 
 // CustomResourceDefinitionSpec describes how a user wants their resource to appear
@@ -34,8 +45,10 @@ type CustomResourceDefinitionSpec struct {
 	// Scope indicates whether this resource is cluster or namespace scoped.  Default is namespaced
 	Scope ResourceScope
 	// Validation describes the validation methods for CustomResources
+	// Optional, and correspond to the first version in the versions list
 	Validation *CustomResourceValidation
 	// Subresources describes the subresources for CustomResources
+	// Optional, and correspond to the first version in the versions list
 	Subresources *CustomResourceSubresources
 	// Versions is the list of all supported versions for this resource.
 	// If Version field is provided, this field is optional.
@@ -50,7 +63,27 @@ type CustomResourceDefinitionSpec struct {
 	// v10, v2, v1, v11beta2, v10beta3, v3beta1, v12alpha1, v11alpha2, foo1, foo10.
 	Versions []CustomResourceDefinitionVersion
 	// AdditionalPrinterColumns are additional columns shown e.g. in kubectl next to the name. Defaults to a created-at column.
+	// Optional, and correspond to the first version in the versions list
 	AdditionalPrinterColumns []CustomResourceColumnDefinition
+
+	// conversion defines conversion settings for the CRD.
+	Conversion *CustomResourceConversion
+}
+
+type CustomResourceConversion struct {
+	// Strategy specifies the conversion strategy. Allowed values are:
+	// - `None`: The converter only change the apiVersion and would not touch any other field in the CR.
+	// - `Webhook`: API Server will call to an external webhook to do the conversion. Additional information is needed for this option.
+	Strategy ConversionStrategyType
+
+	// Additional information for external conversion if strategy is set to external
+	// +optional
+	Webhook *CustomResourceConversionWebhook
+}
+
+type CustomResourceConversionWebhook struct {
+	// ClientConfig defines how to communicate with the webhook. This is the same config used for validating/mutating webhooks.
+	ClientConfig admissionregistration.WebhookClientConfig
 }
 
 type CustomResourceDefinitionVersion struct {
@@ -61,6 +94,16 @@ type CustomResourceDefinitionVersion struct {
 	// Storage flags the version as storage version. There must be exactly one flagged
 	// as storage version.
 	Storage bool
+
+	// Schema describes the schema for CustomResource used in validation, pruning, and defaulting.
+	// Should not be set for first item in Versions list. The top level field is being used for first version.
+	Schema *JSONSchemaProps
+	// Subresources describes the subresources for CustomResources
+	// Should not be set for first item in Versions list. The top level field is being used for first version.
+	Subresources *CustomResourceSubresources
+	// AdditionalPrinterColumns are additional columns shown e.g. in kubectl next to the name. Defaults to a created-at column.
+	// Should not be set for first item in Versions list. The top level field is being used for first version.
+	AdditionalPrinterColumns []CustomResourceColumnDefinition
 }
 
 // CustomResourceColumnDefinition specifies a column for server side printing.
@@ -136,6 +179,9 @@ const (
 	NamesAccepted CustomResourceDefinitionConditionType = "NamesAccepted"
 	// Terminating means that the CustomResourceDefinition has been deleted and is cleaning up.
 	Terminating CustomResourceDefinitionConditionType = "Terminating"
+	// Valid means the CRD does pass validation. K8S objects are not validated on the GET path and it is
+	// possible to have invalid objects on downgrade/upgrade paths.
+	Valid CustomResourceDefinitionConditionType = "Valid"
 )
 
 // CustomResourceDefinitionCondition contains details for the current condition of this pod.
@@ -247,4 +293,42 @@ type CustomResourceSubresourceScale struct {
 	// subresource will default to the empty string.
 	// +optional
 	LabelSelectorPath *string
+}
+
+// ConversionReview describes a conversion request/response.
+type ConversionReview struct {
+	metav1.TypeMeta
+	// Request describes the attributes for the conversion request.
+	// +optional
+	Request *ConversionRequest
+	// Response describes the attributes for the conversion response.
+	// +optional
+	Response *ConversionResponse
+}
+
+// ConversionRequest describes a conversion request parameters.
+type ConversionRequest struct {
+	// UID is an identifier for the individual request/response. It allows us to distinguish instances of requests which are
+	// otherwise identical (parallel requests, requests when earlier requests did not modify etc)
+	// The UID is meant to track the round trip (request/response) between the KAS and the WebHook, not the user request.
+	// It is suitable for correlating log entries between the webhook and apiserver, for either auditing or debugging.
+	UID types.UID
+	// The version to convert given object to. E.g. "stable.example.com/v1"
+	APIVersion string
+	// Object is the CRD object or list of Objects to be converted.
+	Object runtime.RawExtension
+	// IsList indicates that this is a List operation and Object contains a list of items.
+	IsList bool
+}
+
+// ConversionResponse describes a conversion response.
+type ConversionResponse struct {
+	// UID is an identifier for the individual request/response.
+	// This should be copied over from the corresponding ConversionRequest.
+	UID types.UID
+	// ConvertedObject is the converted version of request.Object.
+	ConvertedObject runtime.RawExtension
+	// Result contains extra details into why a conversion request was failed.
+	// +optional
+	Result *metav1.Status
 }
