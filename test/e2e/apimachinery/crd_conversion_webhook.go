@@ -91,7 +91,7 @@ var _ = SIGDescribe("CustomResourceConversionWebhook", func() {
 			{
 				Name:    "v2",
 				Served:  true,
-				Storage: true,
+				Storage: false,
 			},
 		}
 		testcrd, err := framework.CreateMultiVersionTestCRD(f, "stable.example.com", apiVersions,
