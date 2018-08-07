@@ -49,7 +49,7 @@ const (
 
 var serverCRDConversionWebhookVersion = utilversion.MustParseSemantic("v1.11.0")
 
-var _ = SIGDescribe("CustomResourceConversionWebhook", func() {
+var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebhookConversion]", func() {
 	var context *certContext
 	f := framework.NewDefaultFramework("webhook")
 
