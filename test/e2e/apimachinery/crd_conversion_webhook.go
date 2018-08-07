@@ -53,6 +53,10 @@ var _ = SIGDescribe("CustomResourceConversionWebhook", func() {
 	var context *certContext
 	f := framework.NewDefaultFramework("webhook")
 
+	if framework.TestContext.FeatureGates == nil {
+		framework.TestContext.FeatureGates = map[string]bool{}
+	}
+
 	framework.TestContext.FeatureGates[string(features.CustomResourceWebhookConversion)] = true
 
 	var client clientset.Interface
