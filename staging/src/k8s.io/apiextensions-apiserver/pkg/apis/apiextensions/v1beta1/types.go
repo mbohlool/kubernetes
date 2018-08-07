@@ -330,9 +330,11 @@ type ConversionResponse struct {
 	// This should be copied over from the corresponding AdmissionRequest.
 	// +optional
 	UID types.UID `json:"uid,omitempty" protobuf:"bytes,1,opt,name=uid"`
-	// ConvertedObject is the converted version of request.Object.
-	ConvertedObject runtime.RawExtension `json:"convertedObject" protobuf:"bytes,2,name=convertedObject"`
-	// Result contains extra details into why a conversion request was failed.
+	// ConvertedObject is the converted version of request.Object if the Result is nil.
+	// +optional
+	ConvertedObject *runtime.RawExtension `json:"convertedObject" protobuf:"bytes,2,name=convertedObject"`
+	// Result contains extra details into why a conversion request was failed. If it is not nil, it means
+	// the conversion is failed.
 	// +optional
 	Result *metav1.Status `json:"result" protobuf:"bytes,3,name=result"`
 }

@@ -81,6 +81,7 @@ go_library(
         "//pkg/util/taints:go_default_library",
         "//pkg/util/version:go_default_library",
         "//pkg/volume/util:go_default_library",
+        "//staging/src/k8s.io/api/admissionregistration/v1beta1:go_default_library",
         "//staging/src/k8s.io/api/apps/v1:go_default_library",
         "//staging/src/k8s.io/api/apps/v1beta2:go_default_library",
         "//staging/src/k8s.io/api/authorization/v1beta1:go_default_library",

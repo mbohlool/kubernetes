@@ -326,9 +326,10 @@ type ConversionResponse struct {
 	// UID is an identifier for the individual request/response.
 	// This should be copied over from the corresponding ConversionRequest.
 	UID types.UID
-	// ConvertedObject is the converted version of request.Object.
-	ConvertedObject runtime.RawExtension
-	// Result contains extra details into why a conversion request was failed.
+	// ConvertedObject is the converted version of request.Object if Result is nil.
+	ConvertedObject *runtime.RawExtension
+	// Result contains extra details into why a conversion request was failed. If it is not nil, it means
+	// the conversion has been failed.
 	// +optional
 	Result *metav1.Status
 }

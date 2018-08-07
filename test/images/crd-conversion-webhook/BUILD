@@ -1,3 +1,5 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
 filegroup(
     name = "package-srcs",
     srcs = glob(["**"]),
@@ -9,5 +11,36 @@ filegroup(
     name = "all-srcs",
     srcs = [":package-srcs"],
     tags = ["automanaged"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "config.go",
+        "example_converter.go",
+        "main.go",
+        "scheme.go",
+    ],
+    importpath = "k8s.io/kubernetes/test/images/crd-conversion-webhook",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//staging/src/k8s.io/api/core/v1:go_default_library",
+        "//staging/src/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions:go_default_library",
+        "//staging/src/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1:go_default_library",
+        "//staging/src/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/unstructured:go_default_library",
+        "//staging/src/k8s.io/apimachinery/pkg/runtime:go_default_library",
+        "//staging/src/k8s.io/apimachinery/pkg/runtime/serializer:go_default_library",
+        "//staging/src/k8s.io/apimachinery/pkg/util/runtime:go_default_library",
+        "//staging/src/k8s.io/client-go/kubernetes:go_default_library",
+        "//staging/src/k8s.io/client-go/rest:go_default_library",
+        "//vendor/github.com/golang/glog:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "crd-conversion-webhook",
+    embed = [":go_default_library"],
     visibility = ["//visibility:public"],
 )

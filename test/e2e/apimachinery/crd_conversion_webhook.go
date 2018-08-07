@@ -37,6 +37,7 @@ import (
 	. "github.com/onsi/gomega"
 	_ "github.com/stretchr/testify/assert"
 	admission_v1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	"k8s.io/kubernetes/staging/src/k8s.io/apiextensions-apiserver/pkg/features"
 )
 
 const (
@@ -51,6 +52,8 @@ var serverCRDConversionWebhookVersion = utilversion.MustParseSemantic("v1.11.0")
 var _ = SIGDescribe("CustomResourceConversionWebhook", func() {
 	var context *certContext
 	f := framework.NewDefaultFramework("webhook")
+
+	framework.TestContext.FeatureGates[string(features.CustomResourceWebhookConversion)] = true
 
 	var client clientset.Interface
 	var namespaceName string

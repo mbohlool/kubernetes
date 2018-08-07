@@ -24,11 +24,16 @@ import (
 	"net/http"
 
 	"github.com/golang/glog"
+
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"strings"
 )
+
+// convertFunc is the user defined function for any conversion. The code in this file is a
+// template that can be use for any CRD conversion given this function.
+type convertFunc func(Object *unstructured.Unstructured, version string) (*unstructured.Unstructured, *metav1.Status)
 
 // Config contains the server (the webhook) cert and key.
 type Config struct {
@@ -44,57 +49,68 @@ func (c *Config) addFlags() {
 		"File containing the default x509 private key matching --tls-cert-file.")
 }
 
-func convertCRD(Object *unstructured.Unstructured, toVersion string) (*unstructured.Unstructured, error) {
-	glog.V(2).Info("converting crd")
-
-	convertedObject := Object.DeepCopy()
-	fromVersion := Object.GetAPIVersion()
-
-	if toVersion == fromVersion {
-		return nil, fmt.Errorf("conversion from a version to itself should not call the webhook: %s", toVersion)
+// toConversionResponse is a helper function to create an AdmissionResponse
+// with an embedded error
+func toConversionResponse(err error) *v1beta1.ConversionResponse {
+	return &v1beta1.ConversionResponse{
+		Result: &metav1.Status{
+			Message: err.Error(),
+		},
 	}
-
-	switch Object.GetAPIVersion() {
-	case "stable.example.com/v1":
-		switch toVersion {
-		case "stable.example.com/v2":
-			hostPort, ok := convertedObject.Object["hostPort"]
-			if !ok {
-				return nil, fmt.Errorf("expected hostPort in stable.example.com/v1")
-			}
-			delete(convertedObject.Object, "hostPort")
-			parts := strings.Split(hostPort.(string), ":")
-			convertedObject.Object["host"] = parts[0]
-			convertedObject.Object["port"] = parts[1]
-		default:
-			return nil, fmt.Errorf("unexpected conversion version %s", toVersion)
-		}
-	case "stable.example.com/v2":
-		switch toVersion {
-		case "stable.example.com/v1":
-			host, ok := convertedObject.Object["host"]
-			if !ok {
-				return nil, fmt.Errorf("expected host in stable.example.com/v2")
-			}
-			port, ok := convertedObject.Object["port"]
-			if !ok {
-				return nil, fmt.Errorf("expected port in stable.example.com/v2")
-			}
-			delete(convertedObject.Object, "host")
-			delete(convertedObject.Object, "port")
-			convertedObject.Object["hostPort"] = fmt.Sprintf("%s:%s", host, port)
-		default:
-			return nil, fmt.Errorf("unexpected conversion version %s", toVersion)
-		}
-
-	default:
-		return nil, fmt.Errorf("unexpected conversion version %s", fromVersion)
-	}
-
-	return convertedObject, nil
 }
 
-type convertFunc func(Object *unstructured.Unstructured, version string) (*unstructured.Unstructured, error)
+func statusWithMessage(msg string, params ...string) *metav1.Status {
+	return &metav1.Status{
+		Message: fmt.Sprintf(msg, params),
+	}
+}
+
+// doConversion converts the requested object given the conversion function and returns a conversion response.
+// failures will be reported as Reason in the conversion response.
+func doConversion(convertRequest *v1beta1.ConversionRequest, convert convertFunc) *v1beta1.ConversionResponse {
+	cr := unstructured.Unstructured{}
+	if err := cr.UnmarshalJSON(convertRequest.Object.Raw); err != nil {
+		glog.Error(err)
+		return toConversionResponse(err)
+	}
+	var convertedCR *unstructured.Unstructured
+	var status *metav1.Status
+	if convertRequest.IsList {
+		listCR, err := cr.ToList()
+		if err != nil {
+			glog.Error(err)
+			return toConversionResponse(err)
+		}
+		convertedList := listCR.DeepCopy()
+		for i := 0; i < len(convertedList.Items); i++ {
+			item, status := convert(&convertedList.Items[i], convertRequest.APIVersion)
+			if status != nil {
+				glog.Error(status.String())
+				return &v1beta1.ConversionResponse{
+					Result: status,
+				}
+			}
+			item.SetAPIVersion(convertRequest.APIVersion)
+			convertedList.Items[i] = *item
+		}
+		convertedCR = &unstructured.Unstructured{}
+		convertedCR.SetUnstructuredContent(convertedList.UnstructuredContent())
+	} else {
+		convertedCR, status = convert(&cr, convertRequest.APIVersion)
+		if status != nil {
+			glog.Error(status.String())
+			return &v1beta1.ConversionResponse{
+				Result: status,
+			}
+		}
+	}
+	convertedCR.SetAPIVersion(convertRequest.APIVersion)
+	return &v1beta1.ConversionResponse{
+		ConvertedObject: &runtime.RawExtension{
+			Object: convertedCR,
+		},
+	}
+}
 
 func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 	var body []byte
@@ -107,7 +123,9 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		glog.Errorf("contentType=%s, expect application/json", contentType)
+		err := fmt.Errorf("contentType=%s, expect application/json", contentType)
+		glog.Errorf(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -116,49 +134,9 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &convertReview); err != nil {
 		glog.Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		convertReview.Response = toConversionResponse(err)
 	} else {
-		cr := unstructured.Unstructured{}
-		if err := cr.UnmarshalJSON(convertReview.Request.Object.Raw); err != nil {
-			glog.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		var convertedCR *unstructured.Unstructured
-		var err error
-		if convertReview.Request.IsList {
-			listCR, err := cr.ToList()
-			if err != nil {
-				glog.Error(err)
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			convertedList := listCR.DeepCopy()
-			for i := 0; i < len(convertedList.Items); i++  {
-				item, err := convert(&convertedList.Items[i], convertReview.Request.APIVersion)
-				if err != nil {
-					glog.Error(err)
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				item.SetAPIVersion(convertReview.Request.APIVersion)
-				convertedList.Items[i] = *item
-			}
-			convertedCR = &unstructured.Unstructured{}
-			convertedCR.SetUnstructuredContent(convertedList.UnstructuredContent())
-		} else {
-			convertedCR, err = convert(&cr, convertReview.Request.APIVersion)
-			if err != nil {
-				glog.Error(err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-		convertedCR.SetAPIVersion(convertReview.Request.APIVersion)
-		convertReview.Response.ConvertedObject = runtime.RawExtension{
-			Object: convertedCR,
-		}
+		convertReview.Response = doConversion(convertReview.Request, convert)
 	}
 	glog.V(2).Info(fmt.Sprintf("sending response: %v", convertReview.Response))
 
@@ -169,14 +147,17 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 	resp, err := json.Marshal(convertReview)
 	if err != nil {
 		glog.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	if _, err := w.Write(resp); err != nil {
 		glog.Error(err)
+		return
 	}
 }
 
-func serveConvert(w http.ResponseWriter, r *http.Request) {
-	serve(w, r, convertCRD)
+func serveExampleConvert(w http.ResponseWriter, r *http.Request) {
+	serve(w, r, convertExampleCRD)
 }
 
 func main() {
@@ -184,7 +165,7 @@ func main() {
 	config.addFlags()
 	flag.Parse()
 
-	http.HandleFunc("/convert", serveConvert)
+	http.HandleFunc("/convert", serveExampleConvert)
 	clientset := getClient()
 	server := &http.Server{
 		Addr:      ":443",

@@ -313,7 +313,7 @@ func Convert_apiextensions_ConversionRequest_To_v1beta1_ConversionRequest(in *ap
 
 func autoConvert_v1beta1_ConversionResponse_To_apiextensions_ConversionResponse(in *ConversionResponse, out *apiextensions.ConversionResponse, s conversion.Scope) error {
 	out.UID = types.UID(in.UID)
-	out.ConvertedObject = in.ConvertedObject
+	out.ConvertedObject = (*runtime.RawExtension)(unsafe.Pointer(in.ConvertedObject))
 	out.Result = (*v1.Status)(unsafe.Pointer(in.Result))
 	return nil
 }
@@ -325,7 +325,7 @@ func Convert_v1beta1_ConversionResponse_To_apiextensions_ConversionResponse(in *
 
 func autoConvert_apiextensions_ConversionResponse_To_v1beta1_ConversionResponse(in *apiextensions.ConversionResponse, out *ConversionResponse, s conversion.Scope) error {
 	out.UID = types.UID(in.UID)
-	out.ConvertedObject = in.ConvertedObject
+	out.ConvertedObject = (*runtime.RawExtension)(unsafe.Pointer(in.ConvertedObject))
 	out.Result = (*v1.Status)(unsafe.Pointer(in.Result))
 	return nil
 }
