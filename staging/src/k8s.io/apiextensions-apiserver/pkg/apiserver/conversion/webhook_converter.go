@@ -14,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/config"
 	"k8s.io/client-go/rest"
 	admissionregistration_v1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	"github.com/golang/glog"
 )
 
 type webhookConverterFactory struct {
@@ -39,14 +40,24 @@ type webhookConverter struct {
 var _ runtime.ObjectConvertor = &webhookConverter{}
 
 func (f *webhookConverterFactory) NewWebhookConverter(validVersions map[schema.GroupVersion]bool, crd *apiextensions.CustomResourceDefinition) (*webhookConverter, error) {
+	glog.Infof("creating webhook converter for %s", crd.String())
 	v1beta1Webhook := &v1beta1.CustomResourceConversionWebhook{
 		ClientConfig: admissionregistration_v1beta1.WebhookClientConfig{},
 	}
-	err := v1beta1.Convert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook(crd.Spec.Conversion.Webhook, v1beta1Webhook, nil)
+	v1beta1Webhook.ClientConfig.CABundle = crd.Spec.Conversion.Webhook.ClientConfig.CABundle
+	v1beta1Webhook.ClientConfig.URL = crd.Spec.Conversion.Webhook.ClientConfig.URL
+	v1beta1Webhook.ClientConfig.Service.Name = crd.Spec.Conversion.Webhook.ClientConfig.Service.Name
+	v1beta1Webhook.ClientConfig.Service.Namespace = crd.Spec.Conversion.Webhook.ClientConfig.Service.Namespace
+	v1beta1Webhook.ClientConfig.Service.Path = crd.Spec.Conversion.Webhook.ClientConfig.Service.Path
+
+	/*err := v1beta1.Convert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook(crd.Spec.Conversion.Webhook, v1beta1Webhook, nil)
+	if err != nil {
+		return nil, err
+	}*/
+	restClient, err := f.clientManager.HookClient("conversion_webhook_for_"+crd.Name, &v1beta1Webhook.ClientConfig)
 	if err != nil {
 		return nil, err
 	}
-	restClient, err := f.clientManager.HookClient("conversion_webhook_for_"+crd.Name, &v1beta1Webhook.ClientConfig)
 	return &webhookConverter{
 		clientManager: f.clientManager,
 		validVersions: validVersions,
