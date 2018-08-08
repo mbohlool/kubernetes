@@ -43,20 +43,18 @@ func (f *webhookConverterFactory) NewWebhookConverter(validVersions map[schema.G
 	glog.Infof("creating webhook converter for %s", crd)
 	glog.Infof("creating webhook converter for %s", crd.Spec)
 	glog.Infof("creating webhook converter for %s", crd.Spec.Conversion)
-	v1beta1Webhook := &v1beta1.CustomResourceConversionWebhook{
-		ClientConfig: admissionregistration_v1beta1.WebhookClientConfig{},
-	}
-	v1beta1Webhook.ClientConfig.CABundle = crd.Spec.Conversion.Webhook.ClientConfig.CABundle
-	v1beta1Webhook.ClientConfig.URL = crd.Spec.Conversion.Webhook.ClientConfig.URL
-	v1beta1Webhook.ClientConfig.Service.Name = crd.Spec.Conversion.Webhook.ClientConfig.Service.Name
-	v1beta1Webhook.ClientConfig.Service.Namespace = crd.Spec.Conversion.Webhook.ClientConfig.Service.Namespace
-	v1beta1Webhook.ClientConfig.Service.Path = crd.Spec.Conversion.Webhook.ClientConfig.Service.Path
+	ClientConfig := admissionregistration_v1beta1.WebhookClientConfig{}
+	ClientConfig.CABundle = crd.Spec.Conversion.Webhook.ClientConfig.CABundle
+	ClientConfig.URL = crd.Spec.Conversion.Webhook.ClientConfig.URL
+	ClientConfig.Service.Name = crd.Spec.Conversion.Webhook.ClientConfig.Service.Name
+	ClientConfig.Service.Namespace = crd.Spec.Conversion.Webhook.ClientConfig.Service.Namespace
+	ClientConfig.Service.Path = crd.Spec.Conversion.Webhook.ClientConfig.Service.Path
 
 	/*err := v1beta1.Convert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook(crd.Spec.Conversion.Webhook, v1beta1Webhook, nil)
 	if err != nil {
 		return nil, err
 	}*/
-	restClient, err := f.clientManager.HookClient("conversion_webhook_for_"+crd.Name, &v1beta1Webhook.ClientConfig)
+	restClient, err := f.clientManager.HookClient("conversion_webhook_for_"+crd.Name, &ClientConfig)
 	if err != nil {
 		return nil, err
 	}

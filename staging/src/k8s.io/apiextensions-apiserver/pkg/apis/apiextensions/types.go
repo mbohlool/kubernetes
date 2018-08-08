@@ -20,8 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/kubernetes/pkg/apis/admissionregistration"
-)
+	)
 
 type ConversionStrategyType string
 
@@ -83,7 +82,19 @@ type CustomResourceConversion struct {
 
 type CustomResourceConversionWebhook struct {
 	// ClientConfig defines how to communicate with the webhook. This is the same config used for validating/mutating webhooks.
-	ClientConfig admissionregistration.WebhookClientConfig
+	ClientConfig WebhookClientConfig
+}
+
+type WebhookClientConfig struct {
+	URL *string
+	Service *ServiceReference
+	CABundle []byte
+}
+
+type ServiceReference struct {
+	Namespace string
+	Name string
+	Path *string
 }
 
 type CustomResourceDefinitionVersion struct {

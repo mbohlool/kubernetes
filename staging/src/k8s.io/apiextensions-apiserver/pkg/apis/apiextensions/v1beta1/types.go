@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"k8s.io/api/admissionregistration/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -82,12 +81,25 @@ type CustomResourceConversion struct {
 
 	// Additional information for external conversion if strategy is set to external
 	// +optional
-	Webhook *CustomResourceConversionWebhook `json:"webhook,omitempty" protobuf:"bytes,2,name=webhook"`
+	Webhook *CustomResourceConversionWebhook `json:"webhook,omitempty" protobuf:"bytes,2,opt,name=webhook"`
 }
 
 type CustomResourceConversionWebhook struct {
 	// ClientConfig defines how to communicate with the webhook. This is the same config used for validating/mutating webhooks.
-	ClientConfig v1beta1.WebhookClientConfig `json:"clientConfig" protobuf:"bytes,1,name=clientConfig"`
+	ClientConfig WebhookClientConfig `json:"clientConfig" protobuf:"bytes,1,name=clientConfig"`
+}
+
+type WebhookClientConfig struct {
+	URL *string `json:"url,omitempty" protobuf:"bytes,3,opt,name=url"`
+	// +optional
+	Service  *ServiceReference `json:"service,omitempty" protobuf:"bytes,1,opt,name=service"`
+	CABundle []byte            `json:"caBundle" protobuf:"bytes,2,opt,name=caBundle"`
+}
+
+type ServiceReference struct {
+	Namespace string  `json:"namespace" protobuf:"bytes,1,opt,name=namespace"`
+	Name      string  `json:"name" protobuf:"bytes,2,opt,name=name"`
+	Path      *string `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
 }
 
 type CustomResourceDefinitionVersion struct {

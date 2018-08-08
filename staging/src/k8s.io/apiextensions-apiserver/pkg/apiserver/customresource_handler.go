@@ -195,6 +195,7 @@ func (r *crdHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	glog.Infof("ZZZ2: %v, %v", crd.UID, crd.Spec.Conversion)
 	if !apiextensions.HasServedCRDVersion(crd, requestInfo.APIVersion) {
 		r.delegate.ServeHTTP(w, req)
 		return
@@ -432,6 +433,8 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 	storages := map[string]customresource.CustomResourceStorage{}
 	statusScopes := map[string]handlers.RequestScope{}
 	scaleScopes := map[string]handlers.RequestScope{}
+
+	glog.Infof("ZZZ: %v", crd.Spec.Conversion)
 
 	for _, v := range crd.Spec.Versions {
 		safeConverter, unsafeConverter, err := r.crdConverterFactory.NewConverter(crd)
