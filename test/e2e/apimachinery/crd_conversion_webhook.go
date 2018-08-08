@@ -36,8 +36,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	_ "github.com/stretchr/testify/assert"
-	admission_v1beta1 "k8s.io/api/admissionregistration/v1beta1"
-	"k8s.io/kubernetes/staging/src/k8s.io/apiextensions-apiserver/pkg/features"
+		"k8s.io/kubernetes/staging/src/k8s.io/apiextensions-apiserver/pkg/features"
 )
 
 const (
@@ -102,8 +101,8 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 			},
 		}
 		testcrd, err := framework.CreateMultiVersionTestCRD(f, "stable.example.com", apiVersions,
-			&admission_v1beta1.WebhookClientConfig{
-				Service: &admission_v1beta1.ServiceReference{
+			&v1beta1.WebhookClientConfig{
+				Service: &v1beta1.ServiceReference{
 					Namespace: f.Namespace.Name,
 					Name:      serviceCRDName,
 					Path:      strPtr("/convert"),

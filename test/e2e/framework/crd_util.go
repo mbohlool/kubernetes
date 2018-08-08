@@ -19,8 +19,7 @@ package framework
 import (
 	"fmt"
 
-	"k8s.io/api/admissionregistration/v1beta1"
-	apiextensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+		apiextensions_v1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apiextensions-apiserver/test/integration/fixtures"
@@ -45,7 +44,7 @@ type TestCrd struct {
 }
 
 // CreateTestCRD creates a new CRD specifically for the calling test.
-func CreateMultiVersionTestCRD(f *Framework, group string, apiVersions []apiextensionsv1beta1.CustomResourceDefinitionVersion, conversionWebhook *v1beta1.WebhookClientConfig) (*TestCrd, error) {
+func CreateMultiVersionTestCRD(f *Framework, group string, apiVersions []apiextensionsv1beta1.CustomResourceDefinitionVersion, conversionWebhook *apiextensionsv1beta1.WebhookClientConfig) (*TestCrd, error) {
 	suffix := randomSuffix()
 	name := fmt.Sprintf("e2e-test-%s-%s-crd", f.BaseName, suffix)
 	kind := fmt.Sprintf("E2e-test-%s-%s-crd", f.BaseName, suffix)
