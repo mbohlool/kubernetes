@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/config"
 	"k8s.io/client-go/rest"
+	admissionregistration_v1beta1 "k8s.io/api/admissionregistration/v1beta1"
 )
 
 type webhookConverterFactory struct {
@@ -38,7 +39,9 @@ type webhookConverter struct {
 var _ runtime.ObjectConvertor = &webhookConverter{}
 
 func (f *webhookConverterFactory) NewWebhookConverter(validVersions map[schema.GroupVersion]bool, crd *apiextensions.CustomResourceDefinition) (*webhookConverter, error) {
-	v1beta1Webhook := &v1beta1.CustomResourceConversionWebhook{}
+	v1beta1Webhook := &v1beta1.CustomResourceConversionWebhook{
+		ClientConfig: admissionregistration_v1beta1.WebhookClientConfig{},
+	}
 	err := v1beta1.Convert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook(crd.Spec.Conversion.Webhook, v1beta1Webhook, nil)
 	if err != nil {
 		return nil, err
