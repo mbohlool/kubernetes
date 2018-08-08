@@ -40,7 +40,9 @@ type webhookConverter struct {
 var _ runtime.ObjectConvertor = &webhookConverter{}
 
 func (f *webhookConverterFactory) NewWebhookConverter(validVersions map[schema.GroupVersion]bool, crd *apiextensions.CustomResourceDefinition) (*webhookConverter, error) {
-	glog.Infof("creating webhook converter for %s", crd.String())
+	glog.Infof("creating webhook converter for %s", crd)
+	glog.Infof("creating webhook converter for %s", crd.Spec)
+	glog.Infof("creating webhook converter for %s", crd.Spec.Conversion)
 	v1beta1Webhook := &v1beta1.CustomResourceConversionWebhook{
 		ClientConfig: admissionregistration_v1beta1.WebhookClientConfig{},
 	}
