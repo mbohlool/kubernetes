@@ -93,6 +93,8 @@ type crdHandler struct {
 	// MasterCount is used to implement sleep to improve
 	// CRD establishing process for HA clusters.
 	masterCount int
+
+	crdConverterFactory *conversion.CRDConverterFactory
 }
 
 // crdInfo stores enough information to serve the storage for the custom resource
@@ -129,7 +131,7 @@ func NewCustomResourceDefinitionHandler(
 	restOptionsGetter generic.RESTOptionsGetter,
 	admission admission.Interface,
 	establishingController *establish.EstablishingController,
-	masterCount int) *crdHandler {
+	masterCount int) (*crdHandler, error) {
 	ret := &crdHandler{
 		versionDiscoveryHandler: versionDiscoveryHandler,
 		groupDiscoveryHandler:   groupDiscoveryHandler,
@@ -147,10 +149,15 @@ func NewCustomResourceDefinitionHandler(
 			ret.removeDeadStorage()
 		},
 	})
+	crdConverterFactory, err := conversion.NewCRDConverterFactory()
+	if err != nil {
+		return nil, err
+	}
+	ret.crdConverterFactory = crdConverterFactory
 
 	ret.customStorage.Store(crdStorageMap{})
 
-	return ret
+	return ret, nil
 }
 
 func (r *crdHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -427,7 +434,10 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 	scaleScopes := map[string]handlers.RequestScope{}
 
 	for _, v := range crd.Spec.Versions {
-		safeConverter, unsafeConverter := conversion.NewCRDConverter(crd)
+		safeConverter, unsafeConverter, err := r.crdConverterFactory.NewConverter(crd)
+		if err != nil {
+			return nil, err
+		}
 		// In addition to Unstructured objects (Custom Resources), we also may sometimes need to
 		// decode unversioned Options objects, so we delegate to parameterScheme for such types.
 		parameterScheme := runtime.NewScheme()

@@ -49,6 +49,7 @@ func (i *ImageConfig) SetVersion(version string) {
 }
 
 var (
+	CRDConversionWebhook     = ImageConfig{e2eRegistry, "crd-conversion-webhook", "1.12v2", true}
 	AdmissionWebhook         = ImageConfig{e2eRegistry, "webhook", "1.12v1", false}
 	APIServer                = ImageConfig{e2eRegistry, "sample-apiserver", "1.0", false}
 	AppArmorLoader           = ImageConfig{gcRegistry, "apparmor-loader", "0.1", false}

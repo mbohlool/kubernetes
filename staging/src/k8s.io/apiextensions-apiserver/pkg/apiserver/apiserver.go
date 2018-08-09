@@ -167,7 +167,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		delegate:  delegateHandler,
 	}
 	establishingController := establish.NewEstablishingController(s.Informers.Apiextensions().InternalVersion().CustomResourceDefinitions(), crdClient.Apiextensions())
-	crdHandler := NewCustomResourceDefinitionHandler(
+	crdHandler, err := NewCustomResourceDefinitionHandler(
 		versionDiscoveryHandler,
 		groupDiscoveryHandler,
 		s.Informers.Apiextensions().InternalVersion().CustomResourceDefinitions(),
@@ -177,6 +177,9 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		establishingController,
 		c.ExtraConfig.MasterCount,
 	)
+	if err != nil {
+		return nil, err
+	}
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Handle("/apis", crdHandler)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.HandlePrefix("/apis/", crdHandler)
 
