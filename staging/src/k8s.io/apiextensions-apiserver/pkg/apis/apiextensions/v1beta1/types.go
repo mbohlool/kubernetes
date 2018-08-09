@@ -18,6 +18,16 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+)
+
+type ConversionStrategyType string
+
+const (
+	// NopConverter is a converter that only sets apiversion of the CR and leave everything else unchanged.
+	NopConverter     ConversionStrategyType = "None"
+	WebhookConverter ConversionStrategyType = "Webhook"
 )
 
 // CustomResourceDefinitionSpec describes how a user wants their resource to appear
@@ -54,6 +64,89 @@ type CustomResourceDefinitionSpec struct {
 	Versions []CustomResourceDefinitionVersion `json:"versions,omitempty" protobuf:"bytes,7,rep,name=versions"`
 	// AdditionalPrinterColumns are additional columns shown e.g. in kubectl next to the name. Defaults to a created-at column.
 	AdditionalPrinterColumns []CustomResourceColumnDefinition `json:"additionalPrinterColumns,omitempty" protobuf:"bytes,8,rep,name=additionalPrinterColumns"`
+
+	// conversion defines conversion settings for the CRD.
+	// +optional
+	Conversion *CustomResourceConversion `json:"conversion,omitempty" protobuf:"bytes,9,opt,name=conversion"`
+}
+
+type CustomResourceConversion struct {
+	// Strategy specifies the conversion strategy. Allowed values are:
+	// - `None`: The converter only change the apiVersion and would not touch any other field in the CR.
+	// - `Webhook`: API Server will call to an external webhook to do the conversion. Additional information is needed for this option.
+	Strategy ConversionStrategyType `json:"strategy" protobuf:"bytes,1,name=strategy"`
+
+	// Additional information for external conversion if strategy is set to external
+	// +optional
+	Webhook *CustomResourceConversionWebhook `json:"webhook,omitempty" protobuf:"bytes,2,name=webhook"`
+}
+
+type CustomResourceConversionWebhook struct {
+	// ClientConfig defines how to communicate with the webhook. This is the same config used for validating/mutating webhooks.
+	ClientConfig WebhookClientConfig `json:"clientConfig" protobuf:"bytes,1,name=clientConfig"`
+}
+
+// WebhookClientConfig contains the information to make a TLS
+// connection with the webhook. It has the same field as admissionregistration.v1beta1.WebhookClientConfig.
+type WebhookClientConfig struct {
+	// `url` gives the location of the webhook, in standard URL form
+	// (`[scheme://]host:port/path`). Exactly one of `url` or `service`
+	// must be specified.
+	//
+	// The `host` should not refer to a service running in the cluster; use
+	// the `service` field instead. The host might be resolved via external
+	// DNS in some apiservers (e.g., `kube-apiserver` cannot resolve
+	// in-cluster DNS as that would be a layering violation). `host` may
+	// also be an IP address.
+	//
+	// Please note that using `localhost` or `127.0.0.1` as a `host` is
+	// risky unless you take great care to run this webhook on all hosts
+	// which run an apiserver which might need to make calls to this
+	// webhook. Such installs are likely to be non-portable, i.e., not easy
+	// to turn up in a new cluster.
+	//
+	// The scheme must be "https"; the URL must begin with "https://".
+	//
+	// A path is optional, and if present may be any string permissible in
+	// a URL. You may use the path to pass an arbitrary string to the
+	// webhook, for example, a cluster identifier.
+	//
+	// Attempting to use a user or basic auth e.g. "user:password@" is not
+	// allowed. Fragments ("#...") and query parameters ("?...") are not
+	// allowed, either.
+	//
+	// +optional
+	URL *string `json:"url,omitempty" protobuf:"bytes,3,opt,name=url"`
+
+	// `service` is a reference to the service for this webhook. Either
+	// `service` or `url` must be specified.
+	//
+	// If the webhook is running within the cluster, then you should use `service`.
+	//
+	// Port 443 will be used if it is open, otherwise it is an error.
+	//
+	// +optional
+	Service *ServiceReference `json:"service" protobuf:"bytes,1,opt,name=service"`
+
+	// `caBundle` is a PEM encoded CA bundle which will be used to validate
+	// the webhook's server certificate.
+	// Required.
+	CABundle []byte `json:"caBundle" protobuf:"bytes,2,opt,name=caBundle"`
+}
+
+// ServiceReference holds a reference to Service.legacy.k8s.io
+type ServiceReference struct {
+	// `namespace` is the namespace of the service.
+	// Required
+	Namespace string `json:"namespace" protobuf:"bytes,1,opt,name=namespace"`
+	// `name` is the name of the service.
+	// Required
+	Name string `json:"name" protobuf:"bytes,2,opt,name=name"`
+
+	// `path` is an optional URL path which will be sent in any request to
+	// this service.
+	// +optional
+	Path *string `json:"path,omitempty" protobuf:"bytes,3,opt,name=path"`
 }
 
 type CustomResourceDefinitionVersion struct {
@@ -250,4 +343,48 @@ type CustomResourceSubresourceScale struct {
 	// subresource will default to the empty string.
 	// +optional
 	LabelSelectorPath *string `json:"labelSelectorPath,omitempty" protobuf:"bytes,3,opt,name=labelSelectorPath"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ConversionReview describes a conversion request/response.
+type ConversionReview struct {
+	metav1.TypeMeta `json:",inline"`
+	// Request describes the attributes for the conversion request.
+	// +optional
+	Request *ConversionRequest `json:"request,omitempty" protobuf:"bytes,1,opt,name=request"`
+	// Response describes the attributes for the conversion response.
+	// +optional
+	Response *ConversionResponse `json:"response,omitempty" protobuf:"bytes,2,opt,name=response"`
+}
+
+// ConversionRequest describes a conversion request parameters.
+type ConversionRequest struct {
+	// UID is an identifier for the individual request/response. It allows us to distinguish instances of requests which are
+	// otherwise identical (parallel requests, requests when earlier requests did not modify etc)
+	// The UID is meant to track the round trip (request/response) between the KAS and the WebHook, not the user request.
+	// It is suitable for correlating log entries between the webhook and apiserver, for either auditing or debugging.
+	// +optional
+	UID types.UID `json:"uid,omitempty" protobuf:"bytes,1,opt,name=uid"`
+	// The version to convert given object to. E.g. "stable.example.com/v1"
+	APIVersion string `json:"apiVersion" protobuf:"bytes,2,name=apiVersion"`
+	// Object is the CRD object to be converted.
+	Object runtime.RawExtension `json:"object" protobuf:"bytes,3,name=object"`
+	// IsList indicates that this is a List operation and Object contains a list of items.
+	IsList bool `json:"isList" protobuf:"varint,4,name=isList"`
+}
+
+// ConversionResponse describes a conversion response.
+type ConversionResponse struct {
+	// UID is an identifier for the individual request/response.
+	// This should be copied over from the corresponding AdmissionRequest.
+	// +optional
+	UID types.UID `json:"uid,omitempty" protobuf:"bytes,1,opt,name=uid"`
+	// ConvertedObject is the converted version of request.Object if the Result is nil.
+	// +optional
+	ConvertedObject *runtime.RawExtension `json:"convertedObject" protobuf:"bytes,2,name=convertedObject"`
+	// Result contains extra details into why a conversion request was failed. If it is not nil, it means
+	// the conversion is failed.
+	// +optional
+	Result *metav1.Status `json:"result" protobuf:"bytes,3,name=result"`
 }
