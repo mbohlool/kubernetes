@@ -24,8 +24,10 @@ import (
 	unsafe "unsafe"
 
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	types "k8s.io/apimachinery/pkg/types"
 )
 
 func init() {
@@ -35,6 +37,36 @@ func init() {
 // RegisterConversions adds conversion functions to the given scheme.
 // Public to allow building arbitrary schemes.
 func RegisterConversions(s *runtime.Scheme) error {
+	if err := s.AddGeneratedConversionFunc((*ConversionRequest)(nil), (*apiextensions.ConversionRequest)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_ConversionRequest_To_apiextensions_ConversionRequest(a.(*ConversionRequest), b.(*apiextensions.ConversionRequest), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*apiextensions.ConversionRequest)(nil), (*ConversionRequest)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_apiextensions_ConversionRequest_To_v1beta1_ConversionRequest(a.(*apiextensions.ConversionRequest), b.(*ConversionRequest), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ConversionResponse)(nil), (*apiextensions.ConversionResponse)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_ConversionResponse_To_apiextensions_ConversionResponse(a.(*ConversionResponse), b.(*apiextensions.ConversionResponse), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*apiextensions.ConversionResponse)(nil), (*ConversionResponse)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_apiextensions_ConversionResponse_To_v1beta1_ConversionResponse(a.(*apiextensions.ConversionResponse), b.(*ConversionResponse), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ConversionReview)(nil), (*apiextensions.ConversionReview)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_ConversionReview_To_apiextensions_ConversionReview(a.(*ConversionReview), b.(*apiextensions.ConversionReview), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*apiextensions.ConversionReview)(nil), (*ConversionReview)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_apiextensions_ConversionReview_To_v1beta1_ConversionReview(a.(*apiextensions.ConversionReview), b.(*ConversionReview), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*CustomResourceColumnDefinition)(nil), (*apiextensions.CustomResourceColumnDefinition)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_CustomResourceColumnDefinition_To_apiextensions_CustomResourceColumnDefinition(a.(*CustomResourceColumnDefinition), b.(*apiextensions.CustomResourceColumnDefinition), scope)
 	}); err != nil {
@@ -42,6 +74,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*apiextensions.CustomResourceColumnDefinition)(nil), (*CustomResourceColumnDefinition)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_apiextensions_CustomResourceColumnDefinition_To_v1beta1_CustomResourceColumnDefinition(a.(*apiextensions.CustomResourceColumnDefinition), b.(*CustomResourceColumnDefinition), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*CustomResourceConversion)(nil), (*apiextensions.CustomResourceConversion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_CustomResourceConversion_To_apiextensions_CustomResourceConversion(a.(*CustomResourceConversion), b.(*apiextensions.CustomResourceConversion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*apiextensions.CustomResourceConversion)(nil), (*CustomResourceConversion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_apiextensions_CustomResourceConversion_To_v1beta1_CustomResourceConversion(a.(*apiextensions.CustomResourceConversion), b.(*CustomResourceConversion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*CustomResourceConversionWebhook)(nil), (*apiextensions.CustomResourceConversionWebhook)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_CustomResourceConversionWebhook_To_apiextensions_CustomResourceConversionWebhook(a.(*CustomResourceConversionWebhook), b.(*apiextensions.CustomResourceConversionWebhook), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*apiextensions.CustomResourceConversionWebhook)(nil), (*CustomResourceConversionWebhook)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook(a.(*apiextensions.CustomResourceConversionWebhook), b.(*CustomResourceConversionWebhook), scope)
 	}); err != nil {
 		return err
 	}
@@ -233,6 +285,78 @@ func RegisterConversions(s *runtime.Scheme) error {
 	return nil
 }
 
+func autoConvert_v1beta1_ConversionRequest_To_apiextensions_ConversionRequest(in *ConversionRequest, out *apiextensions.ConversionRequest, s conversion.Scope) error {
+	out.UID = types.UID(in.UID)
+	out.APIVersion = in.APIVersion
+	out.Object = in.Object
+	out.IsList = in.IsList
+	return nil
+}
+
+// Convert_v1beta1_ConversionRequest_To_apiextensions_ConversionRequest is an autogenerated conversion function.
+func Convert_v1beta1_ConversionRequest_To_apiextensions_ConversionRequest(in *ConversionRequest, out *apiextensions.ConversionRequest, s conversion.Scope) error {
+	return autoConvert_v1beta1_ConversionRequest_To_apiextensions_ConversionRequest(in, out, s)
+}
+
+func autoConvert_apiextensions_ConversionRequest_To_v1beta1_ConversionRequest(in *apiextensions.ConversionRequest, out *ConversionRequest, s conversion.Scope) error {
+	out.UID = types.UID(in.UID)
+	out.APIVersion = in.APIVersion
+	out.Object = in.Object
+	out.IsList = in.IsList
+	return nil
+}
+
+// Convert_apiextensions_ConversionRequest_To_v1beta1_ConversionRequest is an autogenerated conversion function.
+func Convert_apiextensions_ConversionRequest_To_v1beta1_ConversionRequest(in *apiextensions.ConversionRequest, out *ConversionRequest, s conversion.Scope) error {
+	return autoConvert_apiextensions_ConversionRequest_To_v1beta1_ConversionRequest(in, out, s)
+}
+
+func autoConvert_v1beta1_ConversionResponse_To_apiextensions_ConversionResponse(in *ConversionResponse, out *apiextensions.ConversionResponse, s conversion.Scope) error {
+	out.UID = types.UID(in.UID)
+	out.ConvertedObject = (*runtime.RawExtension)(unsafe.Pointer(in.ConvertedObject))
+	out.Result = (*v1.Status)(unsafe.Pointer(in.Result))
+	return nil
+}
+
+// Convert_v1beta1_ConversionResponse_To_apiextensions_ConversionResponse is an autogenerated conversion function.
+func Convert_v1beta1_ConversionResponse_To_apiextensions_ConversionResponse(in *ConversionResponse, out *apiextensions.ConversionResponse, s conversion.Scope) error {
+	return autoConvert_v1beta1_ConversionResponse_To_apiextensions_ConversionResponse(in, out, s)
+}
+
+func autoConvert_apiextensions_ConversionResponse_To_v1beta1_ConversionResponse(in *apiextensions.ConversionResponse, out *ConversionResponse, s conversion.Scope) error {
+	out.UID = types.UID(in.UID)
+	out.ConvertedObject = (*runtime.RawExtension)(unsafe.Pointer(in.ConvertedObject))
+	out.Result = (*v1.Status)(unsafe.Pointer(in.Result))
+	return nil
+}
+
+// Convert_apiextensions_ConversionResponse_To_v1beta1_ConversionResponse is an autogenerated conversion function.
+func Convert_apiextensions_ConversionResponse_To_v1beta1_ConversionResponse(in *apiextensions.ConversionResponse, out *ConversionResponse, s conversion.Scope) error {
+	return autoConvert_apiextensions_ConversionResponse_To_v1beta1_ConversionResponse(in, out, s)
+}
+
+func autoConvert_v1beta1_ConversionReview_To_apiextensions_ConversionReview(in *ConversionReview, out *apiextensions.ConversionReview, s conversion.Scope) error {
+	out.Request = (*apiextensions.ConversionRequest)(unsafe.Pointer(in.Request))
+	out.Response = (*apiextensions.ConversionResponse)(unsafe.Pointer(in.Response))
+	return nil
+}
+
+// Convert_v1beta1_ConversionReview_To_apiextensions_ConversionReview is an autogenerated conversion function.
+func Convert_v1beta1_ConversionReview_To_apiextensions_ConversionReview(in *ConversionReview, out *apiextensions.ConversionReview, s conversion.Scope) error {
+	return autoConvert_v1beta1_ConversionReview_To_apiextensions_ConversionReview(in, out, s)
+}
+
+func autoConvert_apiextensions_ConversionReview_To_v1beta1_ConversionReview(in *apiextensions.ConversionReview, out *ConversionReview, s conversion.Scope) error {
+	out.Request = (*ConversionRequest)(unsafe.Pointer(in.Request))
+	out.Response = (*ConversionResponse)(unsafe.Pointer(in.Response))
+	return nil
+}
+
+// Convert_apiextensions_ConversionReview_To_v1beta1_ConversionReview is an autogenerated conversion function.
+func Convert_apiextensions_ConversionReview_To_v1beta1_ConversionReview(in *apiextensions.ConversionReview, out *ConversionReview, s conversion.Scope) error {
+	return autoConvert_apiextensions_ConversionReview_To_v1beta1_ConversionReview(in, out, s)
+}
+
 func autoConvert_v1beta1_CustomResourceColumnDefinition_To_apiextensions_CustomResourceColumnDefinition(in *CustomResourceColumnDefinition, out *apiextensions.CustomResourceColumnDefinition, s conversion.Scope) error {
 	out.Name = in.Name
 	out.Type = in.Type
@@ -261,6 +385,54 @@ func autoConvert_apiextensions_CustomResourceColumnDefinition_To_v1beta1_CustomR
 // Convert_apiextensions_CustomResourceColumnDefinition_To_v1beta1_CustomResourceColumnDefinition is an autogenerated conversion function.
 func Convert_apiextensions_CustomResourceColumnDefinition_To_v1beta1_CustomResourceColumnDefinition(in *apiextensions.CustomResourceColumnDefinition, out *CustomResourceColumnDefinition, s conversion.Scope) error {
 	return autoConvert_apiextensions_CustomResourceColumnDefinition_To_v1beta1_CustomResourceColumnDefinition(in, out, s)
+}
+
+func autoConvert_v1beta1_CustomResourceConversion_To_apiextensions_CustomResourceConversion(in *CustomResourceConversion, out *apiextensions.CustomResourceConversion, s conversion.Scope) error {
+	out.Strategy = apiextensions.ConversionStrategyType(in.Strategy)
+	out.Webhook = (*apiextensions.CustomResourceConversionWebhook)(unsafe.Pointer(in.Webhook))
+	return nil
+}
+
+// Convert_v1beta1_CustomResourceConversion_To_apiextensions_CustomResourceConversion is an autogenerated conversion function.
+func Convert_v1beta1_CustomResourceConversion_To_apiextensions_CustomResourceConversion(in *CustomResourceConversion, out *apiextensions.CustomResourceConversion, s conversion.Scope) error {
+	return autoConvert_v1beta1_CustomResourceConversion_To_apiextensions_CustomResourceConversion(in, out, s)
+}
+
+func autoConvert_apiextensions_CustomResourceConversion_To_v1beta1_CustomResourceConversion(in *apiextensions.CustomResourceConversion, out *CustomResourceConversion, s conversion.Scope) error {
+	out.Strategy = ConversionStrategyType(in.Strategy)
+	out.Webhook = (*CustomResourceConversionWebhook)(unsafe.Pointer(in.Webhook))
+	return nil
+}
+
+// Convert_apiextensions_CustomResourceConversion_To_v1beta1_CustomResourceConversion is an autogenerated conversion function.
+func Convert_apiextensions_CustomResourceConversion_To_v1beta1_CustomResourceConversion(in *apiextensions.CustomResourceConversion, out *CustomResourceConversion, s conversion.Scope) error {
+	return autoConvert_apiextensions_CustomResourceConversion_To_v1beta1_CustomResourceConversion(in, out, s)
+}
+
+func autoConvert_v1beta1_CustomResourceConversionWebhook_To_apiextensions_CustomResourceConversionWebhook(in *CustomResourceConversionWebhook, out *apiextensions.CustomResourceConversionWebhook, s conversion.Scope) error {
+	// TODO: Inefficient conversion - can we improve it?
+	if err := s.Convert(&in.ClientConfig, &out.ClientConfig, 0); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1beta1_CustomResourceConversionWebhook_To_apiextensions_CustomResourceConversionWebhook is an autogenerated conversion function.
+func Convert_v1beta1_CustomResourceConversionWebhook_To_apiextensions_CustomResourceConversionWebhook(in *CustomResourceConversionWebhook, out *apiextensions.CustomResourceConversionWebhook, s conversion.Scope) error {
+	return autoConvert_v1beta1_CustomResourceConversionWebhook_To_apiextensions_CustomResourceConversionWebhook(in, out, s)
+}
+
+func autoConvert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook(in *apiextensions.CustomResourceConversionWebhook, out *CustomResourceConversionWebhook, s conversion.Scope) error {
+	// TODO: Inefficient conversion - can we improve it?
+	if err := s.Convert(&in.ClientConfig, &out.ClientConfig, 0); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook is an autogenerated conversion function.
+func Convert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook(in *apiextensions.CustomResourceConversionWebhook, out *CustomResourceConversionWebhook, s conversion.Scope) error {
+	return autoConvert_apiextensions_CustomResourceConversionWebhook_To_v1beta1_CustomResourceConversionWebhook(in, out, s)
 }
 
 func autoConvert_v1beta1_CustomResourceDefinition_To_apiextensions_CustomResourceDefinition(in *CustomResourceDefinition, out *apiextensions.CustomResourceDefinition, s conversion.Scope) error {
@@ -414,6 +586,7 @@ func autoConvert_v1beta1_CustomResourceDefinitionSpec_To_apiextensions_CustomRes
 	out.Subresources = (*apiextensions.CustomResourceSubresources)(unsafe.Pointer(in.Subresources))
 	out.Versions = *(*[]apiextensions.CustomResourceDefinitionVersion)(unsafe.Pointer(&in.Versions))
 	out.AdditionalPrinterColumns = *(*[]apiextensions.CustomResourceColumnDefinition)(unsafe.Pointer(&in.AdditionalPrinterColumns))
+	out.Conversion = (*apiextensions.CustomResourceConversion)(unsafe.Pointer(in.Conversion))
 	return nil
 }
 
@@ -441,6 +614,7 @@ func autoConvert_apiextensions_CustomResourceDefinitionSpec_To_v1beta1_CustomRes
 	out.Subresources = (*CustomResourceSubresources)(unsafe.Pointer(in.Subresources))
 	out.Versions = *(*[]CustomResourceDefinitionVersion)(unsafe.Pointer(&in.Versions))
 	out.AdditionalPrinterColumns = *(*[]CustomResourceColumnDefinition)(unsafe.Pointer(&in.AdditionalPrinterColumns))
+	out.Conversion = (*CustomResourceConversion)(unsafe.Pointer(in.Conversion))
 	return nil
 }
 
