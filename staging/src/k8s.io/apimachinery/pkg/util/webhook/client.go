@@ -1,5 +1,5 @@
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package config
+package webhook
 
 import (
 	"context"
@@ -24,14 +24,14 @@ import (
 	"net"
 	"net/url"
 
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/hashicorp/golang-lru"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
-	"k8s.io/api/admissionregistration/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
+		"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	webhookerrors "k8s.io/apiserver/pkg/admission/plugin/webhook/errors"
 	"k8s.io/client-go/rest"
+	"k8s.io/apimachinery/pkg/util/webhook"
 )
 
 const (
@@ -106,8 +106,8 @@ func (cm *ClientManager) Validate() error {
 
 // HookClient get a RESTClient from the cache, or constructs one based on the
 // webhook configuration.
-func (cm *ClientManager) HookClient(h *v1beta1.Webhook) (*rest.RESTClient, error) {
-	cacheKey, err := json.Marshal(h.ClientConfig)
+func (cm *ClientManager) HookClient(name string, h *webhook.WebhookClientConfig) (*rest.RESTClient, error) {
+	cacheKey, err := json.Marshal(h)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (cm *ClientManager) HookClient(h *v1beta1.Webhook) (*rest.RESTClient, error
 		if len(cfg.TLSClientConfig.CAData) > 0 {
 			cfg.TLSClientConfig.CAData = append(cfg.TLSClientConfig.CAData, '\n')
 		}
-		cfg.TLSClientConfig.CAData = append(cfg.TLSClientConfig.CAData, h.ClientConfig.CABundle...)
+		cfg.TLSClientConfig.CAData = append(cfg.TLSClientConfig.CAData, h.CABundle...)
 
 		cfg.ContentConfig.NegotiatedSerializer = cm.negotiatedSerializer
 		cfg.ContentConfig.ContentType = runtime.ContentTypeJSON
@@ -131,7 +131,7 @@ func (cm *ClientManager) HookClient(h *v1beta1.Webhook) (*rest.RESTClient, error
 		return client, err
 	}
 
-	if svc := h.ClientConfig.Service; svc != nil {
+	if svc := h.Service; svc != nil {
 		restConfig, err := cm.authInfoResolver.ClientConfigForService(svc.Name, svc.Namespace)
 		if err != nil {
 			return nil, err
@@ -167,13 +167,13 @@ func (cm *ClientManager) HookClient(h *v1beta1.Webhook) (*rest.RESTClient, error
 		return complete(cfg)
 	}
 
-	if h.ClientConfig.URL == nil {
-		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: h.Name, Reason: ErrNeedServiceOrURL}
+	if h.URL == nil {
+		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: name, Reason: ErrNeedServiceOrURL}
 	}
 
-	u, err := url.Parse(*h.ClientConfig.URL)
+	u, err := url.Parse(*h.URL)
 	if err != nil {
-		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: h.Name, Reason: fmt.Errorf("Unparsable URL: %v", err)}
+		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: name, Reason: fmt.Errorf("Unparsable URL: %v", err)}
 	}
 
 	restConfig, err := cm.authInfoResolver.ClientConfigFor(u.Host)

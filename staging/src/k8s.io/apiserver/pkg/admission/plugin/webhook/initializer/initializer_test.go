@@ -21,8 +21,7 @@ import (
 	"testing"
 
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/apiserver/pkg/admission/plugin/webhook/config"
-)
+	)
 
 type doNothingAdmission struct{}
 
@@ -39,7 +38,7 @@ type serviceWanter struct {
 	got ServiceResolver
 }
 
-func (s *serviceWanter) SetServiceResolver(sr config.ServiceResolver) { s.got = sr }
+func (s *serviceWanter) SetServiceResolver(sr ServiceResolver) { s.got = sr }
 
 func TestWantsServiceResolver(t *testing.T) {
 	sw := &serviceWanter{}

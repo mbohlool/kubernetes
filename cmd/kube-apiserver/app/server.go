@@ -42,7 +42,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/admission"
-	webhookconfig "k8s.io/apiserver/pkg/admission/plugin/webhook/config"
 	webhookinit "k8s.io/apiserver/pkg/admission/plugin/webhook/initializer"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -88,6 +87,7 @@ import (
 	"k8s.io/kubernetes/pkg/version"
 	"k8s.io/kubernetes/pkg/version/verflag"
 	"k8s.io/kubernetes/plugin/pkg/auth/authenticator/token/bootstrap"
+	"k8s.io/apimachinery/pkg/util/webhook"
 
 	utilflag "k8s.io/kubernetes/pkg/util/flag"
 	_ "k8s.io/kubernetes/pkg/util/reflector/prometheus" // for reflector metric registration
@@ -535,8 +535,8 @@ func buildGenericConfig(
 		genericConfig.DisabledPostStartHooks.Insert(rbacrest.PostStartHookName)
 	}
 
-	webhookAuthResolverWrapper := func(delegate webhookconfig.AuthenticationInfoResolver) webhookconfig.AuthenticationInfoResolver {
-		return &webhookconfig.AuthenticationInfoResolverDelegator{
+	webhookAuthResolverWrapper := func(delegate webhook.AuthenticationInfoResolver) webhook.AuthenticationInfoResolver {
+		return &webhook.AuthenticationInfoResolverDelegator{
 			ClientConfigForFunc: func(server string) (*rest.Config, error) {
 				if server == "kubernetes.default.svc" {
 					return genericConfig.LoopbackClientConfig, nil
@@ -589,7 +589,7 @@ func BuildAdmissionPluginInitializers(
 	client internalclientset.Interface,
 	sharedInformers informers.SharedInformerFactory,
 	serviceResolver aggregatorapiserver.ServiceResolver,
-	webhookAuthWrapper webhookconfig.AuthenticationInfoResolverWrapper,
+	webhookAuthWrapper webhook.AuthenticationInfoResolverWrapper,
 ) ([]admission.PluginInitializer, genericapiserver.PostStartHookFunc, error) {
 	var cloudConfig []byte
 
@@ -759,7 +759,7 @@ func postProcessOpenAPISpecForBackwardCompatibility(s *spec.Swagger) (*spec.Swag
 	compatibilityMap := map[string]string{
 		"io.k8s.kubernetes.pkg.apis.authorization.v1beta1.SelfSubjectAccessReview":                     "io.k8s.api.authorization.v1beta1.SelfSubjectAccessReview",
 		"io.k8s.kubernetes.pkg.api.v1.GitRepoVolumeSource":                                             "io.k8s.api.core.v1.GitRepoVolumeSource",
-		"io.k8s.kubernetes.pkg.apis.admissionregistration.v1alpha1.ValidatingWebhookConfigurationList": "io.k8s.api.admissionregistration.v1alpha1.ValidatingWebhookConfigurationList",
+		"io.k8s.kubernetes.pkg.apis.admissionregistration.v1alpha1.ValidatingwebhookurationList": "io.k8s.api.admissionregistration.v1alpha1.ValidatingwebhookurationList",
 		"io.k8s.kubernetes.pkg.api.v1.EndpointPort":                                                    "io.k8s.api.core.v1.EndpointPort",
 		"io.k8s.kubernetes.pkg.apis.extensions.v1beta1.SupplementalGroupsStrategyOptions":              "io.k8s.api.extensions.v1beta1.SupplementalGroupsStrategyOptions",
 		"io.k8s.kubernetes.pkg.api.v1.PodStatus":                                                       "io.k8s.api.core.v1.PodStatus",
@@ -930,7 +930,7 @@ func postProcessOpenAPISpecForBackwardCompatibility(s *spec.Swagger) (*spec.Swag
 		"io.k8s.kubernetes.pkg.apis.apps.v1beta1.ScaleStatus":                                          "io.k8s.api.apps.v1beta1.ScaleStatus",
 		"io.k8s.kubernetes.pkg.apis.extensions.v1beta1.HTTPIngressRuleValue":                           "io.k8s.api.extensions.v1beta1.HTTPIngressRuleValue",
 		"io.k8s.kubernetes.pkg.apis.batch.v1.Job":                                                      "io.k8s.api.batch.v1.Job",
-		"io.k8s.kubernetes.pkg.apis.admissionregistration.v1alpha1.ValidatingWebhookConfiguration":     "io.k8s.api.admissionregistration.v1alpha1.ValidatingWebhookConfiguration",
+		"io.k8s.kubernetes.pkg.apis.admissionregistration.v1alpha1.Validatingwebhookuration":     "io.k8s.api.admissionregistration.v1alpha1.Validatingwebhookuration",
 		"io.k8s.kubernetes.pkg.apis.rbac.v1beta1.RoleBinding":                                          "io.k8s.api.rbac.v1beta1.RoleBinding",
 		"io.k8s.kubernetes.pkg.api.v1.FCVolumeSource":                                                  "io.k8s.api.core.v1.FCVolumeSource",
 		"io.k8s.kubernetes.pkg.api.v1.EndpointAddress":                                                 "io.k8s.api.core.v1.EndpointAddress",
