@@ -24,6 +24,7 @@ import (
 	"k8s.io/api/admissionregistration/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/webhook"
 	"k8s.io/apiserver/pkg/admission"
 	genericadmissioninit "k8s.io/apiserver/pkg/admission/initializer"
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/config"
@@ -40,7 +41,7 @@ type Webhook struct {
 	sourceFactory sourceFactory
 
 	hookSource       Source
-	clientManager    *config.ClientManager
+	clientManager    *webhook.ClientManager
 	convertor        *convertor
 	namespaceMatcher *namespace.Matcher
 	dispatcher       Dispatcher
@@ -52,7 +53,7 @@ var (
 )
 
 type sourceFactory func(f informers.SharedInformerFactory) Source
-type dispatcherFactory func(cm *config.ClientManager) Dispatcher
+type dispatcherFactory func(cm *webhook.ClientManager) Dispatcher
 
 // NewWebhook creates a new generic admission webhook.
 func NewWebhook(handler *admission.Handler, configFile io.Reader, sourceFactory sourceFactory, dispatcherFactory dispatcherFactory) (*Webhook, error) {
@@ -61,17 +62,17 @@ func NewWebhook(handler *admission.Handler, configFile io.Reader, sourceFactory 
 		return nil, err
 	}
 
-	cm, err := config.NewClientManager()
+	cm, err := webhook.NewClientManager()
 	if err != nil {
 		return nil, err
 	}
-	authInfoResolver, err := config.NewDefaultAuthenticationInfoResolver(kubeconfigFile)
+	authInfoResolver, err := webhook.NewDefaultAuthenticationInfoResolver(kubeconfigFile)
 	if err != nil {
 		return nil, err
 	}
 	// Set defaults which may be overridden later.
 	cm.SetAuthenticationInfoResolver(authInfoResolver)
-	cm.SetServiceResolver(config.NewDefaultServiceResolver())
+	cm.SetServiceResolver(webhook.NewDefaultServiceResolver())
 
 	return &Webhook{
 		Handler:          handler,
@@ -86,13 +87,13 @@ func NewWebhook(handler *admission.Handler, configFile io.Reader, sourceFactory 
 // SetAuthenticationInfoResolverWrapper sets the
 // AuthenticationInfoResolverWrapper.
 // TODO find a better way wire this, but keep this pull small for now.
-func (a *Webhook) SetAuthenticationInfoResolverWrapper(wrapper config.AuthenticationInfoResolverWrapper) {
+func (a *Webhook) SetAuthenticationInfoResolverWrapper(wrapper webhook.AuthenticationInfoResolverWrapper) {
 	a.clientManager.SetAuthenticationInfoResolverWrapper(wrapper)
 }
 
 // SetServiceResolver sets a service resolver for the webhook admission plugin.
 // Passing a nil resolver does not have an effect, instead a default one will be used.
-func (a *Webhook) SetServiceResolver(sr config.ServiceResolver) {
+func (a *Webhook) SetServiceResolver(sr webhook.ServiceResolver) {
 	a.clientManager.SetServiceResolver(sr)
 }
 

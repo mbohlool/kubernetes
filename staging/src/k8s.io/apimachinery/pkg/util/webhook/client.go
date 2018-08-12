@@ -1,5 +1,5 @@
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,19 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package config
+package webhook
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 	"net/url"
 
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/hashicorp/golang-lru"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
-	"k8s.io/api/admissionregistration/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -37,6 +35,16 @@ import (
 const (
 	defaultCacheSize = 200
 )
+
+type ClientConfigInterface interface {
+	GetName() string
+	GetURL() *string
+	GetCABundle() []byte
+	GetServiceName() *string
+	GetServiceNamespace() *string
+	GetServicePath() *string
+	GetCacheKey() (string, error)
+}
 
 var (
 	ErrNeedServiceOrURL = errors.New("webhook configuration must have either service or URL")
@@ -106,12 +114,12 @@ func (cm *ClientManager) Validate() error {
 
 // HookClient get a RESTClient from the cache, or constructs one based on the
 // webhook configuration.
-func (cm *ClientManager) HookClient(h *v1beta1.Webhook) (*rest.RESTClient, error) {
-	cacheKey, err := json.Marshal(h.ClientConfig)
+func (cm *ClientManager) HookClient(h ClientConfigInterface) (*rest.RESTClient, error) {
+	cacheKey, err := h.GetCacheKey()
 	if err != nil {
 		return nil, err
 	}
-	if client, ok := cm.cache.Get(string(cacheKey)); ok {
+	if client, ok := cm.cache.Get(cacheKey); ok {
 		return client.(*rest.RESTClient), nil
 	}
 
@@ -120,28 +128,28 @@ func (cm *ClientManager) HookClient(h *v1beta1.Webhook) (*rest.RESTClient, error
 		if len(cfg.TLSClientConfig.CAData) > 0 {
 			cfg.TLSClientConfig.CAData = append(cfg.TLSClientConfig.CAData, '\n')
 		}
-		cfg.TLSClientConfig.CAData = append(cfg.TLSClientConfig.CAData, h.ClientConfig.CABundle...)
+		cfg.TLSClientConfig.CAData = append(cfg.TLSClientConfig.CAData, h.GetCABundle()...)
 
 		cfg.ContentConfig.NegotiatedSerializer = cm.negotiatedSerializer
 		cfg.ContentConfig.ContentType = runtime.ContentTypeJSON
 		client, err := rest.UnversionedRESTClientFor(cfg)
 		if err == nil {
-			cm.cache.Add(string(cacheKey), client)
+			cm.cache.Add(cacheKey, client)
 		}
 		return client, err
 	}
 
-	if svc := h.ClientConfig.Service; svc != nil {
-		restConfig, err := cm.authInfoResolver.ClientConfigForService(svc.Name, svc.Namespace)
+	if h.GetServiceName() != nil {
+		restConfig, err := cm.authInfoResolver.ClientConfigForService(*h.GetServiceName(), *h.GetServiceNamespace())
 		if err != nil {
 			return nil, err
 		}
 		cfg := rest.CopyConfig(restConfig)
-		serverName := svc.Name + "." + svc.Namespace + ".svc"
+		serverName := *h.GetServiceName() + "." + *h.GetServiceNamespace() + ".svc"
 		host := serverName + ":443"
 		cfg.Host = "https://" + host
-		if svc.Path != nil {
-			cfg.APIPath = *svc.Path
+		if h.GetServicePath() != nil {
+			cfg.APIPath = *h.GetServicePath()
 		}
 		// Set the server name if not already set
 		if len(cfg.TLSClientConfig.ServerName) == 0 {
@@ -155,7 +163,7 @@ func (cm *ClientManager) HookClient(h *v1beta1.Webhook) (*rest.RESTClient, error
 		}
 		cfg.Dial = func(ctx context.Context, network, addr string) (net.Conn, error) {
 			if addr == host {
-				u, err := cm.serviceResolver.ResolveEndpoint(svc.Namespace, svc.Name)
+				u, err := cm.serviceResolver.ResolveEndpoint(*h.GetServiceName(), *h.GetServiceNamespace())
 				if err != nil {
 					return nil, err
 				}
@@ -167,13 +175,13 @@ func (cm *ClientManager) HookClient(h *v1beta1.Webhook) (*rest.RESTClient, error
 		return complete(cfg)
 	}
 
-	if h.ClientConfig.URL == nil {
-		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: h.Name, Reason: ErrNeedServiceOrURL}
+	if h.GetURL() == nil {
+		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: h.GetName(), Reason: ErrNeedServiceOrURL}
 	}
 
-	u, err := url.Parse(*h.ClientConfig.URL)
+	u, err := url.Parse(*h.GetURL())
 	if err != nil {
-		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: h.Name, Reason: fmt.Errorf("Unparsable URL: %v", err)}
+		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: h.GetName(), Reason: fmt.Errorf("Unparsable URL: %v", err)}
 	}
 
 	restConfig, err := cm.authInfoResolver.ClientConfigFor(u.Host)

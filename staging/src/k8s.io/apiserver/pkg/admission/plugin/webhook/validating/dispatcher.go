@@ -23,23 +23,23 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"k8s.io/apiserver/pkg/admission/plugin/webhook/config"
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/generic"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
-	"k8s.io/api/admissionregistration/v1beta1"
+	v1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	admissionmetrics "k8s.io/apiserver/pkg/admission/metrics"
 	webhookerrors "k8s.io/apiserver/pkg/admission/plugin/webhook/errors"
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/request"
+	"k8s.io/apimachinery/pkg/util/webhook"
 )
 
 type validatingDispatcher struct {
-	cm *config.ClientManager
+	cm *webhook.ClientManager
 }
 
-func newValidatingDispatcher(cm *config.ClientManager) generic.Dispatcher {
+func newValidatingDispatcher(cm *webhook.ClientManager) generic.Dispatcher {
 	return &validatingDispatcher{cm}
 }
 

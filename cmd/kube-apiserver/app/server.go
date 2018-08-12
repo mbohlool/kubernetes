@@ -41,8 +41,8 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/util/webhook"
 	"k8s.io/apiserver/pkg/admission"
-	webhookconfig "k8s.io/apiserver/pkg/admission/plugin/webhook/config"
 	webhookinit "k8s.io/apiserver/pkg/admission/plugin/webhook/initializer"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -535,8 +535,8 @@ func buildGenericConfig(
 		genericConfig.DisabledPostStartHooks.Insert(rbacrest.PostStartHookName)
 	}
 
-	webhookAuthResolverWrapper := func(delegate webhookconfig.AuthenticationInfoResolver) webhookconfig.AuthenticationInfoResolver {
-		return &webhookconfig.AuthenticationInfoResolverDelegator{
+	webhookAuthResolverWrapper := func(delegate webhook.AuthenticationInfoResolver) webhook.AuthenticationInfoResolver {
+		return &webhook.AuthenticationInfoResolverDelegator{
 			ClientConfigForFunc: func(server string) (*rest.Config, error) {
 				if server == "kubernetes.default.svc" {
 					return genericConfig.LoopbackClientConfig, nil
@@ -589,7 +589,7 @@ func BuildAdmissionPluginInitializers(
 	client internalclientset.Interface,
 	sharedInformers informers.SharedInformerFactory,
 	serviceResolver aggregatorapiserver.ServiceResolver,
-	webhookAuthWrapper webhookconfig.AuthenticationInfoResolverWrapper,
+	webhookAuthWrapper webhook.AuthenticationInfoResolverWrapper,
 ) ([]admission.PluginInitializer, genericapiserver.PostStartHookFunc, error) {
 	var cloudConfig []byte
 

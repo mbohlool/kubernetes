@@ -32,20 +32,20 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/webhook"
 	admissionmetrics "k8s.io/apiserver/pkg/admission/metrics"
-	"k8s.io/apiserver/pkg/admission/plugin/webhook/config"
 	webhookerrors "k8s.io/apiserver/pkg/admission/plugin/webhook/errors"
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/generic"
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/request"
 )
 
 type mutatingDispatcher struct {
-	cm     *config.ClientManager
+	cm     *webhook.ClientManager
 	plugin *Plugin
 }
 
-func newMutatingDispatcher(p *Plugin) func(cm *config.ClientManager) generic.Dispatcher {
-	return func(cm *config.ClientManager) generic.Dispatcher {
+func newMutatingDispatcher(p *Plugin) func(cm *webhook.ClientManager) generic.Dispatcher {
+	return func(cm *webhook.ClientManager) generic.Dispatcher {
 		return &mutatingDispatcher{cm, p}
 	}
 }
