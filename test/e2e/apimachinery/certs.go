@@ -26,14 +26,14 @@ import (
 )
 
 type certContext struct {
-	cert        []byte
-	key         []byte
-	signingCert []byte
+	Cert        []byte
+	Key         []byte
+	SigningCert []byte
 }
 
 // Setup the server cert. For example, user apiservers and admission webhooks
 // can use the cert to prove their identify to the kube-apiserver
-func setupServerCert(namespaceName, serviceName string) *certContext {
+func SetupServerCert(namespaceName, serviceName string) *certContext {
 	certDir, err := ioutil.TempDir("", "test-e2e-server-cert")
 	if err != nil {
 		framework.Failf("Failed to create a temp dir for cert generation %v", err)
@@ -83,8 +83,8 @@ func setupServerCert(namespaceName, serviceName string) *certContext {
 		framework.Failf("Failed to write key file %v", err)
 	}
 	return &certContext{
-		cert:        cert.EncodeCertPEM(signedCert),
-		key:         cert.EncodePrivateKeyPEM(key),
-		signingCert: cert.EncodeCertPEM(signingCert),
+		Cert:        cert.EncodeCertPEM(signedCert),
+		Key:         cert.EncodePrivateKeyPEM(key),
+		SigningCert: cert.EncodeCertPEM(signingCert),
 	}
 }

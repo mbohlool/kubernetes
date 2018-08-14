@@ -45,6 +45,7 @@ import (
 	_ "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	_ "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
 	_ "k8s.io/apiextensions-apiserver/pkg/client/informers/internalversion"
+	"k8s.io/apimachinery/pkg/util/webhook"
 )
 
 var (
@@ -119,7 +120,7 @@ func (cfg *Config) Complete() CompletedConfig {
 }
 
 // New returns a new instance of CustomResourceDefinitions from the given config.
-func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget) (*CustomResourceDefinitions, error) {
+func (c completedConfig) New(serviceResolver webhook.ServiceResolver, webhookAuthResolverWrapper webhook.AuthenticationInfoResolverWrapper, delegationTarget genericapiserver.DelegationTarget) (*CustomResourceDefinitions, error) {
 	genericServer, err := c.GenericConfig.New("apiextensions-apiserver", delegationTarget)
 	if err != nil {
 		return nil, err
@@ -167,7 +168,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		delegate:  delegateHandler,
 	}
 	establishingController := establish.NewEstablishingController(s.Informers.Apiextensions().InternalVersion().CustomResourceDefinitions(), crdClient.Apiextensions())
-	crdHandler := NewCustomResourceDefinitionHandler(
+	crdHandler, err := NewCustomResourceDefinitionHandler(
 		versionDiscoveryHandler,
 		groupDiscoveryHandler,
 		s.Informers.Apiextensions().InternalVersion().CustomResourceDefinitions(),
@@ -175,8 +176,13 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		c.ExtraConfig.CRDRESTOptionsGetter,
 		c.GenericConfig.AdmissionControl,
 		establishingController,
+		serviceResolver,
+		webhookAuthResolverWrapper,
 		c.ExtraConfig.MasterCount,
 	)
+	if err != nil {
+		return nil, err
+	}
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Handle("/apis", crdHandler)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.HandlePrefix("/apis/", crdHandler)
 

@@ -14,21 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package errors
+package converter
 
-import "fmt"
+import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+)
 
-// ErrCallingWebhook is returned for transport-layer errors calling webhooks. It
-// represents a failure to talk to the webhook, not the webhook rejecting a
-// request.
-type ErrCallingWebhook struct {
-	WebhookName string
-	Reason      error
+var scheme = runtime.NewScheme()
+var codecs = serializer.NewCodecFactory(scheme)
+
+func init() {
+	addToScheme(scheme)
 }
 
-func (e *ErrCallingWebhook) Error() string {
-	if e.Reason != nil {
-		return fmt.Sprintf("failed calling admission webhook %q: %v", e.WebhookName, e.Reason)
-	}
-	return fmt.Sprintf("failed calling admission webhook %q; no further details available", e.WebhookName)
+func addToScheme(scheme *runtime.Scheme) {
+	utilruntime.Must(corev1.AddToScheme(scheme))
+	utilruntime.Must(apiextensions.AddToScheme(scheme))
 }

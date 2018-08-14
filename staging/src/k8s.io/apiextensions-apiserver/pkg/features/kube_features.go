@@ -40,6 +40,13 @@ const (
 	//
 	// CustomResourceSubresources defines the subresources for CustomResources
 	CustomResourceSubresources utilfeature.Feature = "CustomResourceSubresources"
+
+	// owner: @mbohlool
+	// alpha: v1.12
+	// beta: v1.13
+	//
+	// CustomResourceWebhookConversion defines the webhook conversion for Custom Resources.
+	CustomResourceWebhookConversion utilfeature.Feature = "CustomResourceWebhookConversion"
 )
 
 func init() {

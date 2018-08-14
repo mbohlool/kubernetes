@@ -34,6 +34,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
+	extensionserver "k8s.io/apiextensions-apiserver/pkg/cmd/server"
 )
 
 // TearDownFunc is to be called to tear down a test server.
@@ -145,7 +146,9 @@ func StartTestServer(t Logger, instanceOptions *TestServerInstanceOptions, custo
 	if err != nil {
 		return result, fmt.Errorf("failed to create config from options: %v", err)
 	}
-	server, err := config.Complete().New(genericapiserver.NewEmptyDelegate())
+	completedConfig := config.Complete()
+	serviceResolver , webhookAuthResolverWrapper := extensionserver.MakeCRDServerResolverAndAuthResolverWrapper(completedConfig)
+	server, err := config.Complete().New(serviceResolver , webhookAuthResolverWrapper, genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return result, fmt.Errorf("failed to create server: %v", err)
 	}

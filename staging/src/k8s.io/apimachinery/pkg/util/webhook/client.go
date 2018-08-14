@@ -24,11 +24,10 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/golang-lru"
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	webhookerrors "k8s.io/apiserver/pkg/admission/plugin/webhook/errors"
 	"k8s.io/client-go/rest"
 )
 
@@ -37,7 +36,6 @@ const (
 )
 
 type ClientConfigInterface interface {
-	GetName() string
 	GetURL() *string
 	GetCABundle() []byte
 	GetServiceName() *string
@@ -60,19 +58,19 @@ type ClientManager struct {
 }
 
 // NewClientManager creates a clientManager.
-func NewClientManager() (ClientManager, error) {
+func NewClientManager(gv schema.GroupVersion, addToSchemaFunc func(s *runtime.Scheme) error) (ClientManager, error) {
 	cache, err := lru.New(defaultCacheSize)
 	if err != nil {
 		return ClientManager{}, err
 	}
 	admissionScheme := runtime.NewScheme()
-	if err := admissionv1beta1.AddToScheme(admissionScheme); err != nil {
+	if err := addToSchemaFunc(admissionScheme); err != nil {
 		return ClientManager{}, err
 	}
 	return ClientManager{
 		cache: cache,
 		negotiatedSerializer: serializer.NegotiatedSerializerWrapper(runtime.SerializerInfo{
-			Serializer: serializer.NewCodecFactory(admissionScheme).LegacyCodec(admissionv1beta1.SchemeGroupVersion),
+			Serializer: serializer.NewCodecFactory(admissionScheme).LegacyCodec(gv),
 		}),
 	}, nil
 }
@@ -114,7 +112,7 @@ func (cm *ClientManager) Validate() error {
 
 // HookClient get a RESTClient from the cache, or constructs one based on the
 // webhook configuration.
-func (cm *ClientManager) HookClient(h ClientConfigInterface) (*rest.RESTClient, error) {
+func (cm *ClientManager) HookClient(name string, h ClientConfigInterface) (*rest.RESTClient, error) {
 	cacheKey, err := h.GetCacheKey()
 	if err != nil {
 		return nil, err
@@ -176,12 +174,12 @@ func (cm *ClientManager) HookClient(h ClientConfigInterface) (*rest.RESTClient, 
 	}
 
 	if h.GetURL() == nil {
-		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: h.GetName(), Reason: ErrNeedServiceOrURL}
+		return nil, &ErrCallingWebhook{WebhookName: name, Reason: ErrNeedServiceOrURL}
 	}
 
 	u, err := url.Parse(*h.GetURL())
 	if err != nil {
-		return nil, &webhookerrors.ErrCallingWebhook{WebhookName: h.GetName(), Reason: fmt.Errorf("Unparsable URL: %v", err)}
+		return nil, &ErrCallingWebhook{WebhookName: name, Reason: fmt.Errorf("Unparsable URL: %v", err)}
 	}
 
 	restConfig, err := cm.authInfoResolver.ClientConfigFor(u.Host)

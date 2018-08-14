@@ -17,7 +17,10 @@ limitations under the License.
 package integration
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"net/http"
 	"reflect"
 	"sort"
 	"testing"
@@ -34,6 +37,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
+	e2e_apimachinery "k8s.io/kubernetes/test/e2e/apimachinery"
+	"k8s.io/kubernetes/test/images/crd-conversion-webhook/converter"
 )
 
 func TestServerUp(t *testing.T) {
@@ -79,6 +84,44 @@ func TestClusterScopedCRUD(t *testing.T) {
 	ns := ""
 	testSimpleCRUD(t, ns, noxuDefinition, dynamicClient)
 	testFieldSelector(t, ns, noxuDefinition, dynamicClient)
+}
+
+func setupConversionWebhook(t *testing.T) *http.Client {
+	http.HandleFunc("/convert", converter.ServeExampleConvert)
+	context := e2e_apimachinery.SetupServerCert("test_crd", "crd_conversion")
+	t.Logf("%s, %s, %s", context.Key, context.Cert, context.SigningCert)
+	cert, err := tls.X509KeyPair(context.Key, context.Cert)
+	if err != nil {
+		t.Error(err)
+	}
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(context.SigningCert)
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		ClientCAs:    certPool,
+	}
+	server := &http.Server{
+		Addr:      ":8080",
+		TLSConfig: tlsConfig,
+	}
+	go func() {
+		err := server.ListenAndServeTLS("", "")
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	time.Sleep(time.Second * 5)
+
+	transport := &http.Transport{TLSClientConfig: tlsConfig}
+	client := http.Client{Transport: transport}
+	return &client
+}
+
+func TestConversionWebhook(t *testing.T) {
+	client := setupConversionWebhook(t)
+	resp, err := client.Get("https://localhost:8080/convert")
+	t.Logf("ZZZ: %v, %v", err, resp)
 }
 
 func testSimpleCRUD(t *testing.T, ns string, noxuDefinition *apiextensionsv1beta1.CustomResourceDefinition, dynamicClient dynamic.Interface) {

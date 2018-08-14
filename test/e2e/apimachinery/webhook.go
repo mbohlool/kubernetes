@@ -100,7 +100,7 @@ var _ = SIGDescribe("AdmissionWebhook", func() {
 		}
 
 		By("Setting up server cert")
-		context = setupServerCert(namespaceName, serviceName)
+		context = SetupServerCert(namespaceName, serviceName)
 		createAuthReaderRoleBinding(f, namespaceName)
 
 		// Note that in 1.9 we will have backwards incompatible change to
@@ -133,7 +133,7 @@ var _ = SIGDescribe("AdmissionWebhook", func() {
 		defer testcrd.CleanUp()
 		webhookCleanup := registerWebhookForCustomResource(f, context, testcrd)
 		defer webhookCleanup()
-		testCustomResourceWebhook(f, testcrd.Crd, testcrd.DynamicClient)
+		testCustomResourceWebhook(f, testcrd.Crd, testcrd.GetV1DynamicClient())
 	})
 
 	It("Should unconditionally reject operations on fail closed webhook", func() {
@@ -168,7 +168,7 @@ var _ = SIGDescribe("AdmissionWebhook", func() {
 		defer testcrd.CleanUp()
 		webhookCleanup := registerMutatingWebhookForCustomResource(f, context, testcrd)
 		defer webhookCleanup()
-		testMutatingCustomResourceWebhook(f, testcrd.Crd, testcrd.DynamicClient)
+		testMutatingCustomResourceWebhook(f, testcrd.Crd, testcrd.GetV1DynamicClient())
 	})
 
 	It("Should deny crd creation", func() {
@@ -230,8 +230,8 @@ func deployWebhookAndService(f *framework.Framework, image string, context *cert
 		},
 		Type: v1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"tls.crt": context.cert,
-			"tls.key": context.key,
+			"tls.crt": context.Cert,
+			"tls.key": context.Key,
 		},
 	}
 	namespace := f.Namespace.Name
@@ -366,7 +366,7 @@ func registerWebhook(f *framework.Framework, context *certContext) func() {
 						Name:      serviceName,
 						Path:      strPtr("/pods"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 			{
@@ -395,7 +395,7 @@ func registerWebhook(f *framework.Framework, context *certContext) func() {
 						Name:      serviceName,
 						Path:      strPtr("/configmaps"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 			// Server cannot talk to this webhook, so it always fails.
@@ -445,7 +445,7 @@ func registerWebhookForAttachingPod(f *framework.Framework, context *certContext
 						Name:      serviceName,
 						Path:      strPtr("/pods/attach"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 		},
@@ -488,7 +488,7 @@ func registerMutatingWebhookForConfigMap(f *framework.Framework, context *certCo
 						Name:      serviceName,
 						Path:      strPtr("/mutating-configmaps"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 			{
@@ -507,7 +507,7 @@ func registerMutatingWebhookForConfigMap(f *framework.Framework, context *certCo
 						Name:      serviceName,
 						Path:      strPtr("/mutating-configmaps"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 		},
@@ -563,7 +563,7 @@ func registerMutatingWebhookForPod(f *framework.Framework, context *certContext)
 						Name:      serviceName,
 						Path:      strPtr("/mutating-pods"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 		},
@@ -835,7 +835,7 @@ func registerWebhookForWebhookConfigurations(f *framework.Framework, context *ce
 						Name:      serviceName,
 						Path:      strPtr("/always-deny"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 				FailurePolicy: &failurePolicy,
 			},
@@ -1088,7 +1088,7 @@ func registerWebhookForCustomResource(f *framework.Framework, context *certConte
 					Operations: []v1beta1.OperationType{v1beta1.Create},
 					Rule: v1beta1.Rule{
 						APIGroups:   []string{testcrd.ApiGroup},
-						APIVersions: []string{testcrd.ApiVersion},
+						APIVersions: testcrd.GetAPIVersions(),
 						Resources:   []string{testcrd.GetPluralName()},
 					},
 				}},
@@ -1098,7 +1098,7 @@ func registerWebhookForCustomResource(f *framework.Framework, context *certConte
 						Name:      serviceName,
 						Path:      strPtr("/custom-resource"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 		},
@@ -1129,7 +1129,7 @@ func registerMutatingWebhookForCustomResource(f *framework.Framework, context *c
 					Operations: []v1beta1.OperationType{v1beta1.Create},
 					Rule: v1beta1.Rule{
 						APIGroups:   []string{testcrd.ApiGroup},
-						APIVersions: []string{testcrd.ApiVersion},
+						APIVersions: testcrd.GetAPIVersions(),
 						Resources:   []string{testcrd.GetPluralName()},
 					},
 				}},
@@ -1139,7 +1139,7 @@ func registerMutatingWebhookForCustomResource(f *framework.Framework, context *c
 						Name:      serviceName,
 						Path:      strPtr("/mutating-custom-resource"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 			{
@@ -1148,7 +1148,7 @@ func registerMutatingWebhookForCustomResource(f *framework.Framework, context *c
 					Operations: []v1beta1.OperationType{v1beta1.Create},
 					Rule: v1beta1.Rule{
 						APIGroups:   []string{testcrd.ApiGroup},
-						APIVersions: []string{testcrd.ApiVersion},
+						APIVersions: testcrd.GetAPIVersions(),
 						Resources:   []string{testcrd.GetPluralName()},
 					},
 				}},
@@ -1158,7 +1158,7 @@ func registerMutatingWebhookForCustomResource(f *framework.Framework, context *c
 						Name:      serviceName,
 						Path:      strPtr("/mutating-custom-resource"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 		},
@@ -1253,7 +1253,7 @@ func registerValidatingWebhookForCRD(f *framework.Framework, context *certContex
 						Name:      serviceName,
 						Path:      strPtr("/crd"),
 					},
-					CABundle: context.signingCert,
+					CABundle: context.SigningCert,
 				},
 			},
 		},
@@ -1272,12 +1272,18 @@ func testCRDDenyWebhook(f *framework.Framework) {
 	name := fmt.Sprintf("e2e-test-%s-%s-crd", f.BaseName, "deny")
 	kind := fmt.Sprintf("E2e-test-%s-%s-crd", f.BaseName, "deny")
 	group := fmt.Sprintf("%s-crd-test.k8s.io", f.BaseName)
-	apiVersion := "v1"
+	apiVersions := []apiextensionsv1beta1.CustomResourceDefinitionVersion{
+		{
+			Name:    "v1",
+			Served:  true,
+			Storage: true,
+		},
+	}
 	testcrd := &framework.TestCrd{
-		Name:       name,
-		Kind:       kind,
-		ApiGroup:   group,
-		ApiVersion: apiVersion,
+		Name:     name,
+		Kind:     kind,
+		ApiGroup: group,
+		Versions: apiVersions,
 	}
 
 	// Creating a custom resource definition for use by assorted tests.
@@ -1299,8 +1305,8 @@ func testCRDDenyWebhook(f *framework.Framework) {
 			},
 		},
 		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
-			Group:   testcrd.ApiGroup,
-			Version: testcrd.ApiVersion,
+			Group:    testcrd.ApiGroup,
+			Versions: testcrd.Versions,
 			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
 				Plural:   testcrd.GetPluralName(),
 				Singular: testcrd.Name,

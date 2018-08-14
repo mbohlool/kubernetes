@@ -106,7 +106,7 @@ func TestSampleAPIServer(f *framework.Framework, image string) {
 	aggrclient := f.AggregatorClient
 
 	namespace := f.Namespace.Name
-	context := setupServerCert(namespace, "sample-api")
+	context := SetupServerCert(namespace, "sample-api")
 	if framework.ProviderIs("gke") {
 		// kubectl create clusterrolebinding user-cluster-admin-binding --clusterrole=cluster-admin --user=user@domain.com
 		authenticated := rbacv1beta1.Subject{Kind: rbacv1beta1.GroupKind, Name: user.AllAuthenticated}
@@ -124,8 +124,8 @@ func TestSampleAPIServer(f *framework.Framework, image string) {
 		},
 		Type: v1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"tls.crt": context.cert,
-			"tls.key": context.key,
+			"tls.crt": context.Cert,
+			"tls.key": context.Key,
 		},
 	}
 	_, err := client.CoreV1().Secrets(namespace).Create(secret)
@@ -312,7 +312,7 @@ func TestSampleAPIServer(f *framework.Framework, image string) {
 			},
 			Group:                "wardle.k8s.io",
 			Version:              "v1alpha1",
-			CABundle:             context.signingCert,
+			CABundle:             context.SigningCert,
 			GroupPriorityMinimum: 2000,
 			VersionPriority:      200,
 		},

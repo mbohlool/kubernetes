@@ -61,7 +61,7 @@ func (d *validatingDispatcher) Dispatch(ctx context.Context, attr *generic.Versi
 			}
 
 			ignoreClientCallFailures := hook.FailurePolicy != nil && *hook.FailurePolicy == v1beta1.Ignore
-			if callErr, ok := err.(*webhookerrors.ErrCallingWebhook); ok {
+			if callErr, ok := err.(*webhook.ErrCallingWebhook); ok {
 				if ignoreClientCallFailures {
 					glog.Warningf("Failed calling webhook, failing open %v: %v", hook.Name, callErr)
 					utilruntime.HandleError(callErr)
@@ -104,17 +104,17 @@ func (d *validatingDispatcher) callHook(ctx context.Context, h *v1beta1.Webhook,
 
 	// Make the webhook request
 	request := request.CreateAdmissionReview(attr)
-	client, err := d.cm.HookClient(h)
+	client, err := d.cm.HookClient(h.Name, &h.ClientConfig)
 	if err != nil {
-		return &webhookerrors.ErrCallingWebhook{WebhookName: h.Name, Reason: err}
+		return &webhook.ErrCallingWebhook{WebhookName: h.Name, Reason: err}
 	}
 	response := &admissionv1beta1.AdmissionReview{}
 	if err := client.Post().Context(ctx).Body(&request).Do().Into(response); err != nil {
-		return &webhookerrors.ErrCallingWebhook{WebhookName: h.Name, Reason: err}
+		return &webhook.ErrCallingWebhook{WebhookName: h.Name, Reason: err}
 	}
 
 	if response.Response == nil {
-		return &webhookerrors.ErrCallingWebhook{WebhookName: h.Name, Reason: fmt.Errorf("Webhook response was absent")}
+		return &webhook.ErrCallingWebhook{WebhookName: h.Name, Reason: fmt.Errorf("Webhook response was absent")}
 	}
 	if response.Response.Allowed {
 		return nil

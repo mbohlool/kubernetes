@@ -46,6 +46,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&CustomResourceDefinition{},
 		&CustomResourceDefinitionList{},
+		&ConversionReview{},
 	)
 	return nil
 }

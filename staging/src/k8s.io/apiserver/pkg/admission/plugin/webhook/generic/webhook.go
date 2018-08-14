@@ -62,7 +62,7 @@ func NewWebhook(handler *admission.Handler, configFile io.Reader, sourceFactory 
 		return nil, err
 	}
 
-	cm, err := webhook.NewClientManager()
+	cm, err := webhook.NewClientManager(v1beta1.SchemeGroupVersion, v1beta1.AddToScheme)
 	if err != nil {
 		return nil, err
 	}

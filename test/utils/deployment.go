@@ -96,6 +96,8 @@ func waitForDeploymentCompleteMaybeCheckRolling(c clientset.Interface, d *apps.D
 
 		// When the deployment status and its underlying resources reach the desired state, we're done
 		if deploymentutil.DeploymentComplete(d, &deployment.Status) {
+			reason = fmt.Sprintf("deployment status complete: %#v", deployment.Status)
+			logf(reason)
 			return true, nil
 		}
 

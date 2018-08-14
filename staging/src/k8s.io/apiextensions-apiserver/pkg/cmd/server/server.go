@@ -23,6 +23,12 @@ import (
 
 	"k8s.io/apiextensions-apiserver/pkg/cmd/server/options"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver"
+	"k8s.io/apimachinery/pkg/util/webhook"
+	"k8s.io/client-go/rest"
+	"net/url"
+	"k8s.io/apiserver/pkg/util/proxy"
+	"k8s.io/client-go/listers/core/v1"
 )
 
 func NewServerCommand(out, errOut io.Writer, stopCh <-chan struct{}) *cobra.Command {
@@ -50,13 +56,49 @@ func NewServerCommand(out, errOut io.Writer, stopCh <-chan struct{}) *cobra.Comm
 	return cmd
 }
 
+type clusterResolver struct {
+	services v1.ServiceLister
+}
+
+func (r *clusterResolver) ResolveEndpoint(namespace, name string) (*url.URL, error) {
+	return proxy.ResolveCluster(r.services, namespace, name)
+}
+
+func MakeCRDServerResolverAndAuthResolverWrapper(completedConfig apiserver.CompletedConfig) (serviceResolver webhook.ServiceResolver, webhookAuthResolverWrapper webhook.AuthenticationInfoResolverWrapper) {
+	serviceResolver = &clusterResolver{completedConfig.GenericConfig.SharedInformerFactory.Core().V1().Services().Lister()}
+	webhookAuthResolverWrapper = func(delegate webhook.AuthenticationInfoResolver) webhook.AuthenticationInfoResolver {
+		return &webhook.AuthenticationInfoResolverDelegator{
+			ClientConfigForFunc: func(server string) (*rest.Config, error) {
+				if server == "kubernetes.default.svc" {
+					return completedConfig.GenericConfig.LoopbackClientConfig, nil
+				}
+				return delegate.ClientConfigFor(server)
+			},
+			ClientConfigForServiceFunc: func(serviceName, serviceNamespace string) (*rest.Config, error) {
+				if serviceName == "kubernetes" && serviceNamespace == "default" {
+					return completedConfig.GenericConfig.LoopbackClientConfig, nil
+				}
+				ret, err := delegate.ClientConfigForService(serviceName, serviceNamespace)
+				if err != nil {
+					return nil, err
+				}
+				return ret, err
+			},
+		}
+	}
+	return
+}
+
 func Run(o *options.CustomResourceDefinitionsServerOptions, stopCh <-chan struct{}) error {
 	config, err := o.Config()
 	if err != nil {
 		return err
 	}
 
-	server, err := config.Complete().New(genericapiserver.NewEmptyDelegate())
+	completedConfig := config.Complete()
+	serviceResolver , webhookAuthResolverWrapper := MakeCRDServerResolverAndAuthResolverWrapper(completedConfig)
+
+	server, err := completedConfig.New(serviceResolver, webhookAuthResolverWrapper, genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return err
 	}

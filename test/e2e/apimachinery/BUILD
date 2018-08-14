@@ -11,6 +11,7 @@ go_library(
         "aggregator.go",
         "certs.go",
         "chunking.go",
+        "crd_conversion_webhook.go",
         "crd_watch.go",
         "custom_resource_definition.go",
         "etcd_failure.go",
