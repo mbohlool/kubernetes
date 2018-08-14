@@ -13,6 +13,7 @@ go_library(
         "register.go",
         "types.go",
         "types_swagger_doc_generated.go",
+        "webhook_config_interface.go",
         "zz_generated.deepcopy.go",
     ],
     importmap = "k8s.io/kubernetes/vendor/k8s.io/api/admissionregistration/v1beta1",
@@ -21,6 +22,8 @@ go_library(
         "//staging/src/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
         "//staging/src/k8s.io/apimachinery/pkg/runtime:go_default_library",
         "//staging/src/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
+        "//staging/src/k8s.io/apimachinery/pkg/util/json:go_default_library",
+        "//staging/src/k8s.io/apimachinery/pkg/util/webhook:go_default_library",
         "//vendor/github.com/gogo/protobuf/proto:go_default_library",
     ],
 )
