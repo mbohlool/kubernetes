@@ -86,7 +86,11 @@ func TestConvertFieldLabel(t *testing.T) {
 			} else {
 				crd.Spec.Scope = apiextensions.NamespaceScoped
 			}
-			_, c := conversion.NewCRDConverter(&crd)
+			f, err := conversion.NewCRConverterFactory(nil, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, c, err := f.NewConverter(&crd)
 
 			label, value, err := c.ConvertFieldLabel(schema.GroupVersionKind{}, test.label, "value")
 			if e, a := test.expectError, err != nil; e != a {

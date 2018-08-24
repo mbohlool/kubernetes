@@ -110,13 +110,7 @@ func ValidateCustomResourceDefinitionSpec(spec *apiextensions.CustomResourceDefi
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("group"), spec.Group, "should be a domain with at least one dot"))
 	}
 
-	switch spec.Scope {
-	case "":
-		allErrs = append(allErrs, field.Required(fldPath.Child("scope"), ""))
-	case apiextensions.ClusterScoped, apiextensions.NamespaceScoped:
-	default:
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("scope"), spec.Scope, []string{string(apiextensions.ClusterScoped), string(apiextensions.NamespaceScoped)}))
-	}
+	allErrs = append(allErrs, validateEnumStrings(fldPath.Child("scope"), string(spec.Scope), []string{string(apiextensions.ClusterScoped), string(apiextensions.NamespaceScoped)}, true)...)
 
 	storageFlagCount := 0
 	versionsMap := map[string]bool{}
@@ -187,6 +181,36 @@ func ValidateCustomResourceDefinitionSpec(spec *apiextensions.CustomResourceDefi
 		}
 	}
 
+	ValidateCustomResourceConversion(spec.Conversion, fldPath.Child("conversion"))
+
+	return allErrs
+}
+
+func validateEnumStrings(fldPath *field.Path, value string, accepted []string, required bool) field.ErrorList {
+	if required && value == "" {
+		return field.ErrorList{field.Required(fldPath, "")}
+	}
+	for _, a := range accepted {
+		if a == value {
+			return field.ErrorList{}
+		}
+	}
+	return field.ErrorList{field.NotSupported(fldPath, value, accepted)}
+}
+
+// ValidateCustomResourceDefinitionSpecUpdate statically validates
+func ValidateCustomResourceConversion(conversion *apiextensions.CustomResourceConversion, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if conversion == nil {
+		return allErrs
+	}
+	allErrs = append(allErrs, validateEnumStrings(fldPath.Child("strategy"), string(conversion.Strategy), []string{string(apiextensions.NopConverter), string(apiextensions.WebhookConverter)}, true)...)
+	switch conversion.Strategy {
+	case apiextensions.WebhookConverter:
+		if conversion.Webhook == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("webhook"), "required field when strategy is set to Webhook"))
+		}
+	}
 	return allErrs
 }
 

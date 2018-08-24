@@ -57,7 +57,6 @@ import (
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	clientgoinformers "k8s.io/client-go/informers"
 	clientgoclientset "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	certutil "k8s.io/client-go/util/cert"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
@@ -172,11 +171,12 @@ func CreateServerChain(completedOptions completedServerRunOptions, stopCh <-chan
 	}
 
 	// If additional API servers are added, they should be gated.
-	apiExtensionsConfig, err := createAPIExtensionsConfig(*kubeAPIServerConfig.GenericConfig, kubeAPIServerConfig.ExtraConfig.VersionedInformers, pluginInitializer, completedOptions.ServerRunOptions, completedOptions.MasterCount)
+	apiExtensionsConfig, err := createAPIExtensionsConfig(*kubeAPIServerConfig.GenericConfig, kubeAPIServerConfig.ExtraConfig.VersionedInformers, pluginInitializer, completedOptions.ServerRunOptions, completedOptions.MasterCount,
+		serviceResolver, webhook.CreateWebhookAuthResolverWrapper(kubeAPIServerConfig.GenericConfig.LoopbackClientConfig, proxyTransport))
 	if err != nil {
 		return nil, err
 	}
-	apiExtensionsServer, err := createAPIExtensionsServer(apiExtensionsConfig, genericapiserver.NewEmptyDelegate())
+	apiExtensionsServer, err := createAPIExtensionsServer(apiExtensionsConfig, serviceResolver, webhook.CreateWebhookAuthResolverWrapper(kubeAPIServerConfig.GenericConfig.LoopbackClientConfig, proxyTransport), genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return nil, err
 	}
@@ -539,35 +539,12 @@ func buildGenericConfig(
 		genericConfig.DisabledPostStartHooks.Insert(rbacrest.PostStartHookName)
 	}
 
-	webhookAuthResolverWrapper := func(delegate webhook.AuthenticationInfoResolver) webhook.AuthenticationInfoResolver {
-		return &webhook.AuthenticationInfoResolverDelegator{
-			ClientConfigForFunc: func(server string) (*rest.Config, error) {
-				if server == "kubernetes.default.svc" {
-					return genericConfig.LoopbackClientConfig, nil
-				}
-				return delegate.ClientConfigFor(server)
-			},
-			ClientConfigForServiceFunc: func(serviceName, serviceNamespace string) (*rest.Config, error) {
-				if serviceName == "kubernetes" && serviceNamespace == "default" {
-					return genericConfig.LoopbackClientConfig, nil
-				}
-				ret, err := delegate.ClientConfigForService(serviceName, serviceNamespace)
-				if err != nil {
-					return nil, err
-				}
-				if proxyTransport != nil && proxyTransport.DialContext != nil {
-					ret.Dial = proxyTransport.DialContext
-				}
-				return ret, err
-			},
-		}
-	}
 	pluginInitializers, admissionPostStartHook, err = BuildAdmissionPluginInitializers(
 		s,
 		client,
 		sharedInformers,
 		serviceResolver,
-		webhookAuthResolverWrapper,
+		webhook.CreateWebhookAuthResolverWrapper(genericConfig.LoopbackClientConfig, proxyTransport),
 	)
 	if err != nil {
 		lastErr = fmt.Errorf("failed to create admission plugin initializer: %v", err)

@@ -29,6 +29,7 @@ import (
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	kubeexternalinformers "k8s.io/client-go/informers"
+	"k8s.io/client-go/util/webhook"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 )
 
@@ -38,6 +39,8 @@ func createAPIExtensionsConfig(
 	pluginInitializers []admission.PluginInitializer,
 	commandOptions *options.ServerRunOptions,
 	masterCount int,
+	serviceResolver webhook.ServiceResolver,
+	authResolverWrapper webhook.AuthenticationInfoResolverWrapper,
 ) (*apiextensionsapiserver.Config, error) {
 	// make a shallow copy to let us twiddle a few things
 	// most of the config actually remains the same.  We only need to mess with a couple items related to the particulars of the apiextensions
@@ -74,12 +77,14 @@ func createAPIExtensionsConfig(
 		ExtraConfig: apiextensionsapiserver.ExtraConfig{
 			CRDRESTOptionsGetter: apiextensionsoptions.NewCRDRESTOptionsGetter(etcdOptions),
 			MasterCount:          masterCount,
+			AuthResolverWrapper:  authResolverWrapper,
+			ServiceResolver:      serviceResolver,
 		},
 	}
 
 	return apiextensionsConfig, nil
 }
 
-func createAPIExtensionsServer(apiextensionsConfig *apiextensionsapiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*apiextensionsapiserver.CustomResourceDefinitions, error) {
+func createAPIExtensionsServer(apiextensionsConfig *apiextensionsapiserver.Config, serviceResolver webhook.ServiceResolver, authResolverWrapper webhook.AuthenticationInfoResolverWrapper, delegateAPIServer genericapiserver.DelegationTarget) (*apiextensionsapiserver.CustomResourceDefinitions, error) {
 	return apiextensionsConfig.Complete().New(delegateAPIServer)
 }
