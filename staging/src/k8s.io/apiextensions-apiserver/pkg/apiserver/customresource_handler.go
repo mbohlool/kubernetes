@@ -486,7 +486,7 @@ func (r *crdHandler) getOrCreateServingInfoFor(crd *apiextensions.CustomResource
 				typer,
 				crd.Spec.Scope == apiextensions.NamespaceScoped,
 				kind.GroupKind(),
-				allowedAPIVersions,
+				[]string{kind.GroupVersion().String()},
 				validator,
 				statusValidator,
 				statusSpec,
