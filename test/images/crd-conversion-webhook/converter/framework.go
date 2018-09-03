@@ -113,14 +113,17 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 	if _, _, err := deserializer.Decode(body, nil, &convertReview); err != nil {
 		glog.Error(err)
 		convertReview.Response = toConversionResponse(fmt.Sprintf("failed to deserialize body (%v) with error %v", string(body), err))
+		convertReview.Response.Result.Reason = "ZZZ1"
 	} else {
 		convertReview.Response = doConversion(convertReview.Request, convert)
+		convertReview.Response.Result.Reason = "ZZZ1"
 	}
 	glog.V(2).Info(fmt.Sprintf("sending response: %v", convertReview.Response))
 
 	convertReview.Response.UID = convertReview.Request.UID
 	// reset the request, it is not needed in a response.
 	convertReview.Request = &v1beta1.ConversionRequest{}
+	convertReview.Response.Result.Reason += ",ZZZ3"
 
 	resp, err := json.Marshal(convertReview)
 	if err != nil {
