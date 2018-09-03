@@ -42,6 +42,7 @@ func toConversionResponse(msg string) *v1beta1.ConversionResponse {
 		Result: metav1.Status{
 			Message: msg,
 			Status:  metav1.StatusFailure,
+			Code:    123,
 		},
 	}
 
@@ -51,6 +52,7 @@ func statusErrorWithMessage(msg string, params ...string) metav1.Status {
 	return metav1.Status{
 		Message: fmt.Sprintf(msg, params),
 		Status:  metav1.StatusFailure,
+		Code:    124,
 	}
 }
 
