@@ -37,13 +37,14 @@ type convertFunc func(Object *unstructured.Unstructured, version string) (*unstr
 
 // toConversionResponse is a helper function to create an AdmissionResponse
 // with an embedded error
-func toConversionResponse(err error) *v1beta1.ConversionResponse {
+func toConversionResponse(msg string) *v1beta1.ConversionResponse {
 	return &v1beta1.ConversionResponse{
 		Result: metav1.Status{
-			Message: err.Error(),
+			Message: msg,
 			Status:  metav1.StatusFailure,
 		},
 	}
+
 }
 
 func statusErrorWithMessage(msg string, params ...string) metav1.Status {
@@ -67,7 +68,7 @@ func doConversion(convertRequest *v1beta1.ConversionRequest, convert convertFunc
 		cr := unstructured.Unstructured{}
 		if err := cr.UnmarshalJSON(obj.Raw); err != nil {
 			glog.Error(err)
-			return toConversionResponse(err)
+			return toConversionResponse(fmt.Sprintf("failed to unmarshall object (%v) with error %v", string(obj.Raw), err))
 		}
 		var convertedCR *unstructured.Unstructured
 		var status metav1.Status
@@ -83,7 +84,7 @@ func doConversion(convertRequest *v1beta1.ConversionRequest, convert convertFunc
 	}
 	return &v1beta1.ConversionResponse{
 		ConvertedObjects: convertedObjects,
-		Result: statusSucceed(),
+		Result:           statusSucceed(),
 	}
 }
 
@@ -109,7 +110,7 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 	deserializer := serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &convertReview); err != nil {
 		glog.Error(err)
-		convertReview.Response = toConversionResponse(err)
+		convertReview.Response = toConversionResponse(fmt.Sprintf("failed to deserialize body (%v) with error %v", string(body), err))
 	} else {
 		convertReview.Response = doConversion(convertReview.Request, convert)
 	}

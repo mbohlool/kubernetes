@@ -61,17 +61,16 @@ func TestConverter(t *testing.T) {
 apiVersion: apiextensions.k8s.io/v1beta1
 request:
   uid: 0000-0000-0000-0000
-  apiVersion: stable.example.com/v2
-  object:
-    apiVersion: "stable.example.com/v1"
-    kind: CronTab
-    metadata:
-      name: my-new-cron-object
-    spec:
-      cronSpec: "* * * * */5"
-      image: my-awesome-cron-image
-    hostPort: "localhost:7070"
-  isList: false
+  desiredAPIVersion: stable.example.com/v2
+  objects:
+    - apiVersion: stable.example.com/v1
+      kind: CronTab
+      metadata:
+        name: my-new-cron-object
+      spec:
+        cronSpec: "* * * * */5"
+        image: my-awesome-cron-image
+      hostPort: "localhost:7070"
 `
 	response := newInMemoryResponseWriter()
 	request, err := http.NewRequest("POST", "/convert", strings.NewReader(sampleObj))
@@ -86,10 +85,10 @@ request:
 		t.Fatal(err)
 	}
 	if convertReview.Response.Result.Status != v1.StatusSuccess {
-		t.Errorf("cr conversion failed: %v", convertReview.Response)
+		t.Fatalf("cr conversion failed: %v", convertReview.Response)
 	}
 	convertedObj := unstructured.Unstructured{}
-	if _, _, err := deserializer.Decode(convertReview.Response.ConvertedObject.Raw, nil, &convertedObj); err != nil {
+	if _, _, err := deserializer.Decode(convertReview.Response.ConvertedObjects[0].Raw, nil, &convertedObj); err != nil {
 		t.Fatal(err)
 	}
 	if e, a := "localhost", convertedObj.Object["host"]; e != a {

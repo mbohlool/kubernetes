@@ -49,7 +49,7 @@ func convertExampleCRD(Object *unstructured.Unstructured, toVersion string) (*un
 			convertedObject.Object["host"] = parts[0]
 			convertedObject.Object["port"] = parts[1]
 		default:
-			return nil, statusErrorWithMessage("unexpected conversion version %s", toVersion)
+			return nil, statusErrorWithMessage("unexpected conversion version %q", toVersion)
 		}
 	case "stable.example.com/v2":
 		switch toVersion {
@@ -66,11 +66,11 @@ func convertExampleCRD(Object *unstructured.Unstructured, toVersion string) (*un
 			delete(convertedObject.Object, "port")
 			convertedObject.Object["hostPort"] = fmt.Sprintf("%s:%s", host, port)
 		default:
-			return nil, statusErrorWithMessage("unexpected conversion version %s", toVersion)
+			return nil, statusErrorWithMessage("unexpected conversion version %q", toVersion)
 		}
 
 	default:
-		return nil, statusErrorWithMessage("unexpected conversion version %s", fromVersion)
+		return nil, statusErrorWithMessage("unexpected conversion version %q", fromVersion)
 	}
 
 	return convertedObject, statusSucceed()
