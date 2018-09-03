@@ -120,7 +120,7 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 	}
 	glog.V(2).Info(fmt.Sprintf("sending response: %v", convertReview.Response))
 
-	convertReview.Response.UID = convertReview.Request.UID
+	convertReview.Response.UID = "test-uid" // convertReview.Request.UID
 	// reset the request, it is not needed in a response.
 	convertReview.Request = &v1beta1.ConversionRequest{}
 	convertReview.Response.Result.Reason += ",ZZZ3"
