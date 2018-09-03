@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
-	"k8s.io/client-go/util/webhook"
+	"k8s.io/apiserver/pkg/util/webhook"
 )
 
 // CRConverterFactory is the factory for all CR converters.
@@ -56,7 +56,7 @@ func (m *CRConverterFactory) NewConverter(crd *apiextensions.CustomResourceDefin
 	}
 
 	switch crd.Spec.Conversion.Strategy {
-	case apiextensions.NopConverter:
+	case apiextensions.NoneConverter:
 		unsafe = &crConverter{
 			clusterScoped: crd.Spec.Scope == apiextensions.ClusterScoped,
 			delegate: &nopConverter{

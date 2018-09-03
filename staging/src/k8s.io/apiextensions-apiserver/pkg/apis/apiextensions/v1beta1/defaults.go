@@ -73,7 +73,7 @@ func SetDefaults_CustomResourceDefinitionSpec(obj *CustomResourceDefinitionSpec)
 	}
 	if obj.Conversion == nil {
 		obj.Conversion = &CustomResourceConversion{
-			Strategy: NopConverter,
+			Strategy: NoneConverter,
 		}
 	}
 }

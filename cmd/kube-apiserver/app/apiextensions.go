@@ -28,8 +28,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	"k8s.io/apiserver/pkg/util/webhook"
 	kubeexternalinformers "k8s.io/client-go/informers"
-	"k8s.io/client-go/util/webhook"
 	"k8s.io/kubernetes/cmd/kube-apiserver/app/options"
 )
 

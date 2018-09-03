@@ -204,11 +204,11 @@ func ValidateCustomResourceConversion(conversion *apiextensions.CustomResourceCo
 	if conversion == nil {
 		return allErrs
 	}
-	allErrs = append(allErrs, validateEnumStrings(fldPath.Child("strategy"), string(conversion.Strategy), []string{string(apiextensions.NopConverter), string(apiextensions.WebhookConverter)}, true)...)
+	allErrs = append(allErrs, validateEnumStrings(fldPath.Child("strategy"), string(conversion.Strategy), []string{string(apiextensions.NoneConverter), string(apiextensions.WebhookConverter)}, true)...)
 	switch conversion.Strategy {
 	case apiextensions.WebhookConverter:
-		if conversion.Webhook == nil {
-			allErrs = append(allErrs, field.Required(fldPath.Child("webhook"), "required field when strategy is set to Webhook"))
+		if conversion.WebhookClientConfig == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("webhookClientConfig"), "required field when strategy is set to Webhook"))
 		}
 	}
 	return allErrs

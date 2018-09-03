@@ -25,8 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/apiserver/pkg/util/webhook"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/webhook"
 
 	internal "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -61,12 +61,31 @@ type webhookConverter struct {
 	name          string
 }
 
+func webhookClientConfigForCRD(crd *internal.CustomResourceDefinition) *webhook.ClientConfig {
+	apiConfig := crd.Spec.Conversion.WebhookClientConfig
+	ret := webhook.ClientConfig{
+		Name:     fmt.Sprintf("conversion_webhook_for_%s", crd.Name),
+		CABundle: apiConfig.CABundle,
+	}
+	if apiConfig.URL != nil {
+		ret.URL = *apiConfig.URL
+	}
+	if apiConfig.Service != nil {
+		ret.Service = &webhook.ClientConfigService{
+			Name:      apiConfig.Service.Name,
+			Namespace: apiConfig.Service.Namespace,
+		}
+		if apiConfig.Service.Path != nil {
+			ret.Service.Path = *apiConfig.Service.Path
+		}
+	}
+	return &ret
+}
+
 var _ runtime.ObjectConvertor = &webhookConverter{}
 
 func (f *webhookConverterFactory) NewWebhookConverter(validVersions map[schema.GroupVersion]bool, crd *internal.CustomResourceDefinition) (*webhookConverter, error) {
-	restClient, err := f.clientManager.HookClient(
-		fmt.Sprintf("conversion_webhook_for_%s", crd.Name),
-		&crd.Spec.Conversion.Webhook.ClientConfig)
+	restClient, err := f.clientManager.HookClient(*webhookClientConfigForCRD(crd))
 	if err != nil {
 		return nil, err
 	}
@@ -111,16 +130,43 @@ func (c *webhookConverter) Convert(in, out, context interface{}) error {
 }
 
 func createConversionReview(obj runtime.Object, apiVersion string) *v1beta1.ConversionReview {
-	_, isList := obj.(*unstructured.UnstructuredList)
+	listObj, isList := obj.(*unstructured.UnstructuredList)
+	var objects []runtime.RawExtension
+	if isList {
+		for _, item := range listObj.Items {
+			objects = append(objects, runtime.RawExtension{Object: &item})
+		}
+	} else {
+		objects = []runtime.RawExtension{{Object: obj}}
+	}
 	return &v1beta1.ConversionReview{
 		Request: &v1beta1.ConversionRequest{
-			Object:     runtime.RawExtension{Object: obj},
-			APIVersion: apiVersion,
-			UID:        uuid.NewUUID(),
-			IsList:     isList,
+			Objects:           objects,
+			DesiredAPIVersion: apiVersion,
+			UID:               uuid.NewUUID(),
 		},
 		Response: &v1beta1.ConversionResponse{},
 	}
+}
+
+func getRawExtensionObject(rx runtime.RawExtension) (runtime.Object, error) {
+	if rx.Object != nil {
+		return rx.Object, nil
+	}
+	u := unstructured.Unstructured{}
+	err := u.UnmarshalJSON(rx.Raw)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func ensureCorrectGVK(obj runtime.Object, gvk schema.GroupVersionKind) error {
+	convertedGVK := obj.GetObjectKind().GroupVersionKind()
+	if convertedGVK != gvk {
+		return fmt.Errorf("invalid GVK returned by conversion webhook. expected=%s, actual=%s", gvk, convertedGVK)
+	}
+	return nil
 }
 
 func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error) {
@@ -159,22 +205,42 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 		return nil, fmt.Errorf("conversion request failed for %v: %v, %v, %v", in.GetObjectKind(), response, response.Response, response.Response.Result)
 	}
 
-	ret := response.Response.ConvertedObject.Object
-	if ret == nil {
-		unstruct := unstructured.Unstructured{}
-		err := unstruct.UnmarshalJSON(response.Response.ConvertedObject.Raw)
+	if len(response.Response.ConvertedObjects) != len(request.Request.Objects) {
+		return nil, fmt.Errorf("expected %v converted objects, got %v", len(request.Request.Objects), len(response.Response.ConvertedObjects))
+	}
+
+	listObj, isList := in.(*unstructured.UnstructuredList)
+	if isList {
+		convertedList := listObj.DeepCopy()
+		for i := 0; i < len(listObj.Items); i++ {
+			converted, err := getRawExtensionObject(response.Response.ConvertedObjects[i])
+			if err != nil {
+				return nil, err
+			}
+			if err := ensureCorrectGVK(converted, toGVK); err != nil {
+				return nil, err
+			}
+			unstructItem, ok := converted.(*unstructured.Unstructured)
+			if !ok {
+				// this should not happened
+				return nil, fmt.Errorf("internal server error, CR conversion failed")
+			}
+			convertedList.Items[i] = *unstructItem
+		}
+		convertedList.SetAPIVersion(toGVK.GroupVersion().String())
+		return convertedList, nil
+	} else {
+		if len(response.Response.ConvertedObjects) != 1 {
+			// This should not happened
+			return nil, fmt.Errorf("internal server error, CR conversion failed")
+		}
+		converted, err := getRawExtensionObject(response.Response.ConvertedObjects[0])
 		if err != nil {
 			return nil, err
 		}
-		ret = &unstruct
+		if err := ensureCorrectGVK(converted, toGVK); err != nil {
+			return nil, err
+		}
+		return converted, nil
 	}
-
-	convertedGVK := ret.GetObjectKind().GroupVersionKind()
-	if convertedGVK != toGVK {
-		return nil, fmt.Errorf("invalid GVK returned by conversion webhook. expected=%s, actual=%s", toGVK, convertedGVK)
-	}
-	// TODO: Look like failing on convert is considered uncommon and we even have a test flag for it: KUBE_PANIC_WATCH_DECODE_ERROR
-	// Check on that as this conversion may very well return error.
-	// in production, a conversion error may result in watcher stop working.
-	return ret, nil
 }

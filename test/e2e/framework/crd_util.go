@@ -76,9 +76,7 @@ func CreateMultiVersionTestCRD(f *Framework, group string, apiVersions []apiexte
 	if conversionWebhook != nil {
 		crd.Spec.Conversion = &apiextensionsv1beta1.CustomResourceConversion{
 			Strategy: "Webhook",
-			Webhook: &apiextensionsv1beta1.CustomResourceConversionWebhook{
-				ClientConfig: *conversionWebhook,
-			},
+			WebhookClientConfig: conversionWebhook,
 		}
 	}
 

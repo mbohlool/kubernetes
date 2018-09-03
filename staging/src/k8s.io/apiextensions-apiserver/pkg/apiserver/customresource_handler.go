@@ -67,7 +67,7 @@ import (
 	apiextensionsfeatures "k8s.io/apiextensions-apiserver/pkg/features"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
-	"k8s.io/client-go/util/webhook"
+	"k8s.io/apiserver/pkg/util/webhook"
 )
 
 // crdHandler serves the `/apis` endpoint.

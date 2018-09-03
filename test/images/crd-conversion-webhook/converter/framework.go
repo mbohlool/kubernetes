@@ -62,49 +62,28 @@ func statusSucceed() metav1.Status {
 // doConversion converts the requested object given the conversion function and returns a conversion response.
 // failures will be reported as Reason in the conversion response.
 func doConversion(convertRequest *v1beta1.ConversionRequest, convert convertFunc) *v1beta1.ConversionResponse {
-	cr := unstructured.Unstructured{}
-	if err := cr.UnmarshalJSON(convertRequest.Object.Raw); err != nil {
-		glog.Error(err)
-		return toConversionResponse(err)
-	}
-	var convertedCR *unstructured.Unstructured
-	var status metav1.Status
-	if convertRequest.IsList {
-		listCR, err := cr.ToList()
-		if err != nil {
+	var convertedObjects []runtime.RawExtension
+	for _, obj := range convertRequest.Objects {
+		cr := unstructured.Unstructured{}
+		if err := cr.UnmarshalJSON(obj.Raw); err != nil {
 			glog.Error(err)
 			return toConversionResponse(err)
 		}
-		convertedList := listCR.DeepCopy()
-		for i := 0; i < len(convertedList.Items); i++ {
-			item, status := convert(&convertedList.Items[i], convertRequest.APIVersion)
-			if status.Status != metav1.StatusSuccess {
-				glog.Error(status.String())
-				return &v1beta1.ConversionResponse{
-					Result: status,
-				}
-			}
-			item.SetAPIVersion(convertRequest.APIVersion)
-			convertedList.Items[i] = *item
-		}
-		convertedCR = &unstructured.Unstructured{}
-		convertedCR.SetUnstructuredContent(convertedList.UnstructuredContent())
-		status = statusSucceed()
-	} else {
-		convertedCR, status = convert(&cr, convertRequest.APIVersion)
+		var convertedCR *unstructured.Unstructured
+		var status metav1.Status
+		convertedCR, status = convert(&cr, convertRequest.DesiredAPIVersion)
 		if status.Status != metav1.StatusSuccess {
 			glog.Error(status.String())
 			return &v1beta1.ConversionResponse{
 				Result: status,
 			}
 		}
+		convertedCR.SetAPIVersion(convertRequest.DesiredAPIVersion)
+		convertedObjects = append(convertedObjects, runtime.RawExtension{Object: convertedCR})
 	}
-	convertedCR.SetAPIVersion(convertRequest.APIVersion)
 	return &v1beta1.ConversionResponse{
-		ConvertedObject: runtime.RawExtension{
-			Object: convertedCR,
-		},
-		Result: status,
+		ConvertedObjects: convertedObjects,
+		Result: statusSucceed(),
 	}
 }
 
