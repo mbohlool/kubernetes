@@ -615,6 +615,10 @@ func (s unstructuredNegotiatedSerializer) DecoderToVersion(decoder runtime.Decod
 	if groupVersion, ok := gv.(schema.GroupVersion); ok && groupVersion.Group == s.gv.Group {
 		gv = s.gv
 	}
+	if groupVersion, ok := gv.(schema.GroupVersion); ok && groupVersion.Version == runtime.APIVersionInternal {
+		// this is only called by delete collection
+		return versioning.NewDefaultingCodecForScheme(Scheme, nil, d, nil, gv)
+	}
 
 	return versioning.NewCodec(nil, d, s.safeConverter, s.creator, s.typer, s.defaulter, nil, gv, "unstructuredNegotiatedSerializer")
 }
