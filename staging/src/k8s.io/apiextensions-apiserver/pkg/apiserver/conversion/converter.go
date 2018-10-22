@@ -31,6 +31,7 @@ func NewCRDConverter(crd *apiextensions.CustomResourceDefinition) (safe, unsafe 
 	for _, version := range crd.Spec.Versions {
 		validVersions[schema.GroupVersion{Group: crd.Spec.Group, Version: version.Name}] = true
 	}
+	validVersions[schema.GroupVersion{Group: crd.Spec.Group, Version: runtime.APIVersionInternal}] = true
 
 	// The only converter right now is nopConverter. More converters will be returned based on the
 	// CRD object when they introduced.
@@ -48,7 +49,7 @@ var _ runtime.ObjectConvertor = &crdConverter{}
 // crdConverter extends the delegate with generic CRD conversion behaviour. The delegate will implement the
 // user defined conversion strategy given in the CustomResourceDefinition.
 type crdConverter struct {
-	delegate      runtime.ObjectConvertor
+	delegate        runtime.ObjectConvertor
 	clusterScoped bool
 }
 

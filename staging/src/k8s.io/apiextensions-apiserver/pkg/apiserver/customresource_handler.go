@@ -606,13 +606,69 @@ func (s unstructuredNegotiatedSerializer) SupportedMediaTypes() []runtime.Serial
 }
 
 func (s unstructuredNegotiatedSerializer) EncoderForVersion(encoder runtime.Encoder, gv runtime.GroupVersioner) runtime.Encoder {
-	return versioning.NewCodec(encoder, nil, s.converter, Scheme, Scheme, Scheme, gv, nil, "crdNegotiatedSerializer")
+	decode := runtime.InternalGroupVersioner
+	encode := gv
+	c := &unstructuredConverterWrapper{delegate: Scheme, unstructuredConverter: s.converter}
+	return versioning.NewCodec(encoder, nil, c, unstructuredCreator{Scheme}, newUnstructuredObjectTyper(Scheme), unstructuredDefaulter{Scheme}, encode, decode, "crdNegotiatedSerializer")
 }
 
 func (s unstructuredNegotiatedSerializer) DecoderToVersion(decoder runtime.Decoder, gv runtime.GroupVersioner) runtime.Decoder {
+	decode := gv
+	encode := runtime.DisabledGroupVersioner
 	d := schemaCoercingDecoder{delegate: decoder, validator: unstructuredSchemaCoercer{}}
-	return versioning.NewDefaultingCodecForScheme(Scheme, nil, d, nil, gv)
+	c := &unstructuredConverterWrapper{delegate: Scheme, unstructuredConverter: s.converter}
+	return versioning.NewCodec(nil, d, c, unstructuredCreator{Scheme}, newUnstructuredObjectTyper(Scheme), unstructuredDefaulter{Scheme}, encode, decode, "crdNegotiatedSerializer")
 }
+
+// safeConverterWrapper is a wrapper over an unsafe object converter that makes copy of the input and then delegate to the unsafe converter.
+type unstructuredConverterWrapper struct {
+	delegate runtime.ObjectConvertor
+	unstructuredConverter runtime.ObjectConvertor
+}
+
+var _ runtime.ObjectConvertor = &unstructuredConverterWrapper{}
+
+// ConvertFieldLabel delegate the call to the unsafe converter.
+func (c *unstructuredConverterWrapper) ConvertFieldLabel(gvk schema.GroupVersionKind, label, value string) (string, string, error) {
+	return c.unstructuredConverter.ConvertFieldLabel(gvk, label, value)
+}
+
+// Convert makes a copy of in object and then delegate the call to the unsafe converter.
+func (c *unstructuredConverterWrapper) Convert(in, out, context interface{}) error {
+	if _, ok := in.(*unstructured.Unstructured); !ok {
+		err := c.delegate.Convert(in, out, context)
+		if err != nil {
+			return fmt.Errorf("Zy1: %s", err.Error())
+		} else {
+			return nil
+		}
+	}
+	if _, ok := out.(*unstructured.Unstructured); !ok {
+		err := c.delegate.Convert(in, out, context)
+		if err != nil {
+			return fmt.Errorf("Zy3: %s", err.Error())
+		} else {
+			return nil
+		}
+	}
+	return c.unstructuredConverter.Convert(in, out, context)
+}
+
+// ConvertToVersion makes a copy of in object and then delegate the call to the unsafe converter.
+func (c *unstructuredConverterWrapper) ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error) {
+	if _, ok := in.(*unstructured.Unstructured); !ok {
+		obj, err := c.delegate.ConvertToVersion(in, target)
+		if strings.Contains(err.Error(), "no kind") {
+			obj, err = c.unstructuredConverter.ConvertToVersion(in, target)
+		}
+		if err != nil {
+			return obj, fmt.Errorf("Zy2: %s", err.Error())
+		}
+		return obj, err
+	}
+	return c.unstructuredConverter.ConvertToVersion(in, target)
+}
+
 
 type UnstructuredObjectTyper struct {
 	Delegate          runtime.ObjectTyper
@@ -638,9 +694,17 @@ func (t UnstructuredObjectTyper) Recognizes(gvk schema.GroupVersionKind) bool {
 	return t.Delegate.Recognizes(gvk) || t.UnstructuredTyper.Recognizes(gvk)
 }
 
-type unstructuredCreator struct{}
+type unstructuredCreator struct{
+	delegate runtime.ObjectCreater
+}
 
 func (c unstructuredCreator) New(kind schema.GroupVersionKind) (runtime.Object, error) {
+	if c.delegate != nil {
+		obj, err := c.delegate.New(kind)
+		if err != nil {
+			return obj, nil
+		}
+	}
 	ret := &unstructured.Unstructured{}
 	ret.SetGroupVersionKind(kind)
 	return ret, nil

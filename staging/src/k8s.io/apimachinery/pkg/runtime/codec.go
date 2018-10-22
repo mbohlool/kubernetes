@@ -61,7 +61,7 @@ func DecodeInto(d Decoder, data []byte, into Object) error {
 	if err != nil {
 		return err
 	}
-	if out != into {
+	if !reflect.DeepEqual(out, into) {
 		return fmt.Errorf("unable to decode %s into %v", gvk, reflect.TypeOf(into))
 	}
 	return nil

@@ -89,10 +89,20 @@ func (c *codec) Decode(data []byte, defaultGVK *schema.GroupVersionKind, into ru
 	if isVersioned {
 		into = versioned.Last()
 	}
-
 	obj, gvk, err := c.decoder.Decode(data, defaultGVK, into)
 	if err != nil {
 		return nil, gvk, err
+	}
+
+	_, isUnstructured := into.(runtime.Unstructured)
+	if isUnstructured {
+		decodeGvk, ok := c.decodeVersion.KindForGroupVersionKinds([]schema.GroupVersionKind{*gvk})
+		if ok {
+			into, err = c.creater.New(decodeGvk)
+			if err != nil {
+				return nil, gvk, err
+			}
+		}
 	}
 
 	if d, ok := obj.(runtime.NestedObjectDecoder); ok {
@@ -103,8 +113,7 @@ func (c *codec) Decode(data []byte, defaultGVK *schema.GroupVersionKind, into ru
 
 	// if we specify a target, use generic conversion.
 	if into != nil {
-		_, isUnstructured := obj.(runtime.Unstructured)
-		if into == obj && !isUnstructured {
+		if into == obj {
 			if isVersioned {
 				return versioned, gvk, nil
 			}
