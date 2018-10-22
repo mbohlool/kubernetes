@@ -77,7 +77,13 @@ func createHandler(r rest.NamedCreater, scope RequestScope, admit admission.Inte
 			scope.err(err, w, req)
 			return
 		}
-		decoder := scope.Serializer.DecoderToVersion(s.Serializer, schema.GroupVersion{Group: gv.Group, Version: runtime.APIVersionInternal})
+
+		hubGroupVersion := scope.HubGroupVersion
+		if hubGroupVersion.Empty() {
+			hubGroupVersion = schema.GroupVersion{Group: gv.Group, Version: runtime.APIVersionInternal}
+		}
+
+		decoder := scope.Serializer.DecoderToVersion(s.Serializer, hubGroupVersion)
 
 		body, err := readBody(req)
 		if err != nil {

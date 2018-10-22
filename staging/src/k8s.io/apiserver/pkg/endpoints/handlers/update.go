@@ -89,8 +89,14 @@ func UpdateResource(r rest.Updater, scope RequestScope, admit admission.Interfac
 		}
 		defaultGVK := scope.Kind
 		original := r.New()
+
+		hubGroupVersion := scope.HubGroupVersion
+		if hubGroupVersion.Empty() {
+			hubGroupVersion = schema.GroupVersion{Group: defaultGVK.Group, Version: runtime.APIVersionInternal}
+		}
+
 		trace.Step("About to convert to expected version")
-		decoder := scope.Serializer.DecoderToVersion(s.Serializer, schema.GroupVersion{Group: defaultGVK.Group, Version: runtime.APIVersionInternal})
+		decoder := scope.Serializer.DecoderToVersion(s.Serializer, hubGroupVersion)
 		obj, gvk, err := decoder.Decode(body, &defaultGVK, original)
 		if err != nil {
 			err = transformDecodeError(scope.Typer, err, original, gvk, body)

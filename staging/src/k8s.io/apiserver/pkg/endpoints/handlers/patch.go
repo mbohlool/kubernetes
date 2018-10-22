@@ -118,9 +118,15 @@ func PatchResource(r rest.Patcher, scope RequestScope, admit admission.Interface
 			return
 		}
 		gv := scope.Kind.GroupVersion()
+
+		hubGroupVersion := scope.HubGroupVersion
+		if hubGroupVersion.Empty() {
+			hubGroupVersion = schema.GroupVersion{Group: gv.Group, Version: runtime.APIVersionInternal}
+		}
+
 		codec := runtime.NewCodec(
 			scope.Serializer.EncoderForVersion(s.Serializer, gv),
-			scope.Serializer.DecoderToVersion(s.Serializer, schema.GroupVersion{Group: gv.Group, Version: runtime.APIVersionInternal}),
+			scope.Serializer.DecoderToVersion(s.Serializer, hubGroupVersion),
 		)
 
 		userInfo, _ := request.UserFrom(ctx)
@@ -162,6 +168,8 @@ func PatchResource(r rest.Patcher, scope RequestScope, admit admission.Interface
 			unsafeConvertor: scope.UnsafeConvertor,
 			kind:            scope.Kind,
 			resource:        scope.Resource,
+
+			hubGroupVersion: scope.HubGroupVersion,
 
 			createValidation: rest.AdmissionToValidateObjectFunc(admit, staticAdmissionAttributes),
 			updateValidation: rest.AdmissionToValidateObjectUpdateFunc(admit, staticAdmissionAttributes),
@@ -217,6 +225,8 @@ type patcher struct {
 	unsafeConvertor runtime.ObjectConvertor
 	resource        schema.GroupVersionResource
 	kind            schema.GroupVersionKind
+
+	hubGroupVersion schema.GroupVersion
 
 	// Validation functions
 	createValidation rest.ValidateObjectFunc
@@ -297,6 +307,9 @@ func (p *jsonPatcher) applyJSPatch(versionedJS []byte) (patchedJS []byte, retErr
 type smpPatcher struct {
 	*patcher
 
+	// hubGroupVersion
+	hubGroupVersion schema.GroupVersion
+
 	// Schema
 	schemaReferenceObj runtime.Object
 }
@@ -315,9 +328,12 @@ func (p *smpPatcher) applyPatchToCurrentObject(currentObject runtime.Object) (ru
 	if err := strategicPatchObject(p.defaulter, currentVersionedObject, p.patchJS, versionedObjToUpdate, p.schemaReferenceObj); err != nil {
 		return nil, err
 	}
-	// Convert the object back to unversioned (aka internal version).
-	gvk := p.kind.GroupKind().WithVersion(runtime.APIVersionInternal)
-	return p.unsafeConvertor.ConvertToVersion(versionedObjToUpdate, gvk.GroupVersion())
+	// Convert the object back to the internal version
+	hubGroupVersion := p.hubGroupVersion
+	if hubGroupVersion.Empty() {
+		hubGroupVersion = schema.GroupVersion{Group: p.kind.Group, Version: runtime.APIVersionInternal}
+	}
+	return p.unsafeConvertor.ConvertToVersion(versionedObjToUpdate, hubGroupVersion)
 }
 
 // strategicPatchObject applies a strategic merge patch of <patchJS> to
@@ -387,7 +403,7 @@ func (p *patcher) patchResource(ctx context.Context) (runtime.Object, error) {
 		if err != nil {
 			return nil, err
 		}
-		p.mechanism = &smpPatcher{patcher: p, schemaReferenceObj: schemaReferenceObj}
+		p.mechanism = &smpPatcher{patcher: p, hubGroupVersion: p.hubGroupVersion, schemaReferenceObj: schemaReferenceObj}
 	default:
 		return nil, fmt.Errorf("%v: unimplemented patch type", p.patchType)
 	}

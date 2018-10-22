@@ -65,6 +65,10 @@ type RequestScope struct {
 	Subresource string
 
 	MetaGroupVersion schema.GroupVersion
+
+	// HubGroupVersion indicates what version objects read from etcd or incoming requests should be converted to for in-memory handling.
+	// If empty, defaults to using the Group=Kind.Group, Version=runtime.APIVersionInternal
+	HubGroupVersion schema.GroupVersion
 }
 
 func (scope *RequestScope) err(err error, w http.ResponseWriter, req *http.Request) {
