@@ -9,6 +9,7 @@ load(
 go_library(
     name = "go_default_library",
     srcs = [
+        "auth_resolver_wrapper.go",
         "authentication.go",
         "client.go",
         "error.go",
