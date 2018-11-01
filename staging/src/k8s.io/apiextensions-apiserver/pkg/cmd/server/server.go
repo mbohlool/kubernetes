@@ -55,10 +55,6 @@ func Run(o *options.CustomResourceDefinitionsServerOptions, stopCh <-chan struct
 	if err != nil {
 		return err
 	}
-
 	server, err := config.Complete().New(genericapiserver.NewEmptyDelegate())
-	if err != nil {
-		return err
-	}
 	return server.GenericAPIServer.PrepareRun().Run(stopCh)
 }
