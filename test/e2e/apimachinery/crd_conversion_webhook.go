@@ -45,8 +45,8 @@ const (
 	roleBindingCRDName = "crd-conversion-webhook-auth-reader"
 )
 
-// TODO(mehdy): this should be 1.12.0
-var serverCRDConversionWebhookVersion = utilversion.MustParseSemantic("v1.11.0")
+// TODO(mehdy): this should be 1.13.0
+var serverCRDConversionWebhookVersion = utilversion.MustParseSemantic("v1.12.0")
 
 var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebhookConversion]", func() {
 	var context *certContext
