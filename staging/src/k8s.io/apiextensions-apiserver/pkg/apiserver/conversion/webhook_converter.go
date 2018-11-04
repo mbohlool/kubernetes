@@ -20,7 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/kubernetes/staging/src/k8s.io/apimachinery/pkg/util/json"
+	"encoding/json"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -205,7 +205,7 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 	if response.Response.Result.Status != v1.StatusSuccess {
 		// TODO return status message as error
 		bytes, _ := json.Marshal(request)
-		return nil, fmt.Errorf("conversion request failed for %v.\nRequest:%v\n\nResponse: %v", in.GetObjectKind(), string(bytes), in, response)
+		return nil, fmt.Errorf("conversion request failed for %v.\nRequest:%v\n\nResponse: %v", in.GetObjectKind(), string(bytes), response)
 	}
 
 	if len(response.Response.ConvertedObjects) != len(request.Request.Objects) {
