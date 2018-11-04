@@ -203,7 +203,8 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 
 	if response.Response.Result.Status != v1.StatusSuccess {
 		// TODO return status message as error
-		return nil, fmt.Errorf("conversion request failed for %v.\nRequest:%v\n\nResponse: %v", in.GetObjectKind(), request, response)
+		bytes, _ := r.Raw()
+		return nil, fmt.Errorf("conversion request failed for %v.\nRequest:%v\n\nResponse: %v", in.GetObjectKind(), string(bytes), in, response)
 	}
 
 	if len(response.Response.ConvertedObjects) != len(request.Request.Objects) {
