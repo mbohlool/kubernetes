@@ -17,6 +17,7 @@ limitations under the License.
 package apimachinery
 
 import (
+	"k8s.io/kubernetes/staging/src/k8s.io/apimachinery/pkg/util/json"
 	"time"
 
 	apps "k8s.io/api/apps/v1"
@@ -98,6 +99,8 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 		if err != nil {
 			return
 		}
+		bytes, _ := json.Marshal(testcrd.Crd)
+		framework.Logf("ZZZ: Test CRD: %v", string(bytes))
 		defer testcrd.CleanUp()
 		testCustomResourceConversionWebhook(f, testcrd.Crd, testcrd.DynamicClients)
 	})
@@ -270,6 +273,8 @@ func testCustomResourceConversionWebhook(f *framework.Framework, crd *v1beta1.Cu
 			"hostPort": "localhost:8080",
 		},
 	}
+	bytes, _ := json.Marshal(crInstance)
+	framework.Logf("ZZZ: crInstance: %v", string(bytes))
 	_, err := customResourceClients["v1"].Create(crInstance, metav1.CreateOptions{})
 	Expect(err).To(BeNil())
 	By("v2 custom resource should be converted")
@@ -278,6 +283,8 @@ func testCustomResourceConversionWebhook(f *framework.Framework, crd *v1beta1.Cu
 		framework.Failf("unexpected hostPort field in v2 CRD: %v", v2crd)
 		return
 	}
+	bytes, _ = json.Marshal(v2crd)
+	framework.Logf("ZZZ: v2crd: %v", string(bytes))
 	if _, exists := v2crd.Object["host"]; !exists {
 		framework.Failf("absent host field in v2 CRD: %v", v2crd)
 		return

@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"encoding/json"
+	"github.com/golang/glog"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -171,6 +172,12 @@ func ensureCorrectGVK(obj runtime.Object, gvk schema.GroupVersionKind) error {
 }
 
 func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error) {
+
+	{
+		bytes1, _ := json.Marshal(target)
+		bytes2, _ := json.Marshal(in)
+		glog.Warningf("ZZZ: conversion request to %v for %v", string(bytes1), string(bytes2))
+	}
 	fromGVK := in.GetObjectKind().GroupVersionKind()
 	toGVK, ok := target.KindForGroupVersionKinds([]schema.GroupVersionKind{fromGVK})
 	if !ok {
@@ -243,6 +250,12 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 		}
 		if err := ensureCorrectGVK(converted, toGVK); err != nil {
 			return nil, err
+		}
+		{
+			bytes1, _ := json.Marshal(target)
+			bytes2, _ := json.Marshal(in)
+			bytes3, _ := json.Marshal(converted)
+			glog.Warningf("ZZZ: conversion request to %v for %v returns %v", string(bytes1), string(bytes2), string(bytes3))
 		}
 		return converted, nil
 	}
