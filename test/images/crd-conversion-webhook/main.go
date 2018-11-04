@@ -42,7 +42,7 @@ func main() {
 	config.addFlags()
 	flag.Parse()
 
-	http.HandleFunc("/crd_convert", converter.ServeExampleConvert)
+	http.HandleFunc("/crdconvert", converter.ServeExampleConvert)
 	clientset := getClient()
 	server := &http.Server{
 		Addr:      ":443",

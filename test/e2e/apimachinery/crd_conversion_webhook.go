@@ -93,7 +93,7 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 				Service: &v1beta1.ServiceReference{
 					Namespace: f.Namespace.Name,
 					Name:      serviceCRDName,
-					Path:      strPtr("/crd_convert"),
+					Path:      strPtr("/crdconvert"),
 				}})
 		if err != nil {
 			return
