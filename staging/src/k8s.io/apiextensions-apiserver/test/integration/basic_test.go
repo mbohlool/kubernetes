@@ -17,7 +17,11 @@ limitations under the License.
 package integration
 
 import (
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -25,6 +29,7 @@ import (
 	"time"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apiextensions-apiserver/pkg/features"
 	"k8s.io/apiextensions-apiserver/test/integration/fixtures"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -34,7 +39,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/cert"
+	"k8s.io/kubernetes/test/images/crd-conversion-webhook/converter"
 )
 
 func TestServerUp(t *testing.T) {
@@ -43,6 +51,157 @@ func TestServerUp(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer tearDown()
+}
+
+type certContext struct {
+	cert        []byte
+	key         []byte
+	signingCert []byte
+}
+
+func crdConvertHandler(w http.ResponseWriter, req *http.Request) {
+	converter.ServeExampleConvert(w, req)
+}
+
+func startTLSLocalServer(t *testing.T) *certContext {
+	certDir, err := ioutil.TempDir("", "test-crd-integration-server-cert")
+	if err != nil {
+		t.Fatalf("Failed to create a temp dir for cert generation %v", err)
+	}
+	defer os.RemoveAll(certDir)
+	signingKey, err := cert.NewPrivateKey()
+	if err != nil {
+		t.Fatalf("Failed to create CA private key %v", err)
+	}
+	signingCert, err := cert.NewSelfSignedCACert(cert.Config{CommonName: "e2e-server-cert-ca"}, signingKey)
+	if err != nil {
+		t.Fatalf("Failed to create CA cert for apiserver %v", err)
+	}
+	caCertFile, err := ioutil.TempFile(certDir, "ca.crt")
+	if err != nil {
+		t.Fatalf("Failed to create a temp file for ca cert generation %v", err)
+	}
+	if err := ioutil.WriteFile(caCertFile.Name(), cert.EncodeCertPEM(signingCert), 0644); err != nil {
+		t.Fatalf("Failed to write CA cert %v", err)
+	}
+	key, err := cert.NewPrivateKey()
+	if err != nil {
+		t.Fatalf("Failed to create private key for %v", err)
+	}
+	signedCert, err := cert.NewSignedCert(
+		cert.Config{
+			CommonName: "localhost",
+			Usages:     []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		},
+		key, signingCert, signingKey,
+	)
+	if err != nil {
+		t.Fatalf("Failed to create cert%v", err)
+	}
+	certFile, err := ioutil.TempFile(certDir, "server.crt")
+	if err != nil {
+		t.Fatalf("Failed to create a temp file for cert generation %v", err)
+	}
+	keyFile, err := ioutil.TempFile(certDir, "server.key")
+	if err != nil {
+		t.Fatalf("Failed to create a temp file for key generation %v", err)
+	}
+	if err = ioutil.WriteFile(certFile.Name(), cert.EncodeCertPEM(signedCert), 0600); err != nil {
+		t.Fatalf("Failed to write cert file %v", err)
+	}
+	if err = ioutil.WriteFile(keyFile.Name(), cert.EncodePrivateKeyPEM(key), 0644); err != nil {
+		t.Fatalf("Failed to write key file %v", err)
+	}
+	go func() {
+		http.HandleFunc("/crdconvert", crdConvertHandler)
+		err = http.ListenAndServeTLS(":8443", certFile.Name(), keyFile.Name(), nil)
+		if err != nil {
+			t.Fatalf("ListenAndServe: %v", err)
+		}
+	}()
+	time.Sleep(time.Second * 5)
+	return &certContext{
+		cert:        cert.EncodeCertPEM(signedCert),
+		key:         cert.EncodePrivateKeyPEM(key),
+		signingCert: cert.EncodeCertPEM(signingCert),
+	}
+}
+
+func TestConversionWebhook(t *testing.T) {
+	if err := feature.DefaultFeatureGate.Set(string(features.CustomResourceWebhookConversion) + "=true"); err != nil {
+		t.Fatal(err)
+	}
+	tearDown, apiExtensionClient, dynamicClient, err := fixtures.StartDefaultServerWithClients(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tearDown()
+
+	context := startTLSLocalServer(t)
+
+	noxuDefinition := &apiextensionsv1beta1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{Name: "stable.example.com"},
+		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
+			Group:   "example.com",
+			Version: "v1",
+			Versions: []apiextensionsv1beta1.CustomResourceDefinitionVersion{
+				{
+					Name:    "v1",
+					Served:  true,
+					Storage: false,
+				},
+				{
+					Name:    "v2",
+					Served:  true,
+					Storage: true,
+				},
+			},
+			Conversion: &apiextensionsv1beta1.CustomResourceConversion{
+				Strategy: "Webhook",
+				WebhookClientConfig: &apiextensionsv1beta1.WebhookClientConfig{
+					CABundle: context.signingCert,
+					URL:      strPtr("https://localhost:8443/crdconvert"),
+				},
+			},
+			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
+				Plural:     "stable",
+				Singular:   "stable",
+				Kind:       "WishIHadChosenNoxu",
+				ShortNames: []string{"foo", "bar", "abc", "def"},
+				ListKind:   "NoxuItemList",
+				Categories: []string{"all"},
+			},
+			Scope: apiextensionsv1beta1.NamespaceScoped,
+		},
+	}
+
+	ns := "not-the-default"
+	noxuInstanceV1 := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"kind":       noxuDefinition.Spec.Names.Kind,
+			"apiVersion": noxuDefinition.Spec.Group + "/v1",
+			"metadata": map[string]interface{}{
+				"name":      "instance",
+				"namespace": ns,
+			},
+			"hostPort": "localhost:8080",
+		},
+	}
+
+	noxuDefinition, err = fixtures.CreateNewCustomResourceDefinition(noxuDefinition, apiExtensionClient, dynamicClient)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	noxuResourceClientV1 := newNamespacedCustomResourceVersionedClient(ns, dynamicClient, noxuDefinition, "v1")
+	//noxuResourceClientV2 := newNamespacedCustomResourceVersionedClient(ns, dynamicClient, noxuDefinition, "v2")
+	createdNoxuInstance, err := instantiateVersionedCustomResource(t, noxuInstanceV1, noxuResourceClientV1, noxuDefinition, "v1")
+	if err != nil {
+		t.Fatalf("unable to create noxu Instance:%v", err)
+	}
+	if e, a := noxuDefinition.Spec.Group+"/v1", createdNoxuInstance.GetAPIVersion(); e != a {
+		t.Errorf("expected %v, got %v", e, a)
+	}
 }
 
 func TestNamespaceScopedCRUD(t *testing.T) {
