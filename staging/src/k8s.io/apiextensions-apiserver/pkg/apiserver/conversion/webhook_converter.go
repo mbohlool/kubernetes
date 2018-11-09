@@ -53,7 +53,7 @@ func newWebhookConverterFactory(serviceResolver webhook.ServiceResolver, authRes
 	return &webhookConverterFactory{clientManager}, nil
 }
 
-// webhookConverter is a converter calls an external webhook to do the CR conversion.
+// webhookConverter is a converter that calls an external webhook to do the CR conversion.
 type webhookConverter struct {
 	validVersions map[schema.GroupVersion]bool
 	clientManager webhook.ClientManager
@@ -123,14 +123,14 @@ func (c *webhookConverter) Convert(in, out, context interface{}) error {
 		return fmt.Errorf("request to convert CR to an invalid group/version: %s", inGVK.String())
 	}
 
-	converted, err := c.ConvertToVersion(unstructIn.DeepCopy(), outGVK.GroupVersion())
+	converted, err := c.ConvertToVersion(unstructIn, outGVK.GroupVersion())
 	if err != nil {
 		return err
 	}
 	unstructuredConverted, ok := converted.(runtime.Unstructured)
 	if !ok {
 		// this should not happened
-		return fmt.Errorf("internal server error, CR conversion failed")
+		return fmt.Errorf("CR conversion failed")
 	}
 	unstructOut.SetUnstructuredContent(unstructuredConverted.UnstructuredContent())
 	return nil
@@ -141,7 +141,10 @@ func createConversionReview(obj runtime.Object, apiVersion string) *v1beta1.Conv
 	var objects []runtime.RawExtension
 	if isList {
 		for _, item := range listObj.Items {
-			objects = append(objects, runtime.RawExtension{Object: &item})
+			// Only sent item for conversion, if the apiVersion is different
+			if item.GetAPIVersion() != apiVersion {
+				objects = append(objects, runtime.RawExtension{Object: item.DeepCopyObject()})
+			}
 		}
 	} else {
 		objects = []runtime.RawExtension{{Object: obj}}
@@ -195,12 +198,24 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 	if !c.validVersions[toGVK.GroupVersion()] {
 		return nil, fmt.Errorf("request to convert CR to an invalid group/version: %s", toGVK.String())
 	}
-	if !c.validVersions[fromGVK.GroupVersion()] {
-		return nil, fmt.Errorf("request to convert CR from an invalid group/version: %s", fromGVK.String())
-	}
-	if fromGVK == toGVK {
-		// No conversion is required
-		return in, nil
+	listObj, isList := in.(*unstructured.UnstructuredList)
+	if isList {
+		for i, item := range listObj.Items {
+			if !c.validVersions[item.GroupVersionKind().GroupVersion()] {
+				return nil, fmt.Errorf("request to convert List of CRs to an invalid group/version for item %v: %s", i, item.GroupVersionKind())
+			}
+		}
+		if !c.validVersions[fromGVK.GroupVersion()] {
+			return nil, fmt.Errorf("request to convert CR from an invalid list group/version: %s", fromGVK.String())
+		}
+	} else {
+		if !c.validVersions[fromGVK.GroupVersion()] {
+			return nil, fmt.Errorf("request to convert CR from an invalid group/version: %s", fromGVK.String())
+		}
+		if fromGVK == toGVK {
+			// No conversion is required
+			return in, nil
+		}
 	}
 
 	request := createConversionReview(in, toGVK.GroupVersion().String())
@@ -227,26 +242,36 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 		return nil, fmt.Errorf("expected %v converted objects, got %v", len(request.Request.Objects), len(response.Response.ConvertedObjects))
 	}
 
-	listObj, isList := in.(*unstructured.UnstructuredList)
 	if isList {
 		convertedList := listObj.DeepCopy()
+		// Collection of items sent for conversion is different than list items
+		// because only items that needed conversion has been sent.
+		convertedIndex := 0
 		for i := 0; i < len(listObj.Items); i++ {
-			converted, err := getRawExtensionObject(response.Response.ConvertedObjects[i])
-			if err != nil {
-				return nil, fmt.Errorf("invalid converted object at index %v: %v", i, err)
+			if listObj.Items[i].GetAPIVersion() == toGVK.GroupVersion().String() {
+				// This item has not been sent for conversion, skip it.
+				continue
 			}
-			if err := ensureCorrectGVK(converted, toGVK); err != nil {
-				return nil, fmt.Errorf("invalid converted object at index %v: %v", i, err)
+			converted, err := getRawExtensionObject(response.Response.ConvertedObjects[convertedIndex])
+			convertedIndex++
+			original := request.Request.Objects[i].Object
+			if err != nil {
+				return nil, fmt.Errorf("invalid converted object at index %v: %v", convertedIndex, err)
+			}
+			if e, a := toGVK.GroupVersion(), converted.GetObjectKind().GroupVersionKind().GroupVersion(); e != a {
+				return nil, fmt.Errorf("invalid converted object at index %v: invalid groupVersion, e=%v, a=%v", convertedIndex, e, a)
+			}
+			if e, a := original.GetObjectKind().GroupVersionKind().Kind, converted.GetObjectKind().GroupVersionKind().Kind; e != a {
+				return nil, fmt.Errorf("invalid converted object at index %v: invalid kind, e=%v, a=%v", convertedIndex, e, a)
 			}
 			unstructConverted, ok := converted.(*unstructured.Unstructured)
 			if !ok {
 				// this should not happened
-				return nil, fmt.Errorf("internal server error, CR conversion failed")
+				return nil, fmt.Errorf("CR conversion failed")
 			}
 			if err := validateConvertedObject(&listObj.Items[i], unstructConverted); err != nil {
-				return nil, fmt.Errorf("invalid converted object at index %v: %v", i, err)
+				return nil, fmt.Errorf("invalid converted object at index %v: %v", convertedIndex, err)
 			}
-
 			convertedList.Items[i] = *unstructConverted
 		}
 		convertedList.SetAPIVersion(toGVK.GroupVersion().String())
@@ -255,7 +280,7 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 
 	if len(response.Response.ConvertedObjects) != 1 {
 		// This should not happened
-		return nil, fmt.Errorf("internal server error, CR conversion failed")
+		return nil, fmt.Errorf("CR conversion failed")
 	}
 	converted, err := getRawExtensionObject(response.Response.ConvertedObjects[0])
 	if err != nil {
@@ -263,6 +288,19 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 	}
 	if err := ensureCorrectGVK(converted, toGVK); err != nil {
 		return nil, err
+	}
+	unstructConverted, ok := converted.(*unstructured.Unstructured)
+	if !ok {
+		// this should not happened
+		return nil, fmt.Errorf("CR conversion failed")
+	}
+	unstructIn, ok := in.(*unstructured.Unstructured)
+	if !ok {
+		// this should not happened
+		return nil, fmt.Errorf("CR conversion failed")
+	}
+	if err := validateConvertedObject(unstructIn, unstructConverted); err != nil {
+		return nil, fmt.Errorf("invalid converted object: %v", err)
 	}
 	return converted, nil
 }

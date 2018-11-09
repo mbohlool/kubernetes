@@ -348,7 +348,7 @@ func TestCRValidationOnCRDUpdate(t *testing.T) {
 	}
 
 	// update the CRD to a less stricter schema
-	_, err = updateCustomResourceDefinitionWithRetry(apiExtensionClient, "noxus.mygroup.example.com", func(crd *apiextensionsv1beta1.CustomResourceDefinition) {
+	_, err = UpdateCustomResourceDefinitionWithRetry(apiExtensionClient, "noxus.mygroup.example.com", func(crd *apiextensionsv1beta1.CustomResourceDefinition) {
 		crd.Spec.Validation.OpenAPIV3Schema.Required = []string{"alpha", "beta"}
 	})
 	if err != nil {
