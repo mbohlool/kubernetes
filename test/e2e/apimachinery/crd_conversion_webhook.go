@@ -17,6 +17,8 @@ limitations under the License.
 package apimachinery
 
 import (
+	"fmt"
+	"io/ioutil"
 	"k8s.io/kubernetes/staging/src/k8s.io/apimachinery/pkg/util/json"
 	"time"
 
@@ -99,7 +101,7 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 			return
 		}
 		defer testcrd.CleanUp()
-		logJson("testcrd", testcrd)
+		logJson("crd", testcrd.Crd)
 		testCustomResourceConversionWebhook(f, testcrd.Crd, testcrd.DynamicClients)
 	})
 
@@ -147,6 +149,7 @@ func createAuthReaderRoleBindingForCRDConversion(f *framework.Framework, namespa
 func logJson(name string, obj interface{}) {
 	bytes, _ := json.Marshal(obj)
 	framework.Logf("ZZZ(%v): %v", name, string(bytes))
+	ioutil.WriteFile(fmt.Sprintf("/tmp/%s.json", name), bytes, 0777)
 }
 
 func deployCustomResourceWebhookAndService(f *framework.Framework, image string, context *certContext) {
@@ -280,7 +283,7 @@ func testCustomResourceConversionWebhook(f *framework.Framework, crd *v1beta1.Cu
 		},
 	}
 	logJson("cr", crInstance)
-	_, err := customResourceClients["v1"].Create(crInstance, metav1.CreateOptions{})
+ZZ	_, err := customResourceClients["v1"].Create(crInstance, metav1.CreateOptions{})
 	Expect(err).To(BeNil())
 	By("v2 custom resource should be converted")
 	v2crd, err := customResourceClients["v2"].Get(name, metav1.GetOptions{})
