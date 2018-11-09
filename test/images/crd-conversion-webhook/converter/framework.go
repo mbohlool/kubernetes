@@ -50,7 +50,7 @@ func conversionResponseFailureWithMessagef(msg string, params ...interface{}) *v
 
 func statusErrorWithMessage(msg string, params ...interface{}) metav1.Status {
 	return metav1.Status{
-		Message: fmt.Sprintf(msg, params),
+		Message: fmt.Sprintf(msg, params...),
 		Status:  metav1.StatusFailure,
 	}
 }
@@ -126,7 +126,7 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
-	err := serializer.Encode(&convertReview, w)
+	err := outSerializer.Encode(&convertReview, w)
 	if err != nil {
 		glog.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
