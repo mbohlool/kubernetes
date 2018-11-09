@@ -17,6 +17,7 @@ limitations under the License.
 package apimachinery
 
 import (
+	"k8s.io/kubernetes/staging/src/k8s.io/apimachinery/pkg/util/json"
 	"time"
 
 	apps "k8s.io/api/apps/v1"
@@ -98,6 +99,7 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 			return
 		}
 		defer testcrd.CleanUp()
+		logJson("testcrd", testcrd)
 		testCustomResourceConversionWebhook(f, testcrd.Crd, testcrd.DynamicClients)
 	})
 
@@ -142,6 +144,11 @@ func createAuthReaderRoleBindingForCRDConversion(f *framework.Framework, namespa
 	}
 }
 
+func logJson(name string, obj interface{}) {
+	bytes, _ := json.Marshal(obj)
+	framework.Logf("ZZZ(%v): %v", name, string(bytes))
+}
+
 func deployCustomResourceWebhookAndService(f *framework.Framework, image string, context *certContext) {
 	By("Deploying the custom resource conversion webhook pod")
 	client := f.ClientSet
@@ -157,6 +164,7 @@ func deployCustomResourceWebhookAndService(f *framework.Framework, image string,
 			"tls.key": context.key,
 		},
 	}
+	logJson("secret", secret)
 	namespace := f.Namespace.Name
 	_, err := client.CoreV1().Secrets(namespace).Create(secret)
 	framework.ExpectNoError(err, "creating secret %q in namespace %q", secretName, namespace)
@@ -219,6 +227,7 @@ func deployCustomResourceWebhookAndService(f *framework.Framework, image string,
 			},
 		},
 	}
+	logJson("deployment", d)
 	deployment, err := client.AppsV1().Deployments(namespace).Create(d)
 	framework.ExpectNoError(err, "creating deployment %s in namespace %s", deploymentCRDName, namespace)
 	By("Wait for the deployment to be ready")
@@ -247,6 +256,7 @@ func deployCustomResourceWebhookAndService(f *framework.Framework, image string,
 			},
 		},
 	}
+	logJson("service", service)
 	_, err = client.CoreV1().Services(namespace).Create(service)
 	framework.ExpectNoError(err, "creating service %s in namespace %s", serviceCRDName, namespace)
 
@@ -269,6 +279,7 @@ func testCustomResourceConversionWebhook(f *framework.Framework, crd *v1beta1.Cu
 			"hostPort": "localhost:8080",
 		},
 	}
+	logJson("cr", crInstance)
 	_, err := customResourceClients["v1"].Create(crInstance, metav1.CreateOptions{})
 	Expect(err).To(BeNil())
 	By("v2 custom resource should be converted")
