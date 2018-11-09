@@ -17,6 +17,7 @@ limitations under the License.
 package apimachinery
 
 import (
+	"k8s.io/kubernetes/staging/src/k8s.io/apiextensions-apiserver/test/integration"
 	"time"
 
 	apps "k8s.io/api/apps/v1"
@@ -47,6 +48,32 @@ const (
 
 var serverCRDConversionWebhookVersion = utilversion.MustParseSemantic("v1.13.0-alpha")
 
+var apiVersions = []v1beta1.CustomResourceDefinitionVersion{
+	{
+		Name:    "v1",
+		Served:  true,
+		Storage: true,
+	},
+	{
+		Name:    "v2",
+		Served:  true,
+		Storage: false,
+	},
+}
+
+var alternativeApiVersions = []v1beta1.CustomResourceDefinitionVersion{
+	{
+		Name:    "v1",
+		Served:  true,
+		Storage: false,
+	},
+	{
+		Name:    "v2",
+		Served:  true,
+		Storage: true,
+	},
+}
+
 var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebhookConversion]", func() {
 	var context *certContext
 	f := framework.NewDefaultFramework("crd-webhook")
@@ -73,18 +100,6 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 	})
 
 	It("Should be able to convert from CR v1 to CR v2", func() {
-		apiVersions := []v1beta1.CustomResourceDefinitionVersion{
-			{
-				Name:    "v1",
-				Served:  true,
-				Storage: true,
-			},
-			{
-				Name:    "v2",
-				Served:  true,
-				Storage: false,
-			},
-		}
 		testcrd, err := framework.CreateMultiVersionTestCRD(f, "stable.example.com", apiVersions,
 			&v1beta1.WebhookClientConfig{
 				CABundle: context.signingCert,
@@ -100,6 +115,21 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 		testCustomResourceConversionWebhook(f, testcrd.Crd, testcrd.DynamicClients)
 	})
 
+	It("Should be able to convert a non homogeneous list of CRs", func() {
+		testcrd, err := framework.CreateMultiVersionTestCRD(f, "stable.example.com", apiVersions,
+			&v1beta1.WebhookClientConfig{
+				CABundle: context.signingCert,
+				Service: &v1beta1.ServiceReference{
+					Namespace: f.Namespace.Name,
+					Name:      serviceCRDName,
+					Path:      strPtr("/crdconvert"),
+				}})
+		if err != nil {
+			return
+		}
+		defer testcrd.CleanUp()
+		testCRListConversion(f, testcrd)
+	})
 })
 
 func cleanCRDWebhookTest(client clientset.Interface, namespaceName string) {
@@ -251,6 +281,29 @@ func deployCustomResourceWebhookAndService(f *framework.Framework, image string,
 	framework.ExpectNoError(err, "waiting for service %s/%s have %d endpoint", namespace, serviceCRDName, 1)
 }
 
+func verifyV1Object(f *framework.Framework, crd *v1beta1.CustomResourceDefinition, obj *unstructured.Unstructured) {
+	Expect(obj.GetAPIVersion()).To(BeEquivalentTo(crd.Spec.Group + "/v1"))
+	hostPort, exists := obj.Object["hostPort"]
+	Expect(exists).To(BeTrue())
+	Expect(hostPort).To(BeEquivalentTo("localhost:8080"))
+	_, hostExists := obj.Object["host"]
+	Expect(hostExists).To(BeFalse())
+	_, portExists := obj.Object["port"]
+	Expect(portExists).To(BeFalse())
+}
+
+func verifyV2Object(f *framework.Framework, crd *v1beta1.CustomResourceDefinition, obj *unstructured.Unstructured) {
+	Expect(obj.GetAPIVersion()).To(BeEquivalentTo(crd.Spec.Group + "/v2"))
+	_, hostPortExists := obj.Object["hostPort"]
+	Expect(hostPortExists).To(BeFalse())
+	host, hostExists := obj.Object["host"]
+	Expect(hostExists).To(BeTrue())
+	Expect(host).To(BeEquivalentTo("localhost"))
+	port, portExists := obj.Object["port"]
+	Expect(portExists).To(BeTrue())
+	Expect(port).To(BeEquivalentTo("8080"))
+}
+
 func testCustomResourceConversionWebhook(f *framework.Framework, crd *v1beta1.CustomResourceDefinition, customResourceClients map[string]dynamic.ResourceInterface) {
 	name := "cr-instance-1"
 	By("Creating a v1 custom resource")
@@ -269,24 +322,75 @@ func testCustomResourceConversionWebhook(f *framework.Framework, crd *v1beta1.Cu
 	Expect(err).To(BeNil())
 	By("v2 custom resource should be converted")
 	v2crd, err := customResourceClients["v2"].Get(name, metav1.GetOptions{})
-	if _, exists := v2crd.Object["hostPort"]; exists {
-		framework.Failf("unexpected hostPort field in v2 CRD: %v", v2crd)
-		return
+	verifyV2Object(f, crd, v2crd)
+}
+
+func testCRListConversion(f *framework.Framework, testCrd *framework.TestCrd) {
+	crd := testCrd.Crd
+	customResourceClients := testCrd.DynamicClients
+	name1 := "cr-instance-1"
+	name2 := "cr-instance-2"
+	By("Creating a v1 custom resource")
+	crInstance := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"kind":       crd.Spec.Names.Kind,
+			"apiVersion": crd.Spec.Group + "/v1",
+			"metadata": map[string]interface{}{
+				"name":      name1,
+				"namespace": f.Namespace.Name,
+			},
+			"hostPort": "localhost:8080",
+		},
 	}
-	if _, exists := v2crd.Object["host"]; !exists {
-		framework.Failf("absent host field in v2 CRD: %v", v2crd)
-		return
+	_, err := customResourceClients["v1"].Create(crInstance, metav1.CreateOptions{})
+	Expect(err).To(BeNil())
+
+	// Now cr-instance-1 is stored as v1. lets change storage version
+	crd, err = integration.UpdateCustomResourceDefinitionWithRetry(testCrd.ApiExtensionClient, crd.Name, func(c *v1beta1.CustomResourceDefinition) {
+		c.Spec.Versions = alternativeApiVersions
+	})
+	Expect(err).To(BeNil())
+	By("Create a v2 custom resource")
+	crInstance = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"kind":       crd.Spec.Names.Kind,
+			"apiVersion": crd.Spec.Group + "/v1",
+			"metadata": map[string]interface{}{
+				"name":      name2,
+				"namespace": f.Namespace.Name,
+			},
+			"hostPort": "localhost:8080",
+		},
 	}
-	if _, exists := v2crd.Object["port"]; !exists {
-		framework.Failf("absent port field in v2 CRD: %v", v2crd)
-		return
+
+	// After changing a CRD, the resources for versions will be re-created that can be result in
+	// cancelled connection (e.g. "grpc connection closed" or "context canceled").
+	// Just retrying fixes that.
+	for i := 0; i < 5; i++ {
+		_, err = customResourceClients["v1"].Create(crInstance, metav1.CreateOptions{})
+		if err == nil {
+			break
+		}
 	}
-	if expected, actual := "localhost", v2crd.Object["host"]; expected != actual {
-		framework.Failf("expected host = %s, actual = %s", expected, actual)
-		return
-	}
-	if expected, actual := "8080", v2crd.Object["port"]; expected != actual {
-		framework.Failf("expected port = %s, actual = %s", expected, actual)
-		return
-	}
+	Expect(err).To(BeNil())
+
+	// Now that we have a v1 and v2 object, both list operation in v1 and v2 should work as expected.
+
+	By("List CRs in v1")
+	list, err := customResourceClients["v1"].List(metav1.ListOptions{})
+	Expect(err).To(BeNil())
+	Expect(len(list.Items)).To(BeIdenticalTo(2))
+	Expect((list.Items[0].GetName() == name1 && list.Items[1].GetName() == name2) ||
+		(list.Items[0].GetName() == name2 && list.Items[1].GetName() == name1)).To(BeTrue())
+	verifyV1Object(f, crd, &list.Items[0])
+	verifyV1Object(f, crd, &list.Items[1])
+
+	By("List CRs in v2")
+	list, err = customResourceClients["v2"].List(metav1.ListOptions{})
+	Expect(err).To(BeNil())
+	Expect(len(list.Items)).To(BeIdenticalTo(2))
+	Expect((list.Items[0].GetName() == name1 && list.Items[1].GetName() == name2) ||
+		(list.Items[0].GetName() == name2 && list.Items[1].GetName() == name1)).To(BeTrue())
+	verifyV2Object(f, crd, &list.Items[0])
+	verifyV2Object(f, crd, &list.Items[1])
 }
