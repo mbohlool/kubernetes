@@ -152,11 +152,11 @@ func NewCustomResourceDefinitionHandler(
 			ret.removeDeadStorage()
 		},
 	})
-	CRConverterFactory, err := conversion.NewCRConverterFactory(serviceResolver, authResolverWrapper)
+	crConverterFactory, err := conversion.NewCRConverterFactory(serviceResolver, authResolverWrapper)
 	if err != nil {
 		return nil, err
 	}
-	ret.converterFactory = CRConverterFactory
+	ret.converterFactory = crConverterFactory
 
 	ret.customStorage.Store(crdStorageMap{})
 

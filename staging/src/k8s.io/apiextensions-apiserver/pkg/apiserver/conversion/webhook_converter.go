@@ -53,7 +53,7 @@ func newWebhookConverterFactory(serviceResolver webhook.ServiceResolver, authRes
 	return &webhookConverterFactory{clientManager}, nil
 }
 
-// webhookConverter is a converter that only sets the apiVersion fields, but does not real conversion.
+// webhookConverter is a converter calls an external webhook to do the CR conversion.
 type webhookConverter struct {
 	validVersions map[schema.GroupVersion]bool
 	clientManager webhook.ClientManager
@@ -123,11 +123,16 @@ func (c *webhookConverter) Convert(in, out, context interface{}) error {
 		return fmt.Errorf("request to convert CR to an invalid group/version: %s", inGVK.String())
 	}
 
-	unstructOut.SetUnstructuredContent(unstructIn.UnstructuredContent())
-	_, err := c.ConvertToVersion(unstructOut, outGVK.GroupVersion())
+	converted, err := c.ConvertToVersion(unstructIn.DeepCopy(), outGVK.GroupVersion())
 	if err != nil {
 		return err
 	}
+	unstructuredConverted, ok := converted.(runtime.Unstructured)
+	if !ok {
+		// this should not happened
+		return fmt.Errorf("internal server error, CR conversion failed")
+	}
+	unstructOut.SetUnstructuredContent(unstructuredConverted.UnstructuredContent())
 	return nil
 }
 
@@ -228,17 +233,21 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 		for i := 0; i < len(listObj.Items); i++ {
 			converted, err := getRawExtensionObject(response.Response.ConvertedObjects[i])
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("invalid converted object at index %v: %v", i, err)
 			}
 			if err := ensureCorrectGVK(converted, toGVK); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("invalid converted object at index %v: %v", i, err)
 			}
-			unstructItem, ok := converted.(*unstructured.Unstructured)
+			unstructConverted, ok := converted.(*unstructured.Unstructured)
 			if !ok {
 				// this should not happened
 				return nil, fmt.Errorf("internal server error, CR conversion failed")
 			}
-			convertedList.Items[i] = *unstructItem
+			if err := validateConvertedObject(&listObj.Items[i], unstructConverted); err != nil {
+				return nil, fmt.Errorf("invalid converted object at index %v: %v", i, err)
+			}
+
+			convertedList.Items[i] = *unstructConverted
 		}
 		convertedList.SetAPIVersion(toGVK.GroupVersion().String())
 		return convertedList, nil
@@ -256,6 +265,22 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 		return nil, err
 	}
 	return converted, nil
+}
+
+func validateConvertedObject(unstructIn, unstructOut *unstructured.Unstructured) error {
+	if e, a := unstructIn.GetKind(), unstructOut.GetKind(); e != a {
+		return fmt.Errorf("must have the same kind: %v != %v", e, a)
+	}
+	if e, a := unstructIn.GetName(), unstructOut.GetName(); e != a {
+		return fmt.Errorf("must have the same name: %v != %v", e, a)
+	}
+	if e, a := unstructIn.GetNamespace(), unstructOut.GetNamespace(); e != a {
+		return fmt.Errorf("must have the same namespace: %v != %v", e, a)
+	}
+	if e, a := unstructIn.GetUID(), unstructOut.GetUID(); e != a {
+		return fmt.Errorf("must have the same UID: %v != %v", e, a)
+	}
+	return nil
 }
 
 // isEmptyUnstructuredObject returns true if in is an empty unstructured object, i.e. an unstructured object that does
