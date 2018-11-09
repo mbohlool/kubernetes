@@ -167,10 +167,10 @@ func deployCustomResourceWebhookAndService(f *framework.Framework, image string,
 			"tls.key": context.key,
 		},
 	}
-	logJson("secret", secret)
 	namespace := f.Namespace.Name
-	_, err := client.CoreV1().Secrets(namespace).Create(secret)
+	secret2, err := client.CoreV1().Secrets(namespace).Create(secret)
 	framework.ExpectNoError(err, "creating secret %q in namespace %q", secretName, namespace)
+	logJson("secret", secret2)
 
 	// Create the deployment of the webhook
 	podLabels := map[string]string{"app": "sample-crd-conversion-webhook", "crd-webhook": "true"}
@@ -230,9 +230,9 @@ func deployCustomResourceWebhookAndService(f *framework.Framework, image string,
 			},
 		},
 	}
-	logJson("deployment", d)
 	deployment, err := client.AppsV1().Deployments(namespace).Create(d)
 	framework.ExpectNoError(err, "creating deployment %s in namespace %s", deploymentCRDName, namespace)
+	logJson("deployment", deployment)
 	By("Wait for the deployment to be ready")
 	err = framework.WaitForDeploymentRevisionAndImage(client, namespace, deploymentCRDName, "1", image)
 	framework.ExpectNoError(err, "waiting for the deployment of image %s in %s in %s to complete", image, deploymentName, namespace)
@@ -259,9 +259,9 @@ func deployCustomResourceWebhookAndService(f *framework.Framework, image string,
 			},
 		},
 	}
-	logJson("service", service)
-	_, err = client.CoreV1().Services(namespace).Create(service)
+	service2, err := client.CoreV1().Services(namespace).Create(service)
 	framework.ExpectNoError(err, "creating service %s in namespace %s", serviceCRDName, namespace)
+	logJson("service", service2)
 
 	By("Verifying the service has paired with the endpoint")
 	err = framework.WaitForServiceEndpointsNum(client, namespace, serviceCRDName, 1, 1*time.Second, 30*time.Second)
