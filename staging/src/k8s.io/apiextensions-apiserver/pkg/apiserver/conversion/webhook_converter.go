@@ -210,7 +210,9 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 	r := c.restClient.Post().Context(ctx).Body(request).Do()
 	if err := r.Into(response); err != nil {
 		// TODO: Return a webhook specific error to be able to convert it to meta.Status
-		return nil, fmt.Errorf("calling to conversion webhook failed for %s: %v", c.name, err)
+
+		body, berr := r.Raw()
+		return nil, fmt.Errorf("calling to conversion webhook failed for %s: %v, %v, %v", c.name, err, berr, string(body))
 	}
 
 	if response.Response == nil {
