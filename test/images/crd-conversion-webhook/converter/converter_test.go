@@ -18,6 +18,7 @@ package converter
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -27,34 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 )
-
-type inMemoryResponseWriter struct {
-	writeHeaderCalled bool
-	header            http.Header
-	respCode          int
-	data              []byte
-}
-
-func newInMemoryResponseWriter() *inMemoryResponseWriter {
-	return &inMemoryResponseWriter{header: http.Header{}}
-}
-
-func (r *inMemoryResponseWriter) Header() http.Header {
-	return r.header
-}
-
-func (r *inMemoryResponseWriter) WriteHeader(code int) {
-	r.writeHeaderCalled = true
-	r.respCode = code
-}
-
-func (r *inMemoryResponseWriter) Write(in []byte) (int, error) {
-	if !r.writeHeaderCalled {
-		r.WriteHeader(http.StatusOK)
-	}
-	r.data = append(r.data, in...)
-	return len(in), nil
-}
 
 func TestConverter(t *testing.T) {
 	sampleObj := `kind: ConversionReview
@@ -73,7 +46,7 @@ request:
       hostPort: "localhost:7070"
 `
 	// First try json, it should fail as the data is taml
-	response := newInMemoryResponseWriter()
+	response := httptest.NewRecorder()
 	request, err := http.NewRequest("POST", "/convert", strings.NewReader(sampleObj))
 	if err != nil {
 		t.Fatal(err)
@@ -83,7 +56,7 @@ request:
 	convertReview := v1beta1.ConversionReview{}
 	scheme := runtime.NewScheme()
 	jsonSerializer := json.NewSerializer(json.DefaultMetaFactory, scheme, scheme, false)
-	if _, _, err := jsonSerializer.Decode(response.data, nil, &convertReview); err != nil {
+	if _, _, err := jsonSerializer.Decode(response.Body.Bytes(), nil, &convertReview); err != nil {
 		t.Fatal(err)
 	}
 	if convertReview.Response.Result.Status != v1.StatusFailure {
@@ -93,7 +66,7 @@ request:
 	}
 
 	// Now try yaml, and it should successfully convert
-	response = newInMemoryResponseWriter()
+	response = httptest.NewRecorder()
 	request, err = http.NewRequest("POST", "/convert", strings.NewReader(sampleObj))
 	if err != nil {
 		t.Fatal(err)
@@ -102,8 +75,8 @@ request:
 	ServeExampleConvert(response, request)
 	convertReview = v1beta1.ConversionReview{}
 	yamlSerializer := json.NewYAMLSerializer(json.DefaultMetaFactory, scheme, scheme)
-	if _, _, err := yamlSerializer.Decode(response.data, nil, &convertReview); err != nil {
-		t.Fatalf("cannot decode data: \n %v\n Error: %v", string(response.data), err)
+	if _, _, err := yamlSerializer.Decode(response.Body.Bytes(), nil, &convertReview); err != nil {
+		t.Fatalf("cannot decode data: \n %v\n Error: %v", response.Body, err)
 	}
 	if convertReview.Response.Result.Status != v1.StatusSuccess {
 		t.Fatalf("cr conversion failed: %v", convertReview.Response)

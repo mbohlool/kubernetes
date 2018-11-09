@@ -44,6 +44,9 @@ func convertExampleCRD(Object *unstructured.Unstructured, toVersion string) (*un
 			if ok {
 				delete(convertedObject.Object, "hostPort")
 				parts := strings.Split(hostPort.(string), ":")
+				if len(parts) != 2 {
+					return nil, statusErrorWithMessage("invalid hostPort value `%v`", hostPort)
+				}
 				convertedObject.Object["host"] = parts[0]
 				convertedObject.Object["port"] = parts[1]
 			}

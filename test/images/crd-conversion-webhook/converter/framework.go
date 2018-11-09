@@ -17,9 +17,11 @@ limitations under the License.
 package converter
 
 import (
+	"bitbucket.org/ww/goautoneg"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/golang/glog"
 
@@ -46,7 +48,7 @@ func conversionResponseFailureWithMessagef(msg string, params ...interface{}) *v
 
 }
 
-func statusErrorWithMessage(msg string, params ...string) metav1.Status {
+func statusErrorWithMessage(msg string, params ...interface{}) metav1.Status {
 	return metav1.Status{
 		Message: fmt.Sprintf(msg, params),
 		Status:  metav1.StatusFailure,
@@ -93,17 +95,10 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 		}
 	}
 
-	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
-	var serializer runtime.Serializer
-	scheme := runtime.NewScheme()
-	switch contentType {
-	case "application/json":
-		serializer = json.NewSerializer(json.DefaultMetaFactory, scheme, scheme, false)
-	case "application/yaml":
-		serializer = json.NewYAMLSerializer(json.DefaultMetaFactory, scheme, scheme)
-	default:
-		msg := fmt.Sprintf("contentType=%s, expect application/json or application/yaml", contentType)
+	serializer := getInputSerializer(contentType)
+	if serializer == nil {
+		msg := fmt.Sprintf("invalid Content-Type header `%s`", contentType)
 		glog.Errorf(msg)
 		http.Error(w, msg, http.StatusBadRequest)
 		return
@@ -123,6 +118,14 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 	// reset the request, it is not needed in a response.
 	convertReview.Request = &v1beta1.ConversionRequest{}
 
+	accept := r.Header.Get("Accept")
+	outSerializer := getOutputSerializer(accept)
+	if outSerializer == nil {
+		msg := fmt.Sprintf("invalid accept header `%s`", accept)
+		glog.Errorf(msg)
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
 	err := serializer.Encode(&convertReview, w)
 	if err != nil {
 		glog.Error(err)
@@ -134,4 +137,42 @@ func serve(w http.ResponseWriter, r *http.Request, convert convertFunc) {
 // ServeExampleConvert servers endpoint for the example converter defined as convertExampleCRD function.
 func ServeExampleConvert(w http.ResponseWriter, r *http.Request) {
 	serve(w, r, convertExampleCRD)
+}
+
+type mediaType struct {
+	Type, SubType string
+}
+
+var scheme = runtime.NewScheme()
+var serializers = map[mediaType]runtime.Serializer{
+	{"application", "json"}: json.NewSerializer(json.DefaultMetaFactory, scheme, scheme, false),
+	{"application", "yaml"}: json.NewYAMLSerializer(json.DefaultMetaFactory, scheme, scheme),
+}
+
+func getInputSerializer(contentType string) runtime.Serializer {
+	parts := strings.SplitN(contentType, "/", 2)
+	if len(parts) != 2 {
+		return nil
+	}
+	return serializers[mediaType{parts[0], parts[1]}]
+}
+
+func getOutputSerializer(accept string) runtime.Serializer {
+	if len(accept) == 0 {
+		return serializers[mediaType{"application", "json"}]
+	}
+
+	clauses := goautoneg.ParseAccept(accept)
+	for _, clause := range clauses {
+		for k, v := range serializers {
+			switch {
+			case clause.Type == k.Type && clause.SubType == k.SubType,
+				clause.Type == k.Type && clause.SubType == "*",
+				clause.Type == "*" && clause.SubType == "*":
+				return v
+			}
+		}
+	}
+
+	return nil
 }
