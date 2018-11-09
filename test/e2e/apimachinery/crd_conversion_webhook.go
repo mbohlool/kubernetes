@@ -21,7 +21,7 @@ import (
 
 	apps "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
+	rbacv1beta1 "k8s.io/api/rbac/v1beta1"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -107,24 +107,27 @@ func cleanCRDWebhookTest(client clientset.Interface, namespaceName string) {
 	_ = client.CoreV1().Services(namespaceName).Delete(serviceCRDName, nil)
 	_ = client.AppsV1().Deployments(namespaceName).Delete(deploymentCRDName, nil)
 	_ = client.CoreV1().Secrets(namespaceName).Delete(secretCRDName, nil)
-	_ = client.RbacV1().RoleBindings("kube-system").Delete(roleBindingCRDName, nil)
+	_ = client.RbacV1beta1().RoleBindings("kube-system").Delete(roleBindingCRDName, nil)
 }
 
 func createAuthReaderRoleBindingForCRDConversion(f *framework.Framework, namespace string) {
 	By("Create role binding to let cr conversion webhook read extension-apiserver-authentication")
 	client := f.ClientSet
 	// Create the role binding to allow the webhook read the extension-apiserver-authentication configmap
-	_, err := client.RbacV1().RoleBindings("kube-system").Create(&rbacv1.RoleBinding{
+	_, err := client.RbacV1beta1().RoleBindings("kube-system").Create(&rbacv1beta1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: roleBindingCRDName,
+			Annotations: map[string]string{
+				rbacv1beta1.AutoUpdateAnnotationKey: "true",
+			},
 		},
-		RoleRef: rbacv1.RoleRef{
+		RoleRef: rbacv1beta1.RoleRef{
 			APIGroup: "",
 			Kind:     "Role",
 			Name:     "extension-apiserver-authentication-reader",
 		},
 		// Webhook uses the default service account.
-		Subjects: []rbacv1.Subject{
+		Subjects: []rbacv1beta1.Subject{
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
