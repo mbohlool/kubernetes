@@ -253,8 +253,8 @@ func (c *webhookConverter) ConvertToVersion(in runtime.Object, target runtime.Gr
 				continue
 			}
 			converted, err := getRawExtensionObject(response.Response.ConvertedObjects[convertedIndex])
+			original := request.Request.Objects[convertedIndex].Object
 			convertedIndex++
-			original := request.Request.Objects[i].Object
 			if err != nil {
 				return nil, fmt.Errorf("invalid converted object at index %v: %v", convertedIndex, err)
 			}
