@@ -283,7 +283,7 @@ func testCustomResourceConversionWebhook(f *framework.Framework, crd *v1beta1.Cu
 		},
 	}
 	logJson("cr", crInstance)
-ZZ	_, err := customResourceClients["v1"].Create(crInstance, metav1.CreateOptions{})
+	_, err := customResourceClients["v1"].Create(crInstance, metav1.CreateOptions{})
 	Expect(err).To(BeNil())
 	By("v2 custom resource should be converted")
 	v2crd, err := customResourceClients["v2"].Get(name, metav1.GetOptions{})
