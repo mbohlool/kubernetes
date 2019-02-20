@@ -18,10 +18,10 @@ package conversion
 
 import (
 	"fmt"
+	"k8s.io/kubernetes/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apiextensionsfeatures "k8s.io/apiextensions-apiserver/pkg/features"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -55,35 +55,40 @@ func (m *CRConverterFactory) NewConverter(crd *apiextensions.CustomResourceDefin
 		validVersions[schema.GroupVersion{Group: crd.Spec.Group, Version: version.Name}] = true
 	}
 
+	var converter crConverterInterface
 	switch crd.Spec.Conversion.Strategy {
 	case apiextensions.NoneConverter:
-		unsafe = &crConverter{
-			clusterScoped: crd.Spec.Scope == apiextensions.ClusterScoped,
-			delegate: &nopConverter{
-				validVersions: validVersions,
-			},
-		}
-		return &safeConverterWrapper{unsafe}, unsafe, nil
+		converter = &nopConverter{}
 	case apiextensions.WebhookConverter:
 		if !utilfeature.DefaultFeatureGate.Enabled(apiextensionsfeatures.CustomResourceWebhookConversion) {
 			return nil, nil, fmt.Errorf("webhook conversion is disabled on this cluster")
 		}
-		unsafe, err := m.webhookConverterFactory.NewWebhookConverter(validVersions, crd)
+		converter, err = m.webhookConverterFactory.NewWebhookConverter(crd)
 		if err != nil {
 			return nil, nil, err
 		}
-		return &safeConverterWrapper{unsafe}, unsafe, nil
+	default:
+		return nil, nil, fmt.Errorf("unknown conversion strategy %q for CRD %s", crd.Spec.Conversion.Strategy, crd.Name)
 	}
-
-	return nil, nil, fmt.Errorf("unknown conversion strategy %q for CRD %s", crd.Spec.Conversion.Strategy, crd.Name)
+	unsafe = &crConverter{
+		validVersions: validVersions,
+		clusterScoped: crd.Spec.Scope == apiextensions.ClusterScoped,
+		converter: converter,
+	}
+	return &safeConverterWrapper{unsafe}, unsafe, nil
 }
 
-var _ runtime.ObjectConvertor = &crConverter{}
+// crConverterInterface is the interface all cr converters must implement
+type crConverterInterface interface {
+	// ConvertToVersion converts in object to the given gvk and returns the converted object.
+	// Note that the function may mutate in object and return it. A safe wrapper will make sure
+	// a safe converter will be returned.
+	ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error)
+}
 
-// crConverter extends the delegate with generic CR conversion behaviour. The delegate will implement the
-// user defined conversion strategy given in the CustomResourceDefinition.
 type crConverter struct {
-	delegate      runtime.ObjectConvertor
+	converter     crConverterInterface
+	validVersions map[schema.GroupVersion]bool
 	clusterScoped bool
 }
 
@@ -100,29 +105,56 @@ func (c *crConverter) ConvertFieldLabel(gvk schema.GroupVersionKind, label, valu
 }
 
 func (c *crConverter) Convert(in, out, context interface{}) error {
-	return c.delegate.Convert(in, out, context)
+	unstructIn, ok := in.(*unstructured.Unstructured)
+	if !ok {
+		return fmt.Errorf("input type %T in not valid for unstructured conversion", in)
+	}
+
+	unstructOut, ok := out.(*unstructured.Unstructured)
+	if !ok {
+		return fmt.Errorf("output type %T in not valid for unstructured conversion", out)
+	}
+
+	outGVK := unstructOut.GroupVersionKind()
+	converted, err := c.ConvertToVersion(unstructIn, outGVK.GroupVersion())
+	if err != nil {
+		return err
+	}
+	unstructuredConverted, ok := converted.(runtime.Unstructured)
+	if !ok {
+		// this should not happened
+		return fmt.Errorf("CR conversion failed")
+	}
+	unstructOut.SetUnstructuredContent(unstructuredConverted.UnstructuredContent())
+	return nil
+}
+
+// getTargetGroupVersion returns group/version which should be used to convert in objects to.
+// String version of the return item is APIVersion.
+func getTargetGroupVersion(in runtime.Object, target runtime.GroupVersioner) (schema.GroupVersion, error) {
+	fromGVK := in.GetObjectKind().GroupVersionKind()
+	toGVK, ok := target.KindForGroupVersionKinds([]schema.GroupVersionKind{fromGVK})
+	if !ok {
+		// TODO: should this be a typed error?
+		return schema.GroupVersion{}, fmt.Errorf("%v is unstructured and is not suitable for converting to %q", fromGVK.String(), target)
+	}
+	return toGVK.GroupVersion(), nil
 }
 
 // ConvertToVersion converts in object to the given gvk in place and returns the same `in` object.
 func (c *crConverter) ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error) {
-	// Run the converter on the list items instead of list itself
-	if list, ok := in.(*unstructured.UnstructuredList); ok {
-		for i := range list.Items {
-			obj, err := c.delegate.ConvertToVersion(&list.Items[i], target)
-			if err != nil {
-				return nil, err
-			}
-
-			u, ok := obj.(*unstructured.Unstructured)
-			if !ok {
-				return nil, fmt.Errorf("output type %T in not valid for unstructured conversion", obj)
-			}
-			list.Items[i] = *u
-		}
-		return list, nil
+	toGV, err := getTargetGroupVersion(in, target)
+	if err != nil {
+		return nil, err
 	}
-
-	return c.delegate.ConvertToVersion(in, target)
+	if !c.validVersions[toGV] {
+		return nil, fmt.Errorf("request to convert CR to an invalid group/version: %s", toGV.String())
+	}
+	fromGV := in.GetObjectKind().GroupVersionKind().GroupVersion()
+	if !c.validVersions[fromGV] {
+		return nil, fmt.Errorf("request to convert CR from an invalid group/version: %s", fromGV.String())
+	}
+	return c.converter.ConvertToVersion(in, target)
 }
 
 // safeConverterWrapper is a wrapper over an unsafe object converter that makes copy of the input and then delegate to the unsafe converter.
@@ -130,7 +162,7 @@ type safeConverterWrapper struct {
 	unsafe runtime.ObjectConvertor
 }
 
-var _ runtime.ObjectConvertor = &nopConverter{}
+var _ runtime.ObjectConvertor = &safeConverterWrapper{}
 
 // ConvertFieldLabel delegate the call to the unsafe converter.
 func (c *safeConverterWrapper) ConvertFieldLabel(gvk schema.GroupVersionKind, label, value string) (string, string, error) {
