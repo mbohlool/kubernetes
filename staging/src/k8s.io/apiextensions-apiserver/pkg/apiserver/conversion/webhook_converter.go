@@ -133,17 +133,16 @@ func getRawExtensionObject(rx runtime.RawExtension) (runtime.Object, error) {
 	return &u, nil
 }
 
-func (c *webhookConverter) Convert(in runtime.Object, targetGVK schema.GroupVersionKind) (runtime.Object, error) {
+func (c *webhookConverter) Convert(in runtime.Object, toGV schema.GroupVersion) (runtime.Object, error) {
 	// In general, the webhook should not do any defaulting or validation. A special case of that is an empty object
 	// conversion that must result an empty object and practically is the same as nopConverter.
 	// A smoke test in API machinery calls the converter on empty objects. As this case happens consistently
 	// it special cased here not to call webhook converter. The test initiated here:
 	// https://github.com/kubernetes/kubernetes/blob/dbb448bbdcb9e440eee57024ffa5f1698956a054/staging/src/k8s.io/apiserver/pkg/storage/cacher/cacher.go#L201
 	if isEmptyUnstructuredObject(in) {
-		return c.nopConverter.Convert(in, targetGVK)
+		return c.nopConverter.Convert(in, toGV)
 	}
 
-	toGV := targetGVK.GroupVersion()
 	listObj, isList := in.(*unstructured.UnstructuredList)
 
 	request := createConversionReview(in, toGV.String())

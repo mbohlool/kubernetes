@@ -19,6 +19,7 @@ package conversion
 import (
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,11 +39,12 @@ var (
 
 // converterMonitoringFactory holds metrics for all CRD converters
 type converterMonitoringFactory struct {
-	latencies map[string]*prometheus.HistogramVec
+	durations   map[string]*prometheus.HistogramVec
+	factoryLock sync.Mutex
 }
 
 func newConverterMonitoringFactory() *converterMonitoringFactory {
-	return &converterMonitoringFactory{map[string]*prometheus.HistogramVec{}}
+	return &converterMonitoringFactory{durations: map[string]*prometheus.HistogramVec{}, factoryLock: sync.Mutex{}}
 }
 
 var _ crConverterInterface = &converterMonitoring{}
@@ -55,31 +57,33 @@ type converterMonitoring struct {
 }
 
 func (c *converterMonitoringFactory) monitor(converterName string, crdName string, converter crConverterInterface) (crConverterInterface, error) {
-	metric, exists := c.latencies[converterName]
+	c.factoryLock.Lock()
+	defer c.factoryLock.Unlock()
+	metric, exists := c.durations[converterName]
 	if !exists {
 		metric = prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: namespace,
 				Subsystem: subsystem,
-				Name:      fmt.Sprintf("crd_%s_conversion_latencies_seconds", converterName),
-				Help:      fmt.Sprintf("CRD %s conversion latency in seconds", converterName),
+				Name:      fmt.Sprintf("crd_%s_conversion_duration_seconds", converterName),
+				Help:      fmt.Sprintf("CRD %s conversion duration in seconds", converterName),
 				Buckets:   latencyBuckets,
 			},
-			[]string{"crdName", "fromVersion", "toVersion", "succeed"})
+			[]string{"crd_name", "from_version", "to_version", "succeeded"})
 		err := prometheus.Register(metric)
 		if err != nil {
 			return nil, err
 		}
-		c.latencies[converterName] = metric
+		c.durations[converterName] = metric
 	}
 	return &converterMonitoring{latencies: metric, delegate: converter, crdName: crdName}, nil
 }
 
-func (m *converterMonitoring) Convert(in runtime.Object, targetGVK schema.GroupVersionKind) (runtime.Object, error) {
+func (m *converterMonitoring) Convert(in runtime.Object, targetGV schema.GroupVersion) (runtime.Object, error) {
 	start := time.Now()
-	obj, err := m.delegate.Convert(in, targetGVK)
+	obj, err := m.delegate.Convert(in, targetGV)
 	fromVersion := in.GetObjectKind().GroupVersionKind().Version
-	toVersion := targetGVK.Version
+	toVersion := targetGV.Version
 
 	// only record this observation if the version is different
 	if fromVersion != toVersion {

@@ -90,7 +90,7 @@ type crConverterInterface interface {
 	// Convert converts in object to the given gvk and returns the converted object.
 	// Note that the function may mutate in object and return it. A safe wrapper will make sure
 	// a safe converter will be returned.
-	Convert(in runtime.Object, targetGVK schema.GroupVersionKind) (runtime.Object, error)
+	Convert(in runtime.Object, targetGVK schema.GroupVersion) (runtime.Object, error)
 }
 
 // crConverter extends the delegate converter with generic CR conversion behaviour. The delegate will implement the
@@ -158,7 +158,16 @@ func (c *crConverter) ConvertToVersion(in runtime.Object, target runtime.GroupVe
 	if !c.validVersions[fromGVK.GroupVersion()] {
 		return nil, fmt.Errorf("request to convert CR from an invalid group/version: %s", fromGVK.GroupVersion().String())
 	}
-	return c.converter.Convert(in, toGVK)
+	// Check list item's apiVersion
+	if list, ok := in.(*unstructured.UnstructuredList); ok {
+		for i := range list.Items {
+			expectedGV := list.Items[i].GroupVersionKind().GroupVersion()
+			if !c.validVersions[expectedGV] {
+				return nil, fmt.Errorf("request to convert CR list failed, list index %d has invalid group/version: %s", i, expectedGV.String())
+			}
+		}
+	}
+	return c.converter.Convert(in, toGVK.GroupVersion())
 }
 
 // safeConverterWrapper is a wrapper over an unsafe object converter that makes copy of the input and then delegate to the unsafe converter.
