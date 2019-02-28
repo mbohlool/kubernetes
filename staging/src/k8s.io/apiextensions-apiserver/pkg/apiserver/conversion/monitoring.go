@@ -28,11 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-const (
-	namespace = "apiserver"
-	subsystem = "crd"
-)
-
 var (
 	latencyBuckets = prometheus.ExponentialBuckets(1, 2, 5)
 )
@@ -63,8 +58,8 @@ func (c *converterMonitoringFactory) monitor(converterName string, crdName strin
 	if !exists {
 		metric = prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: namespace,
-				Subsystem: subsystem,
+				Namespace: "apiserver",
+				Subsystem: "crd",
 				Name:      fmt.Sprintf("crd_%s_conversion_duration_seconds", converterName),
 				Help:      fmt.Sprintf("CRD %s conversion duration in seconds", converterName),
 				Buckets:   latencyBuckets,
