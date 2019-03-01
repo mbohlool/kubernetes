@@ -2603,6 +2603,10 @@
 			"Rev": "c2654d5206da6b7b6ace12841e8f359bb89b443c"
 		},
 		{
+			"ImportPath": "k8s.io/utils/pointer",
+			"Rev": "c2654d5206da6b7b6ace12841e8f359bb89b443c"
+		},
+		{
 			"ImportPath": "k8s.io/utils/trace",
 			"Rev": "c2654d5206da6b7b6ace12841e8f359bb89b443c"
 		},
