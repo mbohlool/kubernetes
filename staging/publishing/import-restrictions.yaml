@@ -117,6 +117,7 @@
   - k8s.io/kube-aggregator
   - k8s.io/kube-openapi
   - k8s.io/klog
+  - k8s.io/utils
 
 - baseImportPath: "./vendor/k8s.io/sample-apiserver/"
   allowedImports:
@@ -138,6 +139,7 @@
   - k8s.io/component-base
   - k8s.io/klog
   - k8s.io/kube-openapi
+  - k8s.io/utils
 
 - baseImportPath: "./vendor/k8s.io/kube-openapi/"
   allowedImports:
