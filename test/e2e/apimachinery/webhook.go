@@ -39,6 +39,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
 	imageutils "k8s.io/kubernetes/test/utils/image"
+	"k8s.io/utils/pointer"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -49,6 +50,7 @@ const (
 	secretName      = "sample-webhook-secret"
 	deploymentName  = "sample-webhook-deployment"
 	serviceName     = "e2e-test-webhook"
+	servicePort     = 8443
 	roleBindingName = "webhook-auth-reader"
 
 	// The webhook configuration names should not be reused between test instances.
@@ -207,17 +209,17 @@ var _ = SIGDescribe("AdmissionWebhook", func() {
 		policyIgnore := v1beta1.Ignore
 
 		By("Setting timeout (1s) shorter than webhook latency (5s)")
-		slowWebhookCleanup := registerSlowWebhook(f, context, &policyFail, int32Ptr(1))
+		slowWebhookCleanup := registerSlowWebhook(f, context, &policyFail, pointer.Int32Ptr(1))
 		testSlowWebhookTimeoutFailEarly(f)
 		slowWebhookCleanup()
 
 		By("Having no error when timeout is shorter than webhook latency and failure policy is ignore")
-		slowWebhookCleanup = registerSlowWebhook(f, context, &policyIgnore, int32Ptr(1))
+		slowWebhookCleanup = registerSlowWebhook(f, context, &policyIgnore, pointer.Int32Ptr(1))
 		testSlowWebhookTimeoutNoError(f)
 		slowWebhookCleanup()
 
 		By("Having no error when timeout is longer than webhook latency")
-		slowWebhookCleanup = registerSlowWebhook(f, context, &policyFail, int32Ptr(10))
+		slowWebhookCleanup = registerSlowWebhook(f, context, &policyFail, pointer.Int32Ptr(10))
 		testSlowWebhookTimeoutNoError(f)
 		slowWebhookCleanup()
 
@@ -367,7 +369,7 @@ func deployWebhookAndService(f *framework.Framework, image string, context *cert
 			Ports: []v1.ServicePort{
 				{
 					Protocol:   "TCP",
-					Port:       443,
+					Port:       servicePort,
 					TargetPort: intstr.FromInt(443),
 				},
 			},
@@ -382,8 +384,6 @@ func deployWebhookAndService(f *framework.Framework, image string, context *cert
 }
 
 func strPtr(s string) *string { return &s }
-
-func int32Ptr(i int32) *int32 { return &i }
 
 func registerWebhook(f *framework.Framework, context *certContext) func() {
 	client := f.ClientSet
@@ -416,6 +416,7 @@ func registerWebhook(f *framework.Framework, context *certContext) func() {
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/pods"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -445,6 +446,7 @@ func registerWebhook(f *framework.Framework, context *certContext) func() {
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/configmaps"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -495,6 +497,7 @@ func registerWebhookForAttachingPod(f *framework.Framework, context *certContext
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/pods/attach"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -538,6 +541,7 @@ func registerMutatingWebhookForConfigMap(f *framework.Framework, context *certCo
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/mutating-configmaps"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -557,6 +561,7 @@ func registerMutatingWebhookForConfigMap(f *framework.Framework, context *certCo
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/mutating-configmaps"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -613,6 +618,7 @@ func registerMutatingWebhookForPod(f *framework.Framework, context *certContext)
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/mutating-pods"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -785,6 +791,7 @@ func failingWebhook(namespace, name string) v1beta1.Webhook {
 				Namespace: namespace,
 				Name:      serviceName,
 				Path:      strPtr("/configmaps"),
+				Port:      pointer.Int32Ptr(servicePort),
 			},
 			// Without CA bundle, the call to webhook always fails
 			CABundle: nil,
@@ -891,6 +898,7 @@ func registerValidatingWebhookForWebhookConfigurations(f *framework.Framework, c
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/always-deny"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -943,6 +951,7 @@ func registerMutatingWebhookForWebhookConfigurations(f *framework.Framework, con
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/add-label"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -996,6 +1005,7 @@ func testWebhooksForWebhookConfigurations(f *framework.Framework) {
 						// but because the failure policy is ignore, it will
 						// have no effect on admission requests.
 						Path: strPtr(""),
+						Port: pointer.Int32Ptr(servicePort),
 					},
 					CABundle: nil,
 				},
@@ -1043,6 +1053,7 @@ func testWebhooksForWebhookConfigurations(f *framework.Framework) {
 						// but because the failure policy is ignore, it will
 						// have no effect on admission requests.
 						Path: strPtr(""),
+						Port: pointer.Int32Ptr(servicePort),
 					},
 					CABundle: nil,
 				},
@@ -1212,6 +1223,7 @@ func registerWebhookForCustomResource(f *framework.Framework, context *certConte
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/custom-resource"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -1253,6 +1265,7 @@ func registerMutatingWebhookForCustomResource(f *framework.Framework, context *c
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/mutating-custom-resource"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -1272,6 +1285,7 @@ func registerMutatingWebhookForCustomResource(f *framework.Framework, context *c
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/mutating-custom-resource"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -1400,6 +1414,7 @@ func registerValidatingWebhookForCRD(f *framework.Framework, context *certContex
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/crd"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},
@@ -1511,6 +1526,7 @@ func registerSlowWebhook(f *framework.Framework, context *certContext, policy *v
 						Namespace: namespace,
 						Name:      serviceName,
 						Path:      strPtr("/always-allow-delay-5s"),
+						Port:      pointer.Int32Ptr(servicePort),
 					},
 					CABundle: context.signingCert,
 				},

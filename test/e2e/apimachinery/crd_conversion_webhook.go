@@ -33,6 +33,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
 	imageutils "k8s.io/kubernetes/test/utils/image"
+	"k8s.io/utils/pointer"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -43,6 +44,7 @@ const (
 	secretCRDName      = "sample-custom-resource-conversion-webhook-secret"
 	deploymentCRDName  = "sample-crd-conversion-webhook-deployment"
 	serviceCRDName     = "e2e-test-crd-conversion-webhook"
+	serviceCRDPort     = 9443
 	roleBindingCRDName = "crd-conversion-webhook-auth-reader"
 )
 
@@ -106,7 +108,8 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 				Service: &v1beta1.ServiceReference{
 					Namespace: f.Namespace.Name,
 					Name:      serviceCRDName,
-					Path:      strPtr("/crdconvert"),
+					Path:      pointer.StringPtr("/crdconvert"),
+					Port:      pointer.Int32Ptr(serviceCRDPort),
 				}})
 		if err != nil {
 			return
@@ -122,7 +125,8 @@ var _ = SIGDescribe("CustomResourceConversionWebhook [Feature:CustomResourceWebh
 				Service: &v1beta1.ServiceReference{
 					Namespace: f.Namespace.Name,
 					Name:      serviceCRDName,
-					Path:      strPtr("/crdconvert"),
+					Path:      pointer.StringPtr("/crdconvert"),
+					Port:      pointer.Int32Ptr(serviceCRDPort),
 				}})
 		if err != nil {
 			return
@@ -267,7 +271,7 @@ func deployCustomResourceWebhookAndService(f *framework.Framework, image string,
 			Ports: []v1.ServicePort{
 				{
 					Protocol:   "TCP",
-					Port:       443,
+					Port:       serviceCRDPort,
 					TargetPort: intstr.FromInt(443),
 				},
 			},
