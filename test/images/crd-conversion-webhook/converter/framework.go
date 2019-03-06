@@ -33,6 +33,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 )
 
+// A debugging variable that incremeneted on each conversion call and will be added to the converted object.
+// Note that a real converter may not do this.
+var conversionIterationID = 0
+
 // convertFunc is the user defined function for any conversion. The code in this file is a
 // template that can be use for any CR conversion given this function.
 type convertFunc func(Object *unstructured.Unstructured, version string) (*unstructured.Unstructured, metav1.Status)
@@ -66,6 +70,7 @@ func statusSucceed() metav1.Status {
 // failures will be reported as Reason in the conversion response.
 func doConversion(convertRequest *v1beta1.ConversionRequest, convert convertFunc) *v1beta1.ConversionResponse {
 	var convertedObjects []runtime.RawExtension
+	conversionIterationID++
 	for _, obj := range convertRequest.Objects {
 		cr := unstructured.Unstructured{}
 		if err := cr.UnmarshalJSON(obj.Raw); err != nil {
@@ -80,6 +85,7 @@ func doConversion(convertRequest *v1beta1.ConversionRequest, convert convertFunc
 			}
 		}
 		convertedCR.SetAPIVersion(convertRequest.DesiredAPIVersion)
+		convertedCR.Object["_debug_conversion_iteration_id"] = conversionIterationID
 		convertedObjects = append(convertedObjects, runtime.RawExtension{Object: convertedCR})
 	}
 	return &v1beta1.ConversionResponse{

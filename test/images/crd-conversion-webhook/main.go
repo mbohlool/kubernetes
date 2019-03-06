@@ -20,6 +20,8 @@ import (
 	"flag"
 	"net/http"
 
+	"k8s.io/klog"
+
 	"k8s.io/kubernetes/test/images/crd-conversion-webhook/converter"
 )
 
@@ -38,6 +40,7 @@ func (c *Config) addFlags() {
 }
 
 func main() {
+	klog.InitFlags(nil)
 	var config Config
 	config.addFlags()
 	flag.Parse()
