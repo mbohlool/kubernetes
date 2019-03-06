@@ -383,6 +383,8 @@ func testCRListConversion(f *framework.Framework, testCrd *framework.TestCrd) {
 	Expect((list.Items[0].GetName() == name1 && list.Items[1].GetName() == name2) ||
 		(list.Items[0].GetName() == name2 && list.Items[1].GetName() == name1)).To(BeTrue())
 	// Make sure the conversion happened in one iteration
+	framework.Logf("list item 0 _debug_conversion_iteration_id: %v", list.Items[0].Object["_debug_conversion_iteration_id"])
+	framework.Logf("list item 1 _debug_conversion_iteration_id: %v", list.Items[1].Object["_debug_conversion_iteration_id"])
 	Expect(list.Items[0].Object["_debug_conversion_iteration_id"] != nil && list.Items[0].Object["_debug_conversion_iteration_id"] == list.Items[1].Object["_debug_conversion_iteration_id"])
 	verifyV1Object(f, crd, &list.Items[0])
 	verifyV1Object(f, crd, &list.Items[1])
@@ -394,6 +396,8 @@ func testCRListConversion(f *framework.Framework, testCrd *framework.TestCrd) {
 	Expect((list.Items[0].GetName() == name1 && list.Items[1].GetName() == name2) ||
 		(list.Items[0].GetName() == name2 && list.Items[1].GetName() == name1)).To(BeTrue())
 	// Make sure the conversion happened in one iteration
+	framework.Logf("list item 0 _debug_conversion_iteration_id: %v", list.Items[0].Object["_debug_conversion_iteration_id"])
+	framework.Logf("list item 1 _debug_conversion_iteration_id: %v", list.Items[1].Object["_debug_conversion_iteration_id"])
 	Expect(list.Items[0].Object["_debug_conversion_iteration_id"] != nil && list.Items[0].Object["_debug_conversion_iteration_id"] == list.Items[1].Object["_debug_conversion_iteration_id"])
 	verifyV2Object(f, crd, &list.Items[0])
 	verifyV2Object(f, crd, &list.Items[1])
