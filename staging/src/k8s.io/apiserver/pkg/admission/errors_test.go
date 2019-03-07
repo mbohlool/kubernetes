@@ -27,17 +27,7 @@ import (
 // makes sure that we never get:
 // Internal error occurred: [some error, object does not implement the Object interfaces]
 func TestNewForbidden(t *testing.T) {
-	attributes := NewAttributesRecord(
-		&fakeObj{},
-		nil,
-		schema.GroupVersionKind{Group: "foo", Version: "bar", Kind: "Baz"},
-		"",
-		"",
-		schema.GroupVersionResource{Group: "foo", Version: "bar", Resource: "baz"},
-		"",
-		Create,
-		false,
-		nil)
+	attributes := NewAttributesRecord(&fakeObj{}, nil, schema.GroupVersionKind{Group: "foo", Version: "bar", Kind: "Baz"}, "", "", schema.GroupVersionResource{Group: "foo", Version: "bar", Resource: "baz"}, "", Create, false, nil, nil)
 	err := errors.New("some error")
 	expectedErr := `baz.foo "Unknown/errorGettingName" is forbidden: some error`
 

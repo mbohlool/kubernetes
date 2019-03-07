@@ -199,18 +199,7 @@ func TestAdmission(t *testing.T) {
 		for _, c := range test.classes {
 			informerFactory.Storage().V1().StorageClasses().Informer().GetStore().Add(c)
 		}
-		attrs := admission.NewAttributesRecord(
-			claim, // new object
-			nil,   // old object
-			api.Kind("PersistentVolumeClaim").WithVersion("version"),
-			claim.Namespace,
-			claim.Name,
-			api.Resource("persistentvolumeclaims").WithVersion("version"),
-			"", // subresource
-			admission.Create,
-			false, // dryRun
-			nil,   // userInfo
-		)
+		attrs := admission.NewAttributesRecord(claim, nil, api.Kind("PersistentVolumeClaim").WithVersion("version"), claim.Namespace, claim.Name, api.Resource("persistentvolumeclaims").WithVersion("version"), "", admission.Create, false, nil, nil, )
 		err := ctrl.Admit(attrs, nil)
 		klog.Infof("Got %v", err)
 		if err != nil && !test.expectError {

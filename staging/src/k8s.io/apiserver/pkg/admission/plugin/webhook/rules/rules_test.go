@@ -34,39 +34,15 @@ type ruleTest struct {
 type tests map[string]ruleTest
 
 func a(group, version, resource, subresource, name string, operation admission.Operation) admission.Attributes {
-	return admission.NewAttributesRecord(
-		nil, nil,
-		schema.GroupVersionKind{Group: group, Version: version, Kind: "k" + resource},
-		"ns", name,
-		schema.GroupVersionResource{Group: group, Version: version, Resource: resource}, subresource,
-		operation,
-		false,
-		nil,
-	)
+	return admission.NewAttributesRecord(nil, nil, schema.GroupVersionKind{Group: group, Version: version, Kind: "k" + resource}, "ns", name, schema.GroupVersionResource{Group: group, Version: version, Resource: resource}, subresource, operation, false, nil, nil, )
 }
 
 func namespacedAttributes(group, version, resource, subresource, name string, operation admission.Operation) admission.Attributes {
-	return admission.NewAttributesRecord(
-		nil, nil,
-		schema.GroupVersionKind{Group: group, Version: version, Kind: "k" + resource},
-		"ns", name,
-		schema.GroupVersionResource{Group: group, Version: version, Resource: resource}, subresource,
-		operation,
-		false,
-		nil,
-	)
+	return admission.NewAttributesRecord(nil, nil, schema.GroupVersionKind{Group: group, Version: version, Kind: "k" + resource}, "ns", name, schema.GroupVersionResource{Group: group, Version: version, Resource: resource}, subresource, operation, false, nil, nil, )
 }
 
 func clusterScopedAttributes(group, version, resource, subresource, name string, operation admission.Operation) admission.Attributes {
-	return admission.NewAttributesRecord(
-		nil, nil,
-		schema.GroupVersionKind{Group: group, Version: version, Kind: "k" + resource},
-		"", name,
-		schema.GroupVersionResource{Group: group, Version: version, Resource: resource}, subresource,
-		operation,
-		false,
-		nil,
-	)
+	return admission.NewAttributesRecord(nil, nil, schema.GroupVersionKind{Group: group, Version: version, Kind: "k" + resource}, "", name, schema.GroupVersionResource{Group: group, Version: version, Resource: resource}, subresource, operation, false, nil, nil, )
 }
 
 func attrList(a ...admission.Attributes) []admission.Attributes {

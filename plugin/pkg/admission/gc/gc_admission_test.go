@@ -306,7 +306,7 @@ func TestGCAdmission(t *testing.T) {
 				operation = admission.Update
 			}
 			user := &user.DefaultInfo{Name: tc.username}
-			attributes := admission.NewAttributesRecord(tc.newObj, tc.oldObj, schema.GroupVersionKind{}, metav1.NamespaceDefault, "foo", tc.resource, tc.subresource, operation, false, user)
+			attributes := admission.NewAttributesRecord(tc.newObj, tc.oldObj, schema.GroupVersionKind{}, metav1.NamespaceDefault, "foo", tc.resource, tc.subresource, operation, false, user, nil)
 
 			err = gcAdmit.Validate(attributes, nil)
 			if !tc.checkError(err) {
@@ -609,7 +609,7 @@ func TestBlockOwnerDeletionAdmission(t *testing.T) {
 			operation = admission.Update
 		}
 		user := &user.DefaultInfo{Name: tc.username}
-		attributes := admission.NewAttributesRecord(tc.newObj, tc.oldObj, schema.GroupVersionKind{}, metav1.NamespaceDefault, "foo", tc.resource, tc.subresource, operation, false, user)
+		attributes := admission.NewAttributesRecord(tc.newObj, tc.oldObj, schema.GroupVersionKind{}, metav1.NamespaceDefault, "foo", tc.resource, tc.subresource, operation, false, user, nil)
 
 		err := gcAdmit.Validate(attributes, nil)
 		if !tc.checkError(err) {

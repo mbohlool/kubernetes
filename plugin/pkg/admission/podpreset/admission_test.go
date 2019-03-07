@@ -810,18 +810,7 @@ func admitPod(pod *api.Pod, pip *settingsv1alpha1.PodPreset) error {
 	store := informerFactory.Settings().V1alpha1().PodPresets().Informer().GetStore()
 	store.Add(pip)
 	plugin := NewTestAdmission(informerFactory.Settings().V1alpha1().PodPresets().Lister())
-	attrs := kadmission.NewAttributesRecord(
-		pod,
-		nil,
-		api.Kind("Pod").WithVersion("version"),
-		"namespace",
-		"",
-		api.Resource("pods").WithVersion("version"),
-		"",
-		kadmission.Create,
-		false,
-		&user.DefaultInfo{},
-	)
+	attrs := kadmission.NewAttributesRecord(pod, nil, api.Kind("Pod").WithVersion("version"), "namespace", "", api.Resource("pods").WithVersion("version"), "", kadmission.Create, false, &user.DefaultInfo{}, nil, )
 
 	err := plugin.Admit(attrs, nil)
 	if err != nil {

@@ -37,17 +37,7 @@ const (
 
 // attributesForRequest generates the admission.Attributes that for the specified request
 func attributesForRequest(rq request) admission.Attributes {
-	return admission.NewAttributesRecord(
-		rq.event,
-		nil,
-		api.Kind(rq.kind).WithVersion("version"),
-		rq.namespace,
-		"name",
-		api.Resource("resource").WithVersion("version"),
-		"",
-		admission.Create,
-		rq.dryRun,
-		&user.DefaultInfo{Name: rq.username})
+	return admission.NewAttributesRecord(rq.event, nil, api.Kind(rq.kind).WithVersion("version"), rq.namespace, "name", api.Resource("resource").WithVersion("version"), "", admission.Create, rq.dryRun, &user.DefaultInfo{Name: rq.username}, nil)
 }
 
 type request struct {

@@ -122,18 +122,7 @@ func TestAdmit(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			defer utilfeaturetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.StorageObjectInUseProtection, test.featureEnabled)()
 			obj := test.object.DeepCopyObject()
-			attrs := admission.NewAttributesRecord(
-				obj,                  // new object
-				obj.DeepCopyObject(), // old object, copy to be sure it's not modified
-				schema.GroupVersionKind{},
-				test.namespace,
-				"foo",
-				test.resource,
-				"", // subresource
-				admission.Create,
-				false, // dryRun
-				nil,   // userInfo
-			)
+			attrs := admission.NewAttributesRecord(obj, obj.DeepCopyObject(), schema.GroupVersionKind{}, test.namespace, "foo", test.resource, "", admission.Create, false, nil, nil, )
 
 			err := ctrl.Admit(attrs, nil)
 			if err != nil {
