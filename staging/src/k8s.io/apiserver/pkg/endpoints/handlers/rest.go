@@ -136,16 +136,29 @@ func ConnectResource(connecter rest.Connecter, scope RequestScope, admit admissi
 		}
 		if admit != nil && admit.Handles(admission.Connect) {
 			userInfo, _ := request.UserFrom(ctx)
+			admissionRequestoptions := opts.DeepCopyObject()
+			optsKinds, _, err := scope.Typer.ObjectKinds(opts)
+			if err != nil {
+				err = errors.NewInternalError(err)
+				scope.err(err, w, req)
+				return
+			}
+			if len(optsKinds) < 1 {
+				err = errors.NewInternalError(fmt.Errorf("cannot determine kind for connect option: %v", opts))
+				scope.err(err, w, req)
+				return
+			}
+			admissionRequestoptions.GetObjectKind().SetGroupVersionKind(scope.MetaGroupVersion.WithKind(optsKinds[0].Kind))
 			// TODO: remove the mutating admission here as soon as we have ported all plugin that handle CONNECT
 			if mutatingAdmission, ok := admit.(admission.MutationInterface); ok {
-				err = mutatingAdmission.Admit(admission.NewAttributesRecord(opts, nil, scope.Kind, namespace, name, scope.Resource, scope.Subresource, admission.Connect, false, userInfo), &scope)
+				err = mutatingAdmission.Admit(admission.NewAttributesRecord(opts, nil, scope.Kind, namespace, name, scope.Resource, scope.Subresource, admission.Connect, false, userInfo, admissionRequestoptions), &scope)
 				if err != nil {
 					scope.err(err, w, req)
 					return
 				}
 			}
 			if validatingAdmission, ok := admit.(admission.ValidationInterface); ok {
-				err = validatingAdmission.Validate(admission.NewAttributesRecord(opts, nil, scope.Kind, namespace, name, scope.Resource, scope.Subresource, admission.Connect, false, userInfo), &scope)
+				err = validatingAdmission.Validate(admission.NewAttributesRecord(opts, nil, scope.Kind, namespace, name, scope.Resource, scope.Subresource, admission.Connect, false, userInfo, admissionRequestoptions), &scope)
 				if err != nil {
 					scope.err(err, w, req)
 					return

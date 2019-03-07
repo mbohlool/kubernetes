@@ -141,6 +141,8 @@ func PatchResource(r rest.Patcher, scope RequestScope, admit admission.Interface
 			scope.Serializer.DecoderToVersion(s.Serializer, scope.HubGroupVersion),
 		)
 
+		admissionRequestoptions := options.DeepCopyObject()
+		admissionRequestoptions.GetObjectKind().SetGroupVersionKind(metav1.SchemeGroupVersion.WithKind("PatchOptions"))
 		userInfo, _ := request.UserFrom(ctx)
 		staticCreateAttributes := admission.NewAttributesRecord(
 			nil,
@@ -152,7 +154,8 @@ func PatchResource(r rest.Patcher, scope RequestScope, admit admission.Interface
 			scope.Subresource,
 			admission.Create,
 			dryrun.IsDryRun(options.DryRun),
-			userInfo)
+			userInfo,
+			admissionRequestoptions)
 		staticUpdateAttributes := admission.NewAttributesRecord(
 			nil,
 			nil,
@@ -164,7 +167,7 @@ func PatchResource(r rest.Patcher, scope RequestScope, admit admission.Interface
 			admission.Update,
 			dryrun.IsDryRun(options.DryRun),
 			userInfo,
-		)
+			admissionRequestoptions)
 
 		mutatingAdmission, _ := admit.(admission.MutationInterface)
 		createAuthorizerAttributes := authorizer.AttributesRecord{
@@ -492,7 +495,9 @@ func (p *patcher) applyPatch(_ context.Context, _, currentObject runtime.Object)
 
 func (p *patcher) admissionAttributes(ctx context.Context, updatedObject runtime.Object, currentObject runtime.Object, operation admission.Operation) admission.Attributes {
 	userInfo, _ := request.UserFrom(ctx)
-	return admission.NewAttributesRecord(updatedObject, currentObject, p.kind, p.namespace, p.name, p.resource, p.subresource, operation, p.dryRun, userInfo)
+	admissionRequestoptions := p.options.DeepCopyObject()
+	admissionRequestoptions.GetObjectKind().SetGroupVersionKind(metav1.SchemeGroupVersion.WithKind("PatchOptions"))
+	return admission.NewAttributesRecord(updatedObject, currentObject, p.kind, p.namespace, p.name, p.resource, p.subresource, operation, p.dryRun, userInfo, admissionRequestoptions)
 }
 
 // applyAdmission is called every time GuaranteedUpdate asks for the updated object,

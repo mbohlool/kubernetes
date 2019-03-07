@@ -60,6 +60,9 @@ type Attributes interface {
 	// An error is returned if the format of key is invalid. When trying to overwrite annotation with a new value, an error is returned.
 	// Both ValidationInterface and MutationInterface are allowed to add Annotations.
 	AddAnnotation(key, value string) error
+
+	// GetOperationOption returns the Operation Option such as DeleteOptions, CreateOptions, etc.
+	GetOperationOption() runtime.Object
 }
 
 // ObjectInterfaces is an interface used by AdmissionController to get object interfaces

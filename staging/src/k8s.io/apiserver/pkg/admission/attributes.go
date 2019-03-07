@@ -28,16 +28,17 @@ import (
 )
 
 type attributesRecord struct {
-	kind        schema.GroupVersionKind
-	namespace   string
-	name        string
-	resource    schema.GroupVersionResource
-	subresource string
-	operation   Operation
-	dryRun      bool
-	object      runtime.Object
-	oldObject   runtime.Object
-	userInfo    user.Info
+	kind            schema.GroupVersionKind
+	namespace       string
+	name            string
+	resource        schema.GroupVersionResource
+	subresource     string
+	operation       Operation
+	dryRun          bool
+	object          runtime.Object
+	oldObject       runtime.Object
+	userInfo        user.Info
+	operationOption runtime.Object
 
 	// other elements are always accessed in single goroutine.
 	// But ValidatingAdmissionWebhook add annotations concurrently.
@@ -45,18 +46,19 @@ type attributesRecord struct {
 	annotationsLock sync.RWMutex
 }
 
-func NewAttributesRecord(object runtime.Object, oldObject runtime.Object, kind schema.GroupVersionKind, namespace, name string, resource schema.GroupVersionResource, subresource string, operation Operation, dryRun bool, userInfo user.Info) Attributes {
+func NewAttributesRecord(object runtime.Object, oldObject runtime.Object, kind schema.GroupVersionKind, namespace, name string, resource schema.GroupVersionResource, subresource string, operation Operation, dryRun bool, userInfo user.Info, operationOption runtime.Object) Attributes {
 	return &attributesRecord{
-		kind:        kind,
-		namespace:   namespace,
-		name:        name,
-		resource:    resource,
-		subresource: subresource,
-		operation:   operation,
-		dryRun:      dryRun,
-		object:      object,
-		oldObject:   oldObject,
-		userInfo:    userInfo,
+		kind:            kind,
+		namespace:       namespace,
+		name:            name,
+		resource:        resource,
+		subresource:     subresource,
+		operation:       operation,
+		dryRun:          dryRun,
+		object:          object,
+		oldObject:       oldObject,
+		userInfo:        userInfo,
+		operationOption: operationOption,
 	}
 }
 
@@ -98,6 +100,10 @@ func (record *attributesRecord) GetOldObject() runtime.Object {
 
 func (record *attributesRecord) GetUserInfo() user.Info {
 	return record.userInfo
+}
+
+func (record *attributesRecord) GetOperationOption() runtime.Object {
+	return record.requestOption
 }
 
 // getAnnotations implements privateAnnotationsGetter.It's a private method used
